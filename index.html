@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261104223617"></script>
+<script src="data.js?v=20261105061013"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -43,8 +43,8 @@ header{position:relative;color:#fff;padding:34px 40px 26px;
 .presets button.on,.presets button:hover{background:var(--gold-l);border-color:var(--gold-l);color:var(--char)}
 
 /* ---------- Navegación ---------- */
-nav{position:sticky;top:0;z-index:5;background:rgba(251,249,246,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);display:flex;justify-content:center;gap:6px;padding:0 20px;overflow-x:auto}
-nav a{padding:16px 16px 14px;color:var(--mid);text-decoration:none;font-family:var(--head);font-size:12px;letter-spacing:.16em;text-transform:uppercase;white-space:nowrap;border-bottom:2px solid transparent;cursor:pointer;transition:color .2s}
+nav{position:sticky;top:0;z-index:5;background:rgba(251,249,246,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);display:flex;justify-content:safe center;gap:2px;padding:0 16px;overflow-x:auto}
+nav a{padding:16px 11px 14px;color:var(--mid);text-decoration:none;font-family:var(--head);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;border-bottom:2px solid transparent;cursor:pointer;transition:color .2s}
 nav a:hover{color:var(--char)}
 nav a.on{color:var(--char);border-bottom-color:var(--gold)}
 
@@ -146,6 +146,20 @@ details.mas[open] summary::before{content:"– "}
 .fuga{background:#FBF0EE;border:1px solid #EFCFC9;border-radius:14px;padding:14px 18px;margin-bottom:16px;line-height:1.6;font-size:14px}
 .fuga.ok{background:var(--cream-2);border-color:var(--line)}
 .fuga b{color:var(--char)}
+.calc-form{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end}
+.calc-form label{display:flex;flex-direction:column;gap:6px;font-family:var(--head);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--mid)}
+.calc-form .sel{margin-right:0}
+.calc-res{background:#fff;border:1px solid var(--line);border-top:3px solid var(--gold);border-radius:20px;padding:24px 30px;margin-bottom:20px;display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:24px;align-items:center}
+@media(max-width:1000px){.calc-res{grid-template-columns:1fr}}
+.calc-res .k{font-family:var(--head);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mid)}
+.calc-res .bigv{font-family:var(--head);font-weight:300;font-size:46px;color:var(--char);line-height:1.1;margin:8px 0 4px}
+.calc-res .mid{font-family:var(--head);font-weight:300;font-size:28px;color:var(--char);margin:6px 0 2px}
+.calc-res .s{font-size:12.5px;color:var(--gray);line-height:1.5}
+.paso-calc{display:flex;justify-content:space-between;gap:14px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
+.paso-calc:last-child{border-bottom:0}
+.paso-calc .v{font-family:var(--head);font-size:16px;color:var(--char);white-space:nowrap}
+.aviso{border-radius:12px;padding:12px 16px;margin-top:12px;font-size:13px;line-height:1.55;background:#FBF1D9;border:1px solid #EFD9A6}
+.aviso.rojo{background:#FBF0EE;border-color:#EFCFC9}
 h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gray);margin:18px 0 6px}
 </style>
 </head>
@@ -188,6 +202,7 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
   <a data-s="embudo">Embudo WhatsApp</a>
   <a data-s="horas">Días y horas</a>
   <a data-s="segmentos">Segmentos y desperdicio</a>
+  <a data-s="calculadora">Calculadora</a>
   <a data-s="mercados">Mercados</a>
   <a data-s="campanas">Campañas</a>
   <a data-s="presupuesto">Presupuesto óptimo</a>
@@ -285,6 +300,27 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
       <div class="kpis" id="kpisG" style="margin-top:12px"></div>
       <div class="tabla" id="tablaG"></div>
     </div>
+  </section>
+
+  <section id="calculadora">
+    <div class="card"><h3>Calculadora de estrategia</h3>
+      <div class="nota">Dime cuántas pasadías o villas necesitas y en cuántos días: la calculadora estima la <b>inversión diaria</b> con el costo de pauta por reserva real de una ventana reciente. La ventana por defecto es la que mejor predijo en el backtest (abajo). Usa solo campañas cuyo nombre identifica el producto; la inversión de marca o mixta se muestra aparte y se asume constante.</div>
+      <div class="calc-form">
+        <label>Producto<select id="cProd" class="sel"><option>Pasadías</option><option>Villas</option></select></label>
+        <label>Meta en<select id="cUnidad" class="sel"><option value="res">Reservas</option><option value="pax">Personas</option></select></label>
+        <label>Cantidad<input id="cMeta" type="number" min="1" value="60" class="sel" style="width:110px"></label>
+        <label>Inicio<input id="cIni" type="date" class="sel"></label>
+        <label>Días de la estrategia<input id="cDias" type="number" min="1" max="90" value="7" class="sel" style="width:90px"></label>
+        <label>Ventana de referencia<select id="cVent" class="sel"></select></label>
+      </div>
+    </div>
+    <div class="calc-res" id="cRes"></div>
+    <div class="grid2">
+      <div class="card"><h3>Cómo se calculó</h3><div id="cPasos"></div></div>
+      <div class="card"><h3>Escenarios</h3><div class="nota">El costo por reserva varía mucho de una semana a otra. Rango con las últimas 8 semanas: optimista = semana típica barata (percentil 25), conservador = semana típica cara (percentil 75).</div><div id="cEsc"></div></div>
+    </div>
+    <div class="card"><h3>Reparto entre lo que está activo</h3><div class="nota" id="cRepNota"></div><div id="cRep"></div></div>
+    <div class="card"><h3>¿Qué ventana predice mejor? (backtest)</h3><div class="nota">Para cada ventana se "predijo" cada semana pasada con los datos previos y se comparó con lo real. Error mediano al predecir las reservas totales de la semana siguiente. Menor = mejor.</div><div id="cBack"></div></div>
   </section>
 
   <section id="mercados">
@@ -825,6 +861,90 @@ function renderSegmentos(){
     ${d.filas.map(o=>`<tr><td>${o.valor}</td><td class="n">${money(o.gasto)}</td><td class="n">${pct(o.pg)}</td><td class="n">${fmt(o.res)}</td><td class="n">${pct(o.pr)}</td><td class="n">${money(o.cpa)}</td><td class="n">${pct(div(o.clics,o.imp),2)}</td><td class="n">${chip(o.idx)}</td><td class="n">${money(o.desp)}</td></tr>`).join("")}</tbody></table>`;
 }
 
+// --- calculadora de estrategia ---
+const CAL = D.calculadora || {};
+const CSER = T(CAL.serie), CMIX = T(CAL.mixta), CBACK = T(CAL.backtest), CMA = T(CAL.meta_activas), CGA = T(CAL.google_activas);
+function mejorVentana(p){ const b = CBACK.filter(r=>r.producto===p && r.error!=null).sort((a,b)=>a.error-b.error)[0]; return b ? b.ventana : 28; }
+function initCalc(){
+  const ini = addDays(D.generado.slice(0,10), 1);   // mañana (fecha de actualización + 1)
+  if(!$("#cIni").value) $("#cIni").value = ini;
+  ["#cProd","#cUnidad","#cMeta","#cIni","#cDias","#cVent"].forEach(s=>$(s).oninput=$(s).onchange=()=>{ if(s==="#cProd") llenarVentanas(); renderCalculadora(); });
+  llenarVentanas();
+}
+function llenarVentanas(){
+  const p = $("#cProd").value, best = mejorVentana(p);
+  $("#cVent").innerHTML = [7,14,28,56,90].map(w=>`<option value="${w}" ${w===best?"selected":""}>${w} días${w===best?" (recomendada)":""}</option>`).join("");
+}
+function percentil(arr, q){ const a=[...arr].sort((x,y)=>x-y); if(!a.length) return null; const i=(a.length-1)*q, lo=Math.floor(i), hi=Math.ceil(i); return a[lo]+(a[hi]-a[lo])*(i-lo); }
+function renderCalculadora(){
+  if(!CSER.length){ $("#cRes").innerHTML='<div class="vacio">Sin datos para la calculadora.</div>'; return; }
+  const p = $("#cProd").value, W = +$("#cVent").value, dias = Math.max(1, +$("#cDias").value||1), metaIn = Math.max(0, +$("#cMeta").value||0);
+  const unidad = $("#cUnidad").value, fin = CAL.fin_front, ini = addDays(fin, -(W-1));
+  const S = CSER.filter(r=>r.producto===p);
+  const win = S.filter(r=>enRango(r.fecha, ini, fin));
+  const sum = (rows,k)=>rows.reduce((s,r)=>s+(+r[k]||0),0);
+  const inv = sum(win,"inv_meta")+sum(win,"inv_goo"), dig = sum(win,"dig"), nod = sum(win,"nodig"), pax = sum(win,"pax");
+  const paxRes = div(pax, dig+nod);
+  const metaRes = unidad==="pax" ? (paxRes ? metaIn/paxRes : null) : metaIn;
+  const baseNod = nod/W*dias;                       // reservas que llegan sin pauta digital en el periodo
+  const necesDig = Math.max(0, (metaRes||0) - baseNod);
+  const cpr = div(inv, dig);                         // costo de pauta por reserva digital (ventana)
+  const invTot = cpr!=null ? necesDig*cpr : null, invDia = invTot!=null ? invTot/dias : null;
+  const invDiaHoy = inv/W, digDiaHoy = dig/W;
+  // escenarios con las últimas 8 semanas
+  const sem = []; for(let k=0;k<8;k++){ const b=addDays(fin,-7*k), a=addDays(b,-6); const r=S.filter(x=>enRango(x.fecha,a,b)); const i=sum(r,"inv_meta")+sum(r,"inv_goo"), d=sum(r,"dig"); if(d>0 && i>0) sem.push(i/d); }
+  // El rango siempre contiene el escenario probable (el promedio de la ventana no es el promedio de semanas)
+  const p25 = sem.length ? Math.min(percentil(sem,.25), cpr ?? Infinity) : null, p75 = sem.length ? Math.max(percentil(sem,.75), cpr ?? 0) : null;
+  // límite observado: percentil 90 de inversión diaria del producto en los últimos 90 días
+  const ult90 = S.filter(r=>enRango(r.fecha, addDays(fin,-89), fin)).map(r=>r.inv_meta+r.inv_goo).filter(x=>x>0);
+  const p90dia = percentil(ult90,.9);
+  const mixDia = sum(CMIX.filter(r=>enRango(r.fecha, ini, fin)),"inv_mixta")/W;
+  const fFin = addDays($("#cIni").value || addDays(fin,1), dias-1);
+  // Resultado
+  $("#cRes").innerHTML = `
+    <div><div class="k">Inversión diaria recomendada · ${p}</div><div class="bigv">${money(invDia)}</div>
+      <div class="s">${fmt(dias)} días (${$("#cIni").value} a ${fFin}) · total ${money(invTot)}<br>Hoy (promedio ${W} días): ${money(invDiaHoy)}/día · ${invDiaHoy&&invDia!=null?delta(invDia,invDiaHoy,false,false,true)+" vs actual":""}</div></div>
+    <div><div class="k">Rango (escenarios)</div><div class="mid">${money(p25!=null?necesDig*p25/dias:null)} – ${money(p75!=null?necesDig*p75/dias:null)}</div><div class="s">por día, optimista – conservador</div></div>
+    <div><div class="k">Reservas esperadas</div><div class="mid">${fmt(metaRes,0)}</div><div class="s">${fmt(baseNod,0)} sin pauta (referidos, agencias, otros) + ${fmt(necesDig,0)} por IG y Web${unidad==="pax"?`<br>${fmt(metaIn)} personas ÷ ${fmt(paxRes,1)} personas por reserva`:""}</div></div>`;
+  // Pasos
+  const paso = (k,v)=>`<div class="paso-calc"><span>${k}</span><span class="v">${v}</span></div>`;
+  let avisos = "";
+  if(dig < 10) avisos += `<div class="aviso rojo"><b>Confianza baja:</b> en la ventana hubo solo ${fmt(dig)} reservas por IG y Web. El costo por reserva puede cambiar mucho con una o dos reservas más. Prueba una ventana más larga.</div>`;
+  if(invDia!=null && p90dia && invDia > p90dia) avisos += `<div class="aviso"><b>Fuera de lo probado:</b> la inversión diaria pedida (${money(invDia)}) supera lo que se ha invertido en el 90% de los días de los últimos 3 meses (${money(p90dia)}). Por rendimientos decrecientes, el costo real por reserva probablemente será mayor: sube gradualmente y revisa el resultado cada 3–4 días.</div>`;
+  if(necesDig===0) avisos += `<div class="aviso">La meta se cubre con las reservas que llegan sin pauta digital. Mantén la inversión actual para no perder el volumen digital.</div>`;
+  $("#cPasos").innerHTML = [
+    paso(`Meta del periodo (${unidad==="pax"?"personas → reservas":"reservas"})`, fmt(metaRes,0)),
+    paso(`Reservas sin pauta digital esperadas (${fmt(nod/W,1)}/día × ${dias} días)`, "− "+fmt(baseNod,0)),
+    paso("Reservas a conseguir por IG + Web", fmt(necesDig,0)),
+    paso(`Costo de pauta por reserva IG+Web (últimos ${W} días: ${money(inv)} ÷ ${fmt(dig)})`, money(cpr)),
+    paso("Inversión total del producto", money(invTot)),
+    paso("Inversión diaria", `<b>${money(invDia)}</b>`),
+    paso("Además: inversión de marca / mixta actual (se mantiene)", money(mixDia)+"/día"),
+  ].join("") + avisos;
+  // Escenarios
+  const esc = [["Optimista (semana barata, P25)", p25], ["Probable (ventana de "+W+" días)", cpr], ["Conservador (semana cara, P75)", p75]];
+  $("#cEsc").innerHTML = `<table><thead><tr><th>Escenario</th><th class="n">Costo por reserva</th><th class="n">Inversión total</th><th class="n">Inversión diaria</th></tr></thead><tbody>
+    ${esc.map(([n,c])=>`<tr><td>${n}</td><td class="n">${money(c)}</td><td class="n">${money(c!=null?necesDig*c:null)}</td><td class="n"><b>${money(c!=null?necesDig*c/dias:null)}</b></td></tr>`).join("")}</tbody></table>
+    <div class="nota" style="margin-top:10px">Costo por reserva de cada una de las últimas ${sem.length} semanas: ${sem.map(x=>money(x)).join(" · ")}</div>`;
+  // Reparto
+  const invM = sum(win,"inv_meta"), invG = sum(win,"inv_goo"), shM = div(invM, invM+invG) ?? 1;
+  const ma = CMA.filter(r=>r.prod===p), ga = CGA.filter(r=>r.prod===p);
+  const efic = ma.map(r=>({...r, cpc2: div(r.gasto14, r.m2_14), w: r.m2_14>0 ? r.m2_14/r.gasto14 : 0}));
+  const sw = efic.reduce((s,r)=>s+r.w,0);
+  const diaM = invDia!=null ? invDia*shM : null, diaG = invDia!=null ? invDia*(1-shM) : null;
+  $("#cRepNota").innerHTML = `Mezcla de la ventana: <b>${pct(shM,0)} Meta</b> y <b>${pct(1-shM,0)} Google</b> → Meta ${money(diaM)}/día y Google ${money(diaG)}/día. Dentro de Meta, el presupuesto se reparte entre las campañas activas del producto según su eficiencia (chats con 2+ mensajes por peso, últimos 14 días): el front no registra de qué campaña viene cada reserva, así que es la mejor señal disponible. Datos de campañas al ${CAL.fin_meta} (Meta) y ${CAL.fin_google} (Google).`;
+  $("#cRep").innerHTML = (efic.length ? `<table><thead><tr><th>Campaña Meta activa (${p})</th><th>Etapa</th><th class="n">Gasto 14 días</th><th class="n">Chats 2+</th><th class="n">Costo / chat 2+</th><th class="n">Diario actual</th><th class="n">Diario sugerido</th></tr></thead><tbody>
+      ${efic.sort((a,b)=>b.w-a.w).map(r=>`<tr><td>${r.campaign_name}</td><td>${r.etapa}</td><td class="n">${money(r.gasto14)}</td><td class="n">${fmt(r.m2_14)}</td><td class="n">${money(r.cpc2)}</td><td class="n">${money(r.gasto14/14)}</td><td class="n"><b>${sw&&diaM!=null?money(diaM*r.w/sw):"—"}</b></td></tr>`).join("")}</tbody></table>`
+      : `<div class="vacio">No hay campañas de Meta activas identificadas como ${p}.</div>`) +
+    (ga.length ? `<table style="margin-top:16px"><thead><tr><th>Campaña Google activa (${p})</th><th>Tipo</th><th class="n">Gasto 14 días</th><th class="n">Clics</th><th class="n">Diario actual</th><th class="n">Diario sugerido</th></tr></thead><tbody>
+      ${ga.map(r=>{ const tg = ga.reduce((s,x)=>s+x.gasto14,0); return `<tr><td>${r.campana}</td><td>${r.tipo}</td><td class="n">${money(r.gasto14)}</td><td class="n">${fmt(r.clics14)}</td><td class="n">${money(r.gasto14/14)}</td><td class="n"><b>${diaG!=null&&tg?money(diaG*r.gasto14/tg):"—"}</b></td></tr>`; }).join("")}</tbody></table>`
+      : `<div class="nota" style="margin-top:12px">No hay campañas de Google activas identificadas como ${p} en la cuenta conectada por API. Las cuentas sin API se actualizan con los informes descargados.</div>`);
+  // Backtest
+  const prods = ["Pasadías","Villas"];
+  $("#cBack").innerHTML = `<table><thead><tr><th>Ventana</th>${prods.map(x=>`<th class="n">${x}: error mediano</th><th class="n">semanas probadas</th>`).join("")}</tr></thead><tbody>
+    ${[7,14,28,56,90].map(w=>`<tr><td>${w} días</td>${prods.map(x=>{ const r=CBACK.find(b=>b.producto===x&&b.ventana===w); const best=mejorVentana(x)===w; return `<td class="n">${r&&r.error!=null?(best?"<b>":"")+pct(r.error,0)+(best?" ✓</b>":""):"—"}</td><td class="n">${r?fmt(r.semanas):"—"}</td>`; }).join("")}</tr>`).join("")}</tbody></table>`;
+}
+
 // --- mercados ---
 const MERC = D.mercados || {};
 const MG4 = T(MERC.ga4_pais), MGC = T(MERC.ga4_ciudad), MMP = T(MERC.meta_pais), MMR = T(MERC.meta_region), MGP = T(MERC.google_pais);
@@ -1019,6 +1139,7 @@ function renderSeccion(s){
   if(s==="embudo") renderEmbudo(agregado(A,B));
   if(s==="horas") renderHoras();
   if(s==="segmentos") renderSegmentos();
+  if(s==="calculadora") renderCalculadora();
   if(s==="mercados") renderMercados();
   if(s==="campanas") renderCampanas();
   if(s==="presupuesto") renderPresupuesto();
@@ -1041,6 +1162,7 @@ function render(){
   $("#footer").innerHTML = `<img src="assets/logo_makani_dorado_720.png" alt="Makani">Elaborado por: Agencia Digital · Oficina Central GHL · ${D.credito_fecha}`;
   [...new Set(MCAMP.map(c=>c.etapa))].forEach(e=>{ const o=document.createElement("option"); o.value=e; o.textContent=e; $("#etapaCrea").appendChild(o); });
   $("#desde").min=$("#hasta").min=D.rango.min; $("#desde").max=$("#hasta").max=D.rango.max;
+  initCalc();
   document.querySelector('#presets button[data-p="mesant"]').classList.add("on");
   preset("mesant");
 })();
