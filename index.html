@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261105061013"></script>
+<script src="data.js?v=20261105062458"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -160,6 +160,19 @@ details.mas[open] summary::before{content:"– "}
 .paso-calc .v{font-family:var(--head);font-size:16px;color:var(--char);white-space:nowrap}
 .aviso{border-radius:12px;padding:12px 16px;margin-top:12px;font-size:13px;line-height:1.55;background:#FBF1D9;border:1px solid #EFD9A6}
 .aviso.rojo{background:#FBF0EE;border-color:#EFCFC9}
+.vent-err{margin-top:12px;font-size:12.5px;padding:8px 14px;border-radius:10px;display:inline-block}
+.vent-err.ok{background:#E5F1E8;color:var(--pos)} .vent-err.med{background:#FBF1D9;color:var(--neu)} .vent-err.mal{background:#F7E6E3;color:var(--neg)}
+.alerta-roja{background:#B9473F;color:#fff;border-radius:14px;padding:16px 20px;margin-top:14px;font-size:14px;line-height:1.6}
+.alerta-roja b{font-size:17px}
+.alerta-ok{background:#E5F1E8;color:#2F5E3D;border-radius:14px;padding:14px 20px;margin-top:14px;font-size:14px}
+.ads{font-size:12.5px}
+.ads th{white-space:normal;vertical-align:bottom;line-height:1.35}
+.ads td{white-space:nowrap}
+.ads td.camp{white-space:normal;min-width:200px;max-width:280px;font-weight:600;color:var(--char);word-break:break-word}
+.rec{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.04em}
+.rec.subir{background:#E5F1E8;color:var(--pos)} .rec.bajar{background:#F7E6E3;color:var(--neg)} .rec.mantener{background:var(--cream);color:var(--gray)} .rec.revisar{background:#FBF1D9;color:var(--neu)}
+.ads tr.tot td{font-weight:700;background:var(--cream-2)}
+.punto{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--pos);margin-right:6px}
 h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gray);margin:18px 0 6px}
 </style>
 </head>
@@ -313,13 +326,25 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
         <label>Días de la estrategia<input id="cDias" type="number" min="1" max="90" value="7" class="sel" style="width:90px"></label>
         <label>Ventana de referencia<select id="cVent" class="sel"></select></label>
       </div>
+      <div id="cVentErr" class="vent-err"></div>
     </div>
     <div class="calc-res" id="cRes"></div>
     <div class="grid2">
       <div class="card"><h3>Cómo se calculó</h3><div id="cPasos"></div></div>
       <div class="card"><h3>Escenarios</h3><div class="nota">El costo por reserva varía mucho de una semana a otra. Rango con las últimas 8 semanas: optimista = semana típica barata (percentil 25), conservador = semana típica cara (percentil 75).</div><div id="cEsc"></div></div>
     </div>
-    <div class="card"><h3>Reparto entre lo que está activo</h3><div class="nota" id="cRepNota"></div><div id="cRep"></div></div>
+    <div class="card"><h3>Simulador de cierre de mes</h3>
+      <div class="nota">Proyección del gasto total del mes (todas las campañas, ambos productos). <b>Ritmo actual</b> = promedio diario de los últimos 7 días completos. <b>Con la estrategia</b> = durante los días de la estrategia, el producto elegido pasa a la inversión recomendada y el resto sigue a su ritmo actual. El presupuesto aprobado se toma de <code>config/presupuesto_aprobado.csv</code> o se escribe aquí (se guarda en este navegador).</div>
+      <div class="calc-form" style="margin-bottom:14px">
+        <label>Aprobado Meta (mes)<input id="apMeta" type="number" min="0" step="100000" class="sel" style="width:160px" placeholder="sin definir"></label>
+        <label>Aprobado Google (mes)<input id="apGoo" type="number" min="0" step="100000" class="sel" style="width:160px" placeholder="sin definir"></label>
+      </div>
+      <div id="cMes"></div>
+    </div>
+    <div class="card"><h3>Plan por campaña · esta semana</h3>
+      <div class="nota" id="cRepNota"></div>
+      <div id="cRep"></div>
+    </div>
     <div class="card"><h3>¿Qué ventana predice mejor? (backtest)</h3><div class="nota">Para cada ventana se "predijo" cada semana pasada con los datos previos y se comparó con lo real. Error mediano al predecir las reservas totales de la semana siguiente. Menor = mejor.</div><div id="cBack"></div></div>
   </section>
 
@@ -382,7 +407,7 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
 const D = window.DATA;
 const $ = s => document.querySelector(s);
 const fmt = (v, d=0) => v==null||!isFinite(v) ? "—" : Number(v).toLocaleString("es-CO",{maximumFractionDigits:d,minimumFractionDigits:d});
-const money = v => v==null||!isFinite(v) ? "—" : "$" + (Math.abs(v)>=1e6 ? fmt(v/1e6,1)+" M" : fmt(v,0));
+const money = v => v==null||!isFinite(v) ? "—" : v<0 ? "−"+money(-v) : "$" + (Math.abs(v)>=1e6 ? fmt(v/1e6,1)+" M" : fmt(v,0));
 const pct = (v,d=1) => v==null||!isFinite(v) ? "—" : fmt(v*100,d)+"%";
 const div = (a,b) => b ? a/b : null;
 const PAL_META = ["#2F6E73","#4D9499","#7FB3B6","#A9CFCF","#1F4B4F","#CFE3E2"], PAL_GOO = ["#C9A961","#E3CC86","#9C7F3C","#F0D78A"];
@@ -869,6 +894,7 @@ function initCalc(){
   const ini = addDays(D.generado.slice(0,10), 1);   // mañana (fecha de actualización + 1)
   if(!$("#cIni").value) $("#cIni").value = ini;
   ["#cProd","#cUnidad","#cMeta","#cIni","#cDias","#cVent"].forEach(s=>$(s).oninput=$(s).onchange=()=>{ if(s==="#cProd") llenarVentanas(); renderCalculadora(); });
+  ["#apMeta","#apGoo"].forEach(s=>{ $(s).dataset.init=""; });
   llenarVentanas();
 }
 function llenarVentanas(){
@@ -876,10 +902,21 @@ function llenarVentanas(){
   $("#cVent").innerHTML = [7,14,28,56,90].map(w=>`<option value="${w}" ${w===best?"selected":""}>${w} días${w===best?" (recomendada)":""}</option>`).join("");
 }
 function percentil(arr, q){ const a=[...arr].sort((x,y)=>x-y); if(!a.length) return null; const i=(a.length-1)*q, lo=Math.floor(i), hi=Math.ceil(i); return a[lo]+(a[hi]-a[lo])*(i-lo); }
+const CPLAT = T(CAL.plataforma_dia);
+const TIPO_G = {SEARCH:"Búsqueda", PERFORMANCE_MAX:"Máximo rendimiento", DISPLAY:"Display", VIDEO:"Video", DEMAND_GEN:"Demand Gen"};
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function errorVentana(p, w){ const r = CBACK.find(b=>b.producto===p && b.ventana===w); return r ? r.error : null; }
 function renderCalculadora(){
   if(!CSER.length){ $("#cRes").innerHTML='<div class="vacio">Sin datos para la calculadora.</div>'; return; }
   const p = $("#cProd").value, W = +$("#cVent").value, dias = Math.max(1, +$("#cDias").value||1), metaIn = Math.max(0, +$("#cMeta").value||0);
   const unidad = $("#cUnidad").value, fin = CAL.fin_front, ini = addDays(fin, -(W-1));
+  { const best = mejorVentana(p), eW = errorVentana(p, W), eB = errorVentana(p, best), dif = (eW!=null&&eB!=null) ? eW-eB : null;
+    const cls = W===best ? "ok" : (dif!=null && dif>0.05 ? "mal" : "med");
+    $("#cVentErr").className = "vent-err "+cls;
+    $("#cVentErr").innerHTML = W===best
+      ? `Error del backtest con ${W} días: <b>${pct(eW,0)}</b> · es la ventana que mejor predice para ${p}.`
+      : `Error del backtest con ${W} días: <b>${pct(eW,0)}</b> · ${fmt(dif*100,0)} puntos ${dif>0?"peor":"mejor"} que la recomendada (${best} días: ${pct(eB,0)}).${dif>0.05?" Con esta ventana la estimación es menos confiable.":""}`; }
   const S = CSER.filter(r=>r.producto===p);
   const win = S.filter(r=>enRango(r.fecha, ini, fin));
   const sum = (rows,k)=>rows.reduce((s,r)=>s+(+r[k]||0),0);
@@ -926,19 +963,88 @@ function renderCalculadora(){
   $("#cEsc").innerHTML = `<table><thead><tr><th>Escenario</th><th class="n">Costo por reserva</th><th class="n">Inversión total</th><th class="n">Inversión diaria</th></tr></thead><tbody>
     ${esc.map(([n,c])=>`<tr><td>${n}</td><td class="n">${money(c)}</td><td class="n">${money(c!=null?necesDig*c:null)}</td><td class="n"><b>${money(c!=null?necesDig*c/dias:null)}</b></td></tr>`).join("")}</tbody></table>
     <div class="nota" style="margin-top:10px">Costo por reserva de cada una de las últimas ${sem.length} semanas: ${sem.map(x=>money(x)).join(" · ")}</div>`;
-  // Reparto
+  // ===== Plan por campaña (tablero tipo Ads Manager) =====
   const invM = sum(win,"inv_meta"), invG = sum(win,"inv_goo"), shM = div(invM, invM+invG) ?? 1;
-  const ma = CMA.filter(r=>r.prod===p), ga = CGA.filter(r=>r.prod===p);
-  const efic = ma.map(r=>({...r, cpc2: div(r.gasto14, r.m2_14), w: r.m2_14>0 ? r.m2_14/r.gasto14 : 0}));
-  const sw = efic.reduce((s,r)=>s+r.w,0);
   const diaM = invDia!=null ? invDia*shM : null, diaG = invDia!=null ? invDia*(1-shM) : null;
-  $("#cRepNota").innerHTML = `Mezcla de la ventana: <b>${pct(shM,0)} Meta</b> y <b>${pct(1-shM,0)} Google</b> → Meta ${money(diaM)}/día y Google ${money(diaG)}/día. Dentro de Meta, el presupuesto se reparte entre las campañas activas del producto según su eficiencia (chats con 2+ mensajes por peso, últimos 14 días): el front no registra de qué campaña viene cada reserva, así que es la mejor señal disponible. Datos de campañas al ${CAL.fin_meta} (Meta) y ${CAL.fin_google} (Google).`;
-  $("#cRep").innerHTML = (efic.length ? `<table><thead><tr><th>Campaña Meta activa (${p})</th><th>Etapa</th><th class="n">Gasto 14 días</th><th class="n">Chats 2+</th><th class="n">Costo / chat 2+</th><th class="n">Diario actual</th><th class="n">Diario sugerido</th></tr></thead><tbody>
-      ${efic.sort((a,b)=>b.w-a.w).map(r=>`<tr><td>${r.campaign_name}</td><td>${r.etapa}</td><td class="n">${money(r.gasto14)}</td><td class="n">${fmt(r.m2_14)}</td><td class="n">${money(r.cpc2)}</td><td class="n">${money(r.gasto14/14)}</td><td class="n"><b>${sw&&diaM!=null?money(diaM*r.w/sw):"—"}</b></td></tr>`).join("")}</tbody></table>`
-      : `<div class="vacio">No hay campañas de Meta activas identificadas como ${p}.</div>`) +
-    (ga.length ? `<table style="margin-top:16px"><thead><tr><th>Campaña Google activa (${p})</th><th>Tipo</th><th class="n">Gasto 14 días</th><th class="n">Clics</th><th class="n">Diario actual</th><th class="n">Diario sugerido</th></tr></thead><tbody>
-      ${ga.map(r=>{ const tg = ga.reduce((s,x)=>s+x.gasto14,0); return `<tr><td>${r.campana}</td><td>${r.tipo}</td><td class="n">${money(r.gasto14)}</td><td class="n">${fmt(r.clics14)}</td><td class="n">${money(r.gasto14/14)}</td><td class="n"><b>${diaG!=null&&tg?money(diaG*r.gasto14/tg):"—"}</b></td></tr>`; }).join("")}</tbody></table>`
-      : `<div class="nota" style="margin-top:12px">No hay campañas de Google activas identificadas como ${p} en la cuenta conectada por API. Las cuentas sin API se actualizan con los informes descargados.</div>`);
+  const MA = CMA.map(r=>({...r, cpi14: div(r.gasto14,r.m2_14), cpi7: div(r.gasto7,r.m2_7), cpip7: div(r.gastop7,r.m2_p7), w: r.gasto14>0 ? r.m2_14/r.gasto14 : 0}));
+  const medProd = q => { const xs = MA.filter(r=>r.prod===q && r.cpi14!=null).map(r=>r.cpi14).sort((a,b)=>a-b); return percentil(xs, .5); };
+  const wSum = MA.filter(r=>r.prod===p).reduce((s_,r)=>s_+r.w,0);
+  MA.forEach(r=>{
+    const actual = r.presupuesto_diario || r.gasto7/7;
+    if(r.prod===p && diaM!=null && wSum>0) r.sug = diaM * r.w / wSum; else r.sug = actual;
+    r.actual = actual; r.cambio = div(r.sug - actual, actual);
+    r.paso = actual ? actual * (1 + Math.max(-0.2, Math.min(0.2, r.cambio||0))) : r.sug;
+    const med = medProd(r.prod);
+    r.rec = (r.prod!==p) ? "mantener" : (med && r.cpi7 && r.cpi7 > 1.5*med && r.gasto7 > 0) ? "revisar" : (r.cambio>0.15 ? "subir" : r.cambio<-0.15 ? "bajar" : "mantener");
+  });
+  const GA = CGA.map(r=>({...r, tipoTxt: TIPO_G[r.tipo]||r.tipo, cpc7: div(r.gasto7, r.clics7)}));
+  const gProd = GA.filter(r=>r.prod===p), gTot14 = gProd.reduce((s_,r)=>s_+r.gasto14,0);
+  GA.forEach(r=>{
+    const actual = r.presupuesto_diario || r.gasto7/7;
+    r.actual = actual;
+    if(r.prod===p && diaG!=null && gTot14>0) r.sug = diaG * r.gasto14 / gTot14;
+    else if(r.prod===p && diaG!=null && gProd.length) r.sug = diaG / gProd.length;
+    else r.sug = actual;
+    r.cambio = div(r.sug - actual, actual);
+    r.rec = (r.presupuesto_diario>0 && r.gasto14===0) ? "revisar" : (r.prod!==p) ? "mantener" : (r.cambio>0.15 ? "subir" : r.cambio<-0.15 ? "bajar" : "mantener");
+  });
+  const recTxt = {subir:"▲ Subir", bajar:"▼ Bajar", mantener:"Mantener", revisar:"⚠ Revisar"};
+  const tend = (a,b) => (a==null||b==null) ? "—" : (a<b ? `<span class="up">▼ ${money(a)}</span>` : `<span class="down">▲ ${money(a)}</span>`);
+  $("#cRepNota").innerHTML = `Producto en estrategia: <b>${p}</b> → Meta ${money(diaM)}/día (${pct(shM,0)}) y Google ${money(diaG)}/día (${pct(1-shM,0)}), según la mezcla de los últimos ${W} días. <b>Meta:</b> el presupuesto del producto se reparte entre sus campañas activas según su eficiencia (chats con 2+ mensajes por peso, 14 días); "Primer paso" limita el cambio a ±20%, como recomienda Meta para no reiniciar el aprendizaje (repetir cada 2–3 días). <b>Google:</b> sus conversiones solo cuentan compras web, así que el presupuesto del producto se reparte en proporción al gasto actual; marca y el otro producto se mantienen. "⚠ Revisar" = costo por chat de la última semana 50% peor que la mediana del producto, o campaña con presupuesto que no está gastando.`;
+  const filasM = MA.sort((a,b)=>(a.prod===p?0:1)-(b.prod===p?0:1) || b.sug-a.sug).map(r=>`<tr><td class="camp"><span class="punto"></span>${r.campaign_name}</td><td>${r.prod}</td>
+    <td class="n">${money(r.presupuesto_diario)}</td><td class="n">${money(r.gasto7)}</td><td class="n">${fmt(r.m2_7)}</td><td class="n">${money(r.cpi7)}</td><td class="n">${tend(r.cpi7, r.cpip7)}</td>
+    <td><span class="rec ${r.rec}">${recTxt[r.rec]}</span></td><td class="n"><b>${money(r.sug)}</b></td><td class="n">${r.cambio==null?"—":(r.cambio>0?"+":"")+fmt(r.cambio*100,0)+"%"}</td><td class="n">${money(r.paso)}</td></tr>`).join("");
+  const totM = MA.reduce((o,r)=>({a:o.a+(r.presupuesto_diario||0), s:o.s+r.sug}),{a:0,s:0});
+  const filasG = GA.sort((a,b)=>(a.prod===p?0:1)-(b.prod===p?0:1) || b.sug-a.sug).map(r=>`<tr><td class="camp"><span class="punto"></span>${r.campana}</td><td>${r.tipoTxt}</td><td>${r.prod}</td>
+    <td class="n">${r.presupuesto_diario?money(r.presupuesto_diario):'<span class="cmp">sin dato ('+r.fuente_presupuesto+')</span>'}</td><td class="n">${money(r.gasto7)}</td><td class="n">${fmt(r.clics7)}</td><td class="n">${money(r.cpc7)}</td><td class="n">${fmt(r.conv7,1)}</td>
+    <td><span class="rec ${r.rec}">${recTxt[r.rec]}</span>${r.rec==="revisar"?' <span class="cmp">no está gastando</span>':""}</td><td class="n"><b>${money(r.sug)}</b></td><td class="n">${r.cambio==null?"—":(r.cambio>0?"+":"")+fmt(r.cambio*100,0)+"%"}</td></tr>`).join("");
+  const totG = GA.reduce((o,r)=>({a:o.a+(r.presupuesto_diario||0), s:o.s+r.sug}),{a:0,s:0});
+  $("#cRep").innerHTML = `<h3 class="sub3">Meta Ads · campañas activas (datos al ${CAL.fin_meta})</h3>
+    <div class="tabla"><table class="ads"><thead><tr><th>Campaña</th><th>Producto</th><th class="n">Presupuesto diario actual</th><th class="n">Gasto 7 días</th><th class="n">Chats 2+ (7 d)</th><th class="n">Costo / chat 2+ (7 d)</th><th class="n">vs semana anterior</th><th>Recomendación</th><th class="n">Diario sugerido</th><th class="n">Cambio</th><th class="n">Primer paso (±20%)</th></tr></thead>
+    <tbody>${filasM || '<tr><td colspan="11" class="vacio">Sin campañas activas</td></tr>'}<tr class="tot"><td>Total Meta</td><td></td><td class="n">${money(totM.a)}</td><td colspan="5"></td><td class="n">${money(totM.s)}</td><td colspan="2"></td></tr></tbody></table></div>
+    <h3 class="sub3">Google Ads · campañas activas (datos al ${CAL.fin_google})</h3>
+    <div class="tabla"><table class="ads"><thead><tr><th>Campaña</th><th>Tipo</th><th>Producto</th><th class="n">Presupuesto diario actual</th><th class="n">Gasto 7 días</th><th class="n">Clics (7 d)</th><th class="n">CPC</th><th class="n">Conv. web (7 d)</th><th>Recomendación</th><th class="n">Diario sugerido</th><th class="n">Cambio</th></tr></thead>
+    <tbody>${filasG || '<tr><td colspan="11" class="vacio">Sin campañas activas</td></tr>'}<tr class="tot"><td>Total Google</td><td colspan="2"></td><td class="n">${money(totG.a)}</td><td colspan="5"></td><td class="n">${money(totG.s)}</td><td></td></tr></tbody></table></div>
+    <div class="nota" style="margin-top:10px">Las cuentas de Google sin API (cuenta 1 y cuenta 2) solo aparecen si su último informe descargado tiene gasto en los 3 días finales; su presupuesto diario no está disponible.</div>`;
+
+  // ===== Simulador de cierre de mes =====
+  const iniE = $("#cIni").value || addDays(D.generado.slice(0,10),1), finE = addDays(iniE, dias-1);
+  const mes = iniE.slice(0,7), d1 = mes+"-01";
+  const dFin = (()=>{ const d=toD(d1); d.setMonth(d.getMonth()+1); d.setDate(0); return toS(d); })();
+  const ayer = addDays(D.generado.slice(0,10), -1);
+  const corte = [CAL.fin_meta, CAL.fin_google, ayer].sort()[0];      // último día completo en ambas fuentes
+  const mtd = {meta:0, google:0}; CPLAT.filter(r=>enRango(r.fecha, d1, corte)).forEach(r=>{ mtd.meta+=r.meta; mtd.google+=r.google; });
+  const u7 = CPLAT.filter(r=>enRango(r.fecha, addDays(corte,-6), corte));
+  const ritmo = {meta: u7.reduce((s_,r)=>s_+r.meta,0)/7, google: u7.reduce((s_,r)=>s_+r.google,0)/7};
+  const prodHoy = {meta: S.filter(r=>enRango(r.fecha, addDays(fin,-6), fin)).reduce((s_,r)=>s_+r.inv_meta,0)/7,
+                   google: S.filter(r=>enRango(r.fecha, addDays(fin,-6), fin)).reduce((s_,r)=>s_+r.inv_goo,0)/7};
+  let restantes = 0, enEstr = 0;
+  for(let d = addDays(corte,1); d <= dFin; d = addDays(d,1)){ restantes++; if(d>=iniE && d<=finE) enEstr++; }
+  const proyRitmo = {meta: mtd.meta + ritmo.meta*restantes, google: mtd.google + ritmo.google*restantes};
+  const diaEstr = {meta: Math.max(0, ritmo.meta - prodHoy.meta + (diaM||0)), google: Math.max(0, ritmo.google - prodHoy.google + (diaG||0))};
+  const proyEstr = {meta: mtd.meta + diaEstr.meta*enEstr + ritmo.meta*(restantes-enEstr), google: mtd.google + diaEstr.google*enEstr + ritmo.google*(restantes-enEstr)};
+  const apDef = (CAL.aprobado||{})[mes] || {};
+  if(!$("#apMeta").dataset.init){ $("#apMeta").value = lsGet("ap_meta_"+mes) ?? (apDef.Meta ?? ""); $("#apGoo").value = lsGet("ap_goo_"+mes) ?? (apDef.Google ?? "");
+    $("#apMeta").dataset.init = $("#apGoo").dataset.init = "1";
+    $("#apMeta").oninput = ()=>{ lsSet("ap_meta_"+mes, $("#apMeta").value); renderCalculadora(); };
+    $("#apGoo").oninput = ()=>{ lsSet("ap_goo_"+mes, $("#apGoo").value); renderCalculadora(); }; }
+  const ap = {meta: $("#apMeta").value!=="" ? +$("#apMeta").value : null, google: $("#apGoo").value!=="" ? +$("#apGoo").value : null};
+  const filaMes = (n, k) => { const dif = ap[k]!=null ? proyEstr[k]-ap[k] : null;
+    return `<tr><td>${n}</td><td class="n">${money(mtd[k])}</td><td class="n">${money(ritmo[k])}</td><td class="n">${money(proyRitmo[k])}</td><td class="n">${money(diaEstr[k])}</td><td class="n"><b>${money(proyEstr[k])}</b></td><td class="n">${ap[k]!=null?money(ap[k]):'<span class="cmp">sin definir</span>'}</td>
+      <td class="n">${dif==null?"—":dif>0?`<span class="down">+${money(dif)}</span>`:`<span class="up">${money(dif)}</span>`}</td></tr>`; };
+  const totE = proyEstr.meta+proyEstr.google, totAp = (ap.meta??0)+(ap.google??0), hayAp = ap.meta!=null || ap.google!=null;
+  const exceso = {meta: ap.meta!=null ? proyEstr.meta-ap.meta : null, google: ap.google!=null ? proyEstr.google-ap.google : null};
+  let alerta = "";
+  if(!hayAp) alerta = `<div class="aviso">Define el presupuesto aprobado de ${etiqMes(mes)} (arriba o en <code>config/presupuesto_aprobado.csv</code>) para saber si hay que pedir más.</div>`;
+  else if(totE > totAp && ap.meta!=null && ap.google!=null) alerta = `<div class="alerta-roja">⚠ Con la estrategia, el gasto de ${etiqMes(mes)} cerraría en <b>${money(totE)}</b>, por encima de lo aprobado (${money(totAp)}).<br>Hay que pedir <b>${money(totE-totAp)}</b> adicionales${(exceso.meta??0)>0?` · Meta: ${money(exceso.meta)}`:""}${(exceso.google??0)>0?` · Google: ${money(exceso.google)}`:""}${(exceso.meta??0)<0?` (Meta tiene ${money(-exceso.meta)} libres)`:""}${(exceso.google??0)<0?` (Google tiene ${money(-exceso.google)} libres)`:""}.</div>`;
+  else if((exceso.meta??0) > 0 || (exceso.google??0) > 0) { const k = (exceso.meta??0)>0 ? "Meta" : "Google", e = Math.max(exceso.meta??0, exceso.google??0), otro = k==="Meta" ? exceso.google : exceso.meta;
+    alerta = `<div class="alerta-roja">⚠ ${k} cerraría ${etiqMes(mes)} <b>${money(e)}</b> por encima de su aprobado.${otro!=null && otro<0 ? ` En total sí cabe (sobran ${money(totAp-totE)}): se puede <b>mover ${money(Math.min(e,-otro))}</b> desde ${k==="Meta"?"Google":"Meta"}${e>-otro?` y pedir <b>${money(e+otro)}</b> adicionales`:""}.` : ` Hay que pedir <b>${money(e)}</b> adicionales para ${k}.`}</div>`; }
+  else alerta = `<div class="alerta-ok">Con la estrategia, ${etiqMes(mes)} cerraría en ${money(totE)}: dentro de lo aprobado (${money(totAp)}). Quedarían ${money(totAp-totE)} disponibles.</div>`;
+  $("#cMes").innerHTML = `<table><thead><tr><th>${etiqMes(mes)}</th><th class="n">Gastado al ${corte}</th><th class="n">Ritmo actual / día</th><th class="n">Cierre al ritmo actual</th><th class="n">Diario durante la estrategia</th><th class="n">Cierre con la estrategia</th><th class="n">Aprobado</th><th class="n">Diferencia vs aprobado</th></tr></thead><tbody>
+    ${filaMes("Meta","meta")}${filaMes("Google","google")}
+    <tr class="tot"><td><b>Total</b></td><td class="n">${money(mtd.meta+mtd.google)}</td><td class="n">${money(ritmo.meta+ritmo.google)}</td><td class="n">${money(proyRitmo.meta+proyRitmo.google)}</td><td class="n">${money(diaEstr.meta+diaEstr.google)}</td><td class="n"><b>${money(totE)}</b></td><td class="n">${hayAp?money(totAp):"—"}</td><td class="n">${hayAp?money(totE-totAp):"—"}</td></tr></tbody></table>
+    <div class="nota" style="margin-top:8px">${restantes} días restantes del mes desde el ${addDays(corte,1)}; ${enEstr} de ellos dentro de la estrategia (${iniE} a ${finE}). ${finE>dFin?"La estrategia se extiende al mes siguiente: aquí solo cuenta la parte de "+etiqMes(mes)+".":""}</div>${alerta}`;
+
   // Backtest
   const prods = ["Pasadías","Villas"];
   $("#cBack").innerHTML = `<table><thead><tr><th>Ventana</th>${prods.map(x=>`<th class="n">${x}: error mediano</th><th class="n">semanas probadas</th>`).join("")}</tr></thead><tbody>
