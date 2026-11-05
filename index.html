@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>Makani · Performance Digital</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Elms+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<script src="data.js"></script>
+<style>
+:root{
+  --ocean:#023859; --blood:#6399BA; --sea:#2A5E95; --gray:#808080; --glossy:#D1D1D1;
+  --pos:#74AD52; --neg:#D72D41; --neu:#FFC75F;
+  --bg:#F4F7FA; --card:#FFFFFF; --ink:#1B2B3A; --soft:#EEF3F7;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Elms Sans",-apple-system,"Segoe UI",Roboto,sans-serif;font-size:14px}
+h1,h2,h3{font-weight:600;margin:0}
+header{background:var(--ocean);color:#fff;padding:18px 28px 14px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.logo-lockup{display:flex;align-items:center;gap:10px}
+.logo-lockup .mark{width:34px;height:34px;border-radius:7px;background:#F2F7FA;color:var(--ocean);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+.logo-lockup .word{font-size:12px;letter-spacing:.13em;text-transform:uppercase;font-weight:600;color:#BFD6E8}
+header h1{font-size:22px;margin-top:10px}
+header .sub{color:#BFD6E8;font-size:13px;margin-top:4px}
+.filtros{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.filtros label{display:flex;flex-direction:column;font-size:11px;color:#BFD6E8;gap:4px;text-transform:uppercase;letter-spacing:.05em}
+.filtros input,.filtros select{font-family:inherit;font-size:13px;padding:6px 8px;border-radius:6px;border:1px solid #4F7A99;background:#fff;color:var(--ink)}
+.presets{display:flex;gap:6px;flex-wrap:wrap}
+.presets button{font-family:inherit;font-weight:700;font-size:12px;border:1px solid #4F7A99;background:transparent;color:#fff;border-radius:16px;padding:5px 11px;cursor:pointer}
+.presets button.on,.presets button:hover{background:var(--blood);border-color:var(--blood)}
+nav{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid var(--glossy);display:flex;gap:4px;padding:0 20px;overflow-x:auto}
+nav a{padding:12px 14px;color:var(--gray);text-decoration:none;font-weight:600;white-space:nowrap;border-bottom:3px solid transparent}
+nav a.on{color:var(--ocean);border-bottom-color:var(--ocean)}
+main{padding:22px 28px;max-width:1500px;margin:0 auto}
+section{display:none}
+section.on{display:block}
+.periodo{color:var(--gray);font-size:13px;margin-bottom:14px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:18px}
+.kpi{background:var(--card);border-radius:10px;padding:14px 16px;border:1px solid #E3EAF0}
+.kpi .lbl{font-size:12px;color:var(--gray)}
+.kpi .val{font-size:24px;font-weight:600;color:var(--ocean);margin:6px 0 4px}
+.kpi .ly{font-size:12px;color:var(--gray)}
+.kpi .var{font-weight:700}
+.up{color:var(--pos)} .down{color:var(--neg)} .flat{color:#B8860B}
+.kpi.dest{border-left:4px solid var(--ocean)}
+.card{background:var(--card);border-radius:10px;padding:18px;border:1px solid #E3EAF0;margin-bottom:16px}
+.card h3{font-size:16px;color:var(--ocean);margin-bottom:4px}
+.card .nota{font-size:12px;color:var(--gray);margin-bottom:10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:1000px){.grid2,.grid3{grid-template-columns:1fr}}
+.chart{width:100%;height:340px}
+.chart.alto{height:440px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--ocean);color:#fff;font-weight:600;text-align:left;padding:8px;position:sticky;top:0;cursor:pointer}
+td{padding:7px 8px;border-bottom:1px solid var(--glossy)}
+td.n,th.n{text-align:right}
+tr:hover td{background:var(--soft)}
+.tabla{max-height:520px;overflow:auto}
+.insights{display:grid;gap:10px}
+.insight{background:var(--soft);border-left:4px solid var(--sea);padding:10px 14px;border-radius:6px;line-height:1.45}
+.insight b{color:var(--ocean)}
+.insight.alerta{border-left-color:var(--neg)}
+.insight.bien{border-left-color:var(--pos)}
+.chip{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:var(--soft);color:var(--sea);font-weight:600}
+.chip.rojo{background:#FBE7EA;color:var(--neg)} .chip.verde{background:#EAF4E4;color:#4C7F33} .chip.amar{background:#FFF4DC;color:#9A6B00}
+.sel{font-family:inherit;padding:6px 8px;border-radius:6px;border:1px solid var(--glossy);margin-right:8px}
+.galeria{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.crea{background:#fff;border:1px solid #E3EAF0;border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.crea .img{height:250px;background:var(--soft);display:flex;align-items:center;justify-content:center;color:var(--gray);font-size:12px;position:relative}
+.crea img{width:100%;height:100%;object-fit:cover}
+.crea .vid{position:absolute;top:8px;left:8px;background:rgba(2,56,89,.85);color:#fff;font-size:11px;padding:2px 7px;border-radius:8px}
+.crea .cuerpo{padding:10px 12px;display:flex;flex-direction:column;gap:6px;font-size:12px}
+.crea .nom{font-weight:600;color:var(--ocean);font-size:13px;word-break:break-word}
+.crea .mets{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px}
+.crea .mets span{color:var(--gray)}
+.crea .txt{color:var(--gray);max-height:54px;overflow:hidden}
+.crea a{color:var(--sea);font-weight:700;text-decoration:none}
+footer{color:var(--gray);font-size:12px;text-align:center;padding:24px}
+.vacio{color:var(--gray);font-style:italic;padding:20px;text-align:center}
+.leyenda-def{font-size:12px;color:var(--gray);line-height:1.5}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div>
+      <div class="logo-lockup"><span class="mark">GHL</span><span class="word">Makani Luxury Wanderlust</span></div>
+      <h1>Performance digital · Meta + Google Ads + WhatsApp</h1>
+      <div class="sub" id="sub"></div>
+    </div>
+    <div class="filtros">
+      <label>Desde<input type="date" id="desde"></label>
+      <label>Hasta<input type="date" id="hasta"></label>
+      <label>Comparar con
+        <select id="modoComp">
+          <option value="ly364">LY (−364 días, mismo día de semana)</option>
+          <option value="lyfecha">LY (misma fecha calendario)</option>
+          <option value="prev">Periodo anterior</option>
+        </select>
+      </label>
+      <div class="presets" id="presets">
+        <button data-p="30">30 días</button><button data-p="90">90 días</button>
+        <button data-p="mes">Mes actual</button><button data-p="mesant">Mes anterior</button>
+        <button data-p="ytd">Año a la fecha</button><button data-p="todo">Todo</button>
+      </div>
+    </div>
+  </div>
+</header>
+<nav id="nav">
+  <a data-s="resumen" class="on">Resumen</a>
+  <a data-s="embudo">Embudo WhatsApp</a>
+  <a data-s="horas">Días y horas</a>
+  <a data-s="segmentos">Segmentos y desperdicio</a>
+  <a data-s="campanas">Campañas</a>
+  <a data-s="presupuesto">Presupuesto óptimo</a>
+  <a data-s="creativos">Creativos</a>
+  <a data-s="historial">Historial de cambios</a>
+  <a data-s="notas">Metodología</a>
+</nav>
+<main>
+  <div class="periodo" id="periodo"></div>
+
+  <section id="resumen" class="on">
+    <div class="kpis" id="kpis"></div>
+    <div class="card"><h3>Lectura automática del periodo</h3><div class="nota">Hallazgos calculados sobre el rango elegido. Se recalculan al cambiar las fechas.</div><div class="insights" id="insights"></div></div>
+    <div class="card"><h3>Inversión, leads y reservas en el tiempo</h3><div class="nota">Barras: inversión Meta y Google. Líneas: leads registrados por el front y reservas. Línea punteada gris: leads del periodo de comparación.</div><div class="chart alto" id="chTendencia"></div></div>
+    <div class="grid2">
+      <div class="card"><h3>Mezcla de inversión</h3><div class="chart" id="chMix"></div></div>
+      <div class="card"><h3>Reservas y venta por origen del lead</h3><div class="chart" id="chOrigen"></div></div>
+    </div>
+  </section>
+
+  <section id="embudo">
+    <div class="card"><h3>Embudo Meta → WhatsApp → venta</h3><div class="nota">Meta separa el <b>clic</b> en el anuncio de la <b>conversación iniciada</b> (la persona envía el mensaje), y además informa cuántas personas enviaron un 2º y un 3er mensaje: esa es la señal de interés real. Leads IG y reservas vienen del registro del front, que también incluye mensajes orgánicos de Instagram.</div><div class="nota" id="embudoCtx"></div><div class="chart" id="chEmbudo"></div></div>
+    <div class="grid2">
+      <div class="card"><h3>Chats Meta vs leads IG registrados</h3><div class="nota">Conversaciones iniciadas y chats con 2+ mensajes (Meta) frente a los leads IG del front. Los leads IG se parecen más a los chats con 2+ mensajes: el front anota a quien realmente conversa.</div><div class="chart" id="chConvVsLeads"></div></div>
+      <div class="card"><h3>Calidad de la conversación (Meta)</h3><div class="nota">% de conversaciones iniciadas en las que la persona envió un 2º mensaje, es decir, siguió escribiendo después del mensaje automático del anuncio. Bloqueos = la persona bloqueó a la empresa.</div><div class="chart" id="chCalidad"></div></div>
+    </div>
+    <div class="card"><h3>Razones de no cierre (front)</h3><div class="nota">Comparación con el periodo de referencia.</div><div class="chart alto" id="chRazones"></div></div>
+  </section>
+
+  <section id="horas">
+    <div class="card">
+      <h3>Mapa de calor Meta: día de la semana × hora</h3>
+      <div class="nota" id="notaHora"></div>
+      <select class="sel" id="metHora">
+        <option value="conv">Conversaciones iniciadas (hora real del mensaje)</option>
+        <option value="gasto">Gasto</option>
+        <option value="cpa">Costo por conversación</option>
+        <option value="idx">Índice de eficiencia (% conversaciones ÷ % gasto)</option>
+      </select>
+      <div class="chart alto" id="chHeat"></div>
+    </div>
+    <div class="grid2">
+      <div class="card"><h3>Por hora: % del gasto vs % de las conversaciones</h3><div class="nota">Donde la barra de gasto supera a la de conversaciones, se paga más de lo que rinde la franja.</div><div class="chart" id="chHoras"></div></div>
+      <div class="card"><h3>Front por día de la semana</h3><div class="nota">Leads y reservas registrados, y tasa de cierre (reservas IG+Web+Ref ÷ leads).</div><div class="chart" id="chDiaSemana"></div></div>
+    </div>
+    <div class="card"><h3>Google Ads: día de la semana × hora (costo por conversión)</h3><div class="nota">Informe agregado por cuenta, sin fecha diaria: no responde al filtro de fechas.</div><div class="chart alto" id="chHeatG"></div></div>
+  </section>
+
+  <section id="segmentos">
+    <div class="card">
+      <h3>¿Dónde se va el presupuesto sin retorno?</h3>
+      <div class="nota">Meta, datos mensuales: se incluyen los meses que tocan el rango. <b>Desperdicio estimado</b> = gasto del segmento − (conversiones × costo promedio de su campaña): cuánto se habría ahorrado si el segmento rindiera como el promedio. Solo campañas que optimizan conversaciones o ventas.</div>
+      <select class="sel" id="tipoSeg">
+        <option value="edad_sexo">Edad y sexo</option>
+        <option value="region">Región</option>
+        <option value="pais">País</option>
+        <option value="ubicacion">Plataforma y ubicación</option>
+        <option value="dispositivo">Dispositivo</option>
+      </select>
+      <select class="sel" id="objSeg">
+        <option value="conv">Resultado: conversaciones WhatsApp</option>
+        <option value="compras">Resultado: compras web (píxel)</option>
+      </select>
+      <div class="kpis" id="kpisSeg" style="margin-top:12px"></div>
+      <div class="chart alto" id="chSeg"></div>
+      <div class="tabla" id="tablaSeg"></div>
+    </div>
+    <div class="card">
+      <h3>Google Ads: dispositivo, país y términos de búsqueda</h3>
+      <div class="nota">Informes mensuales de las cuentas sin API (sep-2025 → oct-2026); se incluyen los meses que tocan el rango. Términos: los 1.500 de mayor costo; los términos de Performance Max solo aparecen parcialmente (Google no los entrega todos).</div>
+      <select class="sel" id="dimG">
+        <option value="termino_busqueda">Términos de búsqueda</option>
+        <option value="pais">País del usuario</option>
+        <option value="dispositivo">Dispositivo</option>
+      </select>
+      <select class="sel" id="filtroTerm">
+        <option value="">Todos</option>
+        <option value="sin">Solo con costo y 0 conversiones</option>
+        <option value="marca">Solo marca (contienen "makani")</option>
+        <option value="nomarca">Solo genéricos (sin "makani")</option>
+      </select>
+      <div class="kpis" id="kpisG" style="margin-top:12px"></div>
+      <div class="tabla" id="tablaG"></div>
+    </div>
+  </section>
+
+  <section id="campanas">
+    <div class="card"><h3>Inversión y costo por resultado según etapa de estrategia</h3><div class="nota">Mensual. La línea muestra el costo por conversación de WhatsApp.</div><div class="chart alto" id="chEtapas"></div></div>
+    <div class="card"><h3>Campañas Meta</h3><div class="tabla" id="tablaCampMeta"></div></div>
+    <div class="card"><h3>Google Ads frente a los leads Web del front</h3><div class="nota">Las "conversiones" de Google solo cuentan compras en el motor de reservas web. Quien llega desde Google y escribe por el botón de WhatsApp no aparece como conversión en Google, pero sí como lead Web en el registro del front. Por eso Google se evalúa también con leads y reservas Web (que además incluyen tráfico orgánico y directo).</div><div class="chart" id="chGoogleWeb"></div></div>
+    <div class="card"><h3>Campañas Google Ads</h3><div class="tabla" id="tablaCampG"></div></div>
+  </section>
+
+  <section id="presupuesto">
+    <div class="card"><h3>Curva de rendimiento del gasto diario en Meta</h3><div class="nota">Cada punto es un día del rango. La curva ajustada (logarítmica) muestra los rendimientos decrecientes: a partir de cierto gasto, cada peso extra trae menos conversaciones.</div><div class="chart alto" id="chCurva"></div></div>
+    <div class="grid2">
+      <div class="card"><h3>Costo marginal por tramo de gasto diario</h3><div class="nota">Días agrupados en quintiles de gasto. El costo marginal es lo que cuesta cada conversación adicional al pasar al tramo siguiente.</div><div class="tabla" id="tablaTramos"></div></div>
+      <div class="card"><h3>Lectura</h3><div class="insights" id="insPresupuesto"></div></div>
+    </div>
+  </section>
+
+  <section id="creativos">
+    <div class="card">
+      <h3>Creativos de Meta</h3>
+      <div class="nota">Ordenados por el criterio elegido, con gasto en el rango (meses completos). Los rankings son la comparación de Meta frente a anuncios que compiten por el mismo público (último mes con datos).</div>
+      <select class="sel" id="ordCrea">
+        <option value="gasto">Mayor gasto</option>
+        <option value="cpa">Menor costo por conversación</option>
+        <option value="cpa_desc">Mayor costo por conversación</option>
+        <option value="ctr">Mayor CTR</option>
+      </select>
+      <select class="sel" id="etapaCrea"><option value="">Todas las etapas</option></select>
+      <div class="galeria" id="galeria" style="margin-top:14px"></div>
+    </div>
+  </section>
+
+  <section id="historial">
+    <div class="card"><h3>Cambios en la cuenta Meta vs gasto diario</h3><div class="nota">Cada marca es un día con cambios de presupuesto, estado, puja o segmentación.</div><div class="chart" id="chHist"></div></div>
+    <div class="card"><h3>Detalle de cambios del periodo</h3><div class="tabla" id="tablaHist"></div></div>
+  </section>
+
+  <section id="notas">
+    <div class="card"><h3>Metodología y definiciones</h3><div class="leyenda-def" id="metodologia"></div></div>
+  </section>
+</main>
+<footer id="footer"></footer>
+
+<script>
+const D = window.DATA;
+const $ = s => document.querySelector(s);
+const fmt = (v, d=0) => v==null||!isFinite(v) ? "—" : Number(v).toLocaleString("es-CO",{maximumFractionDigits:d,minimumFractionDigits:d});
+const money = v => v==null||!isFinite(v) ? "—" : "$" + (Math.abs(v)>=1e6 ? fmt(v/1e6,1)+" M" : fmt(v,0));
+const pct = (v,d=1) => v==null||!isFinite(v) ? "—" : fmt(v*100,d)+"%";
+const div = (a,b) => b ? a/b : null;
+const C = {ocean:"#023859", blood:"#6399BA", sea:"#2A5E95", gray:"#808080", glossy:"#D1D1D1", pos:"#74AD52", neg:"#D72D41", neu:"#FFC75F"};
+const DIAS = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+const ETAPAS_CONV = new Set(["Conversaciones WhatsApp","Interacción / WhatsApp"]);
+const charts = {};
+function chart(id){ if(!charts[id]) charts[id] = echarts.init(document.getElementById(id)); return charts[id]; }
+window.addEventListener("resize", () => Object.values(charts).forEach(c => c.resize()));
+const base = {textStyle:{fontFamily:"Elms Sans, Segoe UI, sans-serif"}, grid:{left:60,right:60,top:40,bottom:40}, tooltip:{trigger:"axis"}};
+
+// --- tablas columnares -> objetos ---
+function T(t){ if(!t) return []; return t.rows.map(r => Object.fromEntries(t.cols.map((c,i)=>[c,r[i]]))); }
+const FRONT = T(D.front), META = T(D.meta), MCAMP = T(D.meta_campanas), GOO = T(D.google), GCAMP = T(D.google_campanas);
+const HORA = T(D.hora), GHORA = T(D.google_hora), SEG = T(D.segmentos), ADM = T(D.anuncios_mes), ADS = T(D.anuncios);
+const HIST = T(D.historial), RAZ = T(D.razones), PROD = T(D.producto), GDIM = T(D.google_dim);
+
+// --- fechas ---
+const toD = s => new Date(s+"T00:00:00");
+const toS = d => d.toISOString().slice(0,10);
+const addDays = (s,n) => { const d=toD(s); d.setDate(d.getDate()+n); return toS(d); };
+const diaSem = s => (toD(s).getDay()+6)%7;
+function rangoComp(a,b){
+  const m = $("#modoComp").value;
+  if(m==="ly364") return [addDays(a,-364), addDays(b,-364)];
+  if(m==="lyfecha"){ const f = s => { const d=toD(s); d.setFullYear(d.getFullYear()-1); return toS(d); }; return [f(a), f(b)]; }
+  const n = (toD(b)-toD(a))/864e5 + 1; return [addDays(a,-n), addDays(a,-1)];
+}
+const enRango = (s,a,b) => s>=a && s<=b;
+const mesesDe = (a,b) => { const out=new Set(); let d=toD(a.slice(0,7)+"-01"); const fin=toD(b); while(d<=fin){ out.add(toS(d).slice(0,7)); d.setMonth(d.getMonth()+1);} return out; };
+
+// --- agregaciones ---
+function sumar(rows, campos){ const o={}; campos.forEach(c=>o[c]=0); rows.forEach(r=>campos.forEach(c=>o[c]+= +r[c]||0)); return o; }
+const CF = ["leads_ig","leads_web","leads_ref","res_ig","res_web","res_ref","res_otro","venta_ig","venta_web","venta_ref","venta_otro","pax"];
+const CM = ["gasto","impresiones","clics_enlace","conversaciones","primera_respuesta","mensaje_2","mensaje_3","bloqueos","compras_web","valor_compras_web","vistas_landing","video_thruplay"];
+const CG = ["costo","clics","impresiones","conversiones","valor"];
+function agregado(a,b){
+  const f = sumar(FRONT.filter(r=>enRango(r.fecha,a,b)), CF);
+  const m = sumar(META.filter(r=>enRango(r.fecha,a,b)), CM);
+  const g = sumar(GOO.filter(r=>enRango(r.fecha,a,b)), CG);
+  const frontCubre = a >= D.rango.front_desde;
+  const leads = f.leads_ig+f.leads_web+f.leads_ref;
+  const resDig = f.res_ig+f.res_web+f.res_ref;
+  const ventaDig = f.venta_ig+f.venta_web+f.venta_ref;
+  const venta = ventaDig + f.venta_otro;
+  const inv = m.gasto + g.costo;
+  return {f,m,g,frontCubre,leads,resDig,ventaDig,venta,inv,
+    reservas: resDig + f.res_otro,
+    cpConv: div(m.gasto,m.conversaciones), cpLead: div(inv,leads), cpRes: div(inv,resDig),
+    roas: div(ventaDig,inv), conv: div(resDig,leads), registro: div(f.leads_ig,m.mensaje_2), sigue: div(m.mensaje_2,m.conversaciones),
+    cpLeadWeb: div(g.costo,f.leads_web), cpResWeb: div(g.costo,f.res_web), cpConvReal: div(m.gasto,m.mensaje_2),
+    convIG: div(f.res_ig,f.leads_ig)};
+}
+
+// --- estado ---
+let A, B, CA, CB;
+function setRango(a,b){ $("#desde").value=a; $("#hasta").value=b; render(); }
+function preset(p){
+  const max = D.rango.max; const hoy = toD(max);
+  if(p==="30") return setRango(addDays(max,-29), max);
+  if(p==="90") return setRango(addDays(max,-89), max);
+  if(p==="mes") return setRango(max.slice(0,7)+"-01", max);
+  if(p==="mesant"){ const d=new Date(hoy.getFullYear(), hoy.getMonth()-1, 1); const e=new Date(hoy.getFullYear(), hoy.getMonth(), 0); return setRango(toS(d), toS(e)); }
+  if(p==="ytd") return setRango(max.slice(0,4)+"-01-01", max);
+  return setRango(D.rango.min, max);
+}
+document.querySelectorAll("#presets button").forEach(b=>b.onclick=()=>{ document.querySelectorAll("#presets button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); preset(b.dataset.p); });
+["#desde","#hasta","#modoComp"].forEach(s=>$(s).onchange=()=>{ document.querySelectorAll("#presets button").forEach(x=>x.classList.remove("on")); render(); });
+document.querySelectorAll("#nav a").forEach(a=>a.onclick=()=>{
+  document.querySelectorAll("#nav a").forEach(x=>x.classList.remove("on")); a.classList.add("on");
+  document.querySelectorAll("section").forEach(s=>s.classList.toggle("on", s.id===a.dataset.s));
+  renderSeccion(a.dataset.s); Object.values(charts).forEach(c=>c.resize());
+});
+["#metHora"].forEach(s=>$(s).onchange=()=>renderHoras());
+["#tipoSeg","#objSeg","#dimG","#filtroTerm"].forEach(s=>$(s).onchange=()=>renderSegmentos());
+["#ordCrea","#etapaCrea"].forEach(s=>$(s).onchange=()=>renderCreativos());
+
+// --- KPI ---
+function variacion(act, ant, inverso=false){
+  if(act==null || ant==null || !isFinite(act) || !isFinite(ant) || ant===0) return '<span class="ly">sin dato de comparación</span>';
+  const v = act/ant-1; const bueno = inverso ? v<0 : v>0;
+  const cls = Math.abs(v)<0.02 ? "flat" : (bueno ? "up" : "down");
+  const flecha = Math.abs(v)<0.02 ? "▬" : (v>0?"▲":"▼");
+  return `<span class="var ${cls}">${flecha} ${v>0?"+":""}${fmt(v*100,1)}%</span>`;
+}
+function kpi(lbl, act, ant, f, inverso=false, dest=false, sinComp=false){
+  return `<div class="kpi ${dest?"dest":""}"><div class="lbl">${lbl}</div><div class="val">${f(act)}</div>
+  <div class="ly">${sinComp ? '<span class="ly">comparación no disponible</span>' : variacion(act,ant,inverso)+' · antes '+f(ant)}</div></div>`;
+}
+function renderKPIs(x, y){
+  const sf = !y.frontCubre;  // el front no cubre el periodo de comparación
+  $("#kpis").innerHTML = [
+    kpi("Inversión total (Meta + Google)", x.inv, y.inv, money, false, true),
+    kpi("Inversión Meta", x.m.gasto, y.m.gasto, money),
+    kpi("Inversión Google Ads", x.g.costo, y.g.costo, money),
+    kpi("Conversaciones WhatsApp (Meta)", x.m.conversaciones, y.m.conversaciones, v=>fmt(v)),
+    kpi("Costo por conversación", x.cpConv, y.cpConv, money, true),
+    kpi("Leads registrados (front)", x.leads, y.leads, v=>fmt(v), false, true, sf),
+    kpi("Leads IG", x.f.leads_ig, y.f.leads_ig, v=>fmt(v), false, false, sf),
+    kpi("Leads Web", x.f.leads_web, y.f.leads_web, v=>fmt(v), false, false, sf),
+    kpi("Reservas canales digitales (IG+Web+Ref)", x.resDig, y.resDig, v=>fmt(v), false, true, sf),
+    kpi("Venta sin IVA total (front)", x.venta, y.venta, money, false, false, sf),
+    kpi("Conversión lead → reserva", x.conv, y.conv, v=>pct(v), false, false, sf),
+    kpi("Costo por lead", x.cpLead, y.cpLead, money, true, false, sf),
+    kpi("Costo por reserva digital", x.cpRes, y.cpRes, money, true, true, sf),
+    kpi("ROAS digital (venta IG+Web+Ref ÷ inversión)", x.roas, y.roas, v=>v==null?"—":fmt(v,1)+"x", false, false, sf),
+    kpi("% de chats Meta que siguieron escribiendo (2+ mensajes)", x.sigue, y.sigue, v=>pct(v)),
+    kpi("Costo Meta por chat con 2+ mensajes", x.cpConvReal, y.cpConvReal, money, true),
+    kpi("Costo Google por lead Web (front)", x.cpLeadWeb, y.cpLeadWeb, money, true, false, sf),
+    kpi("Costo Google por reserva Web (front)", x.cpResWeb, y.cpResWeb, money, true, false, sf),
+    kpi("Compras web atribuidas por Meta (píxel)", x.m.compras_web, y.m.compras_web, v=>fmt(v)),
+  ].join("");
+}
+
+// --- serie temporal (diaria o semanal) ---
+function serie(a,b){
+  const dias = (toD(b)-toD(a))/864e5+1; const semanal = dias>92;
+  const clave = s => { if(!semanal) return s; const d=toD(s); d.setDate(d.getDate()-diaSem(s)); return toS(d); };
+  const mp = new Map();
+  const get = k => { if(!mp.has(k)) mp.set(k,{meta:0,goo:0,leads:0,res:0}); return mp.get(k); };
+  for(let s=a; s<=b; s=addDays(s,1)) get(clave(s));
+  META.forEach(r=>{ if(enRango(r.fecha,a,b)) get(clave(r.fecha)).meta += r.gasto; });
+  GOO.forEach(r=>{ if(enRango(r.fecha,a,b)) get(clave(r.fecha)).goo += r.costo; });
+  FRONT.forEach(r=>{ if(enRango(r.fecha,a,b)){ const o=get(clave(r.fecha)); o.leads += r.leads_ig+r.leads_web+r.leads_ref; o.res += r.res_ig+r.res_web+r.res_ref; } });
+  return {semanal, k:[...mp.keys()].sort(), mp};
+}
+function renderTendencia(){
+  const s = serie(A,B), c = serie(CA,CB);
+  const ck = c.k;
+  const ly = s.k.map((k,i)=> ck[i]!=null ? c.mp.get(ck[i]).leads : null);
+  chart("chTendencia").setOption({...base, legend:{top:0},
+    xAxis:{type:"category", data:s.k.map(k=> s.semanal ? "Sem "+k.slice(5) : k.slice(5))},
+    yAxis:[{type:"value",name:"Inversión",axisLabel:{formatter:v=>money(v)}},{type:"value",name:"Leads / reservas",splitLine:{show:false}}],
+    tooltip:{trigger:"axis", valueFormatter:v=>fmt(v)},
+    series:[
+      {name:"Meta",type:"bar",stack:"inv",data:s.k.map(k=>Math.round(s.mp.get(k).meta)),itemStyle:{color:C.ocean}},
+      {name:"Google",type:"bar",stack:"inv",data:s.k.map(k=>Math.round(s.mp.get(k).goo)),itemStyle:{color:C.blood}},
+      {name:"Leads front",type:"line",yAxisIndex:1,data:s.k.map(k=>s.mp.get(k).leads),itemStyle:{color:C.sea},lineStyle:{width:2.5},symbol:"none"},
+      {name:"Reservas digitales",type:"line",yAxisIndex:1,data:s.k.map(k=>s.mp.get(k).res),itemStyle:{color:C.gray},lineStyle:{width:2.5,type:"dotted"},symbol:"none"},
+      {name:"Leads comparación",type:"line",yAxisIndex:1,data:ly,itemStyle:{color:C.glossy},lineStyle:{type:"dashed"},symbol:"none"},
+    ]}, true);
+}
+function renderMix(x){
+  const porEtapa = {};
+  META.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const e = MCAMP[r.c].etapa; porEtapa["Meta · "+e]=(porEtapa["Meta · "+e]||0)+r.gasto; });
+  GOO.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const g=GCAMP[r.c]; const k="Google · "+g.tipo; porEtapa[k]=(porEtapa[k]||0)+r.costo; });
+  const pal = [C.ocean,C.sea,C.blood,"#4F7A99","#8FB5CF","#B9D0E0",C.gray,C.glossy];
+  const data = Object.entries(porEtapa).sort((a,b)=>b[1]-a[1]).map(([name,value],i)=>({name,value:Math.round(value),itemStyle:{color:pal[i%pal.length]}}));
+  chart("chMix").setOption({...base, tooltip:{trigger:"item",formatter:p=>`${p.name}<br>${money(p.value)} (${fmt(p.percent,1)}%)`},
+    series:[{type:"pie",radius:["45%","72%"],data,label:{formatter:"{b}\n{d}%",fontSize:11}}]}, true);
+}
+function renderOrigen(x,y){
+  const cats = ["IG","Web","Referidos","Otros orígenes"];
+  const r1=[x.f.res_ig,x.f.res_web,x.f.res_ref,x.f.res_otro], r0=[y.f.res_ig,y.f.res_web,y.f.res_ref,y.f.res_otro];
+  const v1=[x.f.venta_ig,x.f.venta_web,x.f.venta_ref,x.f.venta_otro];
+  chart("chOrigen").setOption({...base, legend:{top:0}, xAxis:{type:"category",data:cats},
+    yAxis:[{type:"value",name:"Reservas"},{type:"value",name:"Venta",axisLabel:{formatter:v=>money(v)},splitLine:{show:false}}],
+    series:[{name:"Reservas",type:"bar",data:r1,itemStyle:{color:C.ocean}},
+            {name:"Reservas comparación",type:"bar",data:y.frontCubre?r0:[],itemStyle:{color:C.glossy}},
+            {name:"Venta sin IVA",type:"line",yAxisIndex:1,data:v1.map(Math.round),itemStyle:{color:C.blood}}]}, true);
+}
+
+// --- insights automáticos ---
+function insights(x,y){
+  const out = [];
+  const add = (txt, tipo="") => out.push(`<div class="insight ${tipo}">${txt}</div>`);
+  if(x.m.conversaciones>0){
+    add(`Meta reporta <b>${fmt(x.m.conversaciones)}</b> conversaciones iniciadas (${money(x.cpConv)} c/u), pero solo <b>${fmt(x.m.mensaje_2)}</b> personas (${pct(x.sigue,0)}) enviaron un segundo mensaje; el resto se quedó en el mensaje automático del anuncio. El front registró <b>${fmt(x.f.leads_ig)}</b> leads IG (${fmt(x.registro,2)} por cada chat con 2+ mensajes${x.registro>1.2?"; incluye mensajes orgánicos de Instagram":x.registro<0.8?"; hay chats con interés que no quedan registrados":""}). Costo real por chat con interés: <b>${money(x.cpConvReal)}</b>.`, x.sigue<0.6?"alerta":"");
+  }
+  if(x.f.leads_ig>0) add(`De cada 100 leads IG se cerraron <b>${fmt(100*(x.convIG||0),1)}</b> reservas${y.frontCubre && y.f.leads_ig? ` (antes ${fmt(100*(div(y.f.res_ig,y.f.leads_ig)||0),1)})`:""}. Costo de pauta Meta por reserva IG: <b>${money(div(x.m.gasto,x.f.res_ig))}</b>.`, (y.frontCubre && x.convIG < 0.8*div(y.f.res_ig,y.f.leads_ig)) ? "alerta":"");
+  if(x.m.conversaciones && x.m.bloqueos/x.m.conversaciones > 0.03) add(`<b>${pct(x.m.bloqueos/x.m.conversaciones)}</b> de las conversaciones terminaron en bloqueo del chat: señal de público poco calificado o de mensajes que no responden lo que la persona busca.`, "alerta");
+  if(y.inv>0) add(`La inversión total varió <b>${fmt(100*(x.inv/y.inv-1),1)}%</b> frente al periodo de comparación${x.frontCubre&&y.frontCubre&&y.resDig?` y las reservas digitales <b>${fmt(100*(x.resDig/y.resDig-1),1)}%</b>`:""}.`);
+  // horas
+  const h = HORA.filter(r=>enRango(r.fecha,A,B));
+  if(h.length){
+    const porH = Array.from({length:24},()=>({g:0,c:0}));
+    h.forEach(r=>{porH[r.hora].g+=r.gasto; porH[r.hora].c+=r.conversaciones;});
+    const tg = porH.reduce((s,o)=>s+o.g,0), tc = porH.reduce((s,o)=>s+o.c,0);
+    const madrugada = [0,1,2,3,4,5].reduce((s,i)=>s+porH[i].g,0);
+    const madC = [0,1,2,3,4,5].reduce((s,i)=>s+porH[i].c,0);
+    if(tg) add(`Entre 00:00 y 05:59 se invierte el <b>${pct(madrugada/tg)}</b> del gasto de Meta y se recibe el <b>${pct(madC/(tc||1))}</b> de las conversaciones. Esos chats llegan cuando el front no está atendiendo.`, madrugada/tg>0.08?"alerta":"");
+  }
+  // segmentos: mayor desperdicio
+  const ds = desperdicio("edad_sexo","conv");
+  if(ds.total>0) add(`Desperdicio estimado por edad/sexo en el rango: <b>${money(ds.total)}</b> (${pct(ds.total/(ds.gasto||1))} del gasto en campañas de conversación). El segmento que más pesa: <b>${ds.filas[0]?.valor||"—"}</b>.`, "alerta");
+  $("#insights").innerHTML = out.join("") || '<div class="vacio">Sin datos suficientes en el rango.</div>';
+}
+
+// --- embudo ---
+function renderEmbudo(x){
+  const pasos = [["Conversaciones iniciadas (Meta)",x.m.conversaciones],["Enviaron el 1er mensaje (Meta)",x.m.primera_respuesta],["Enviaron un 2º mensaje (Meta)",x.m.mensaje_2],["Enviaron un 3er mensaje (Meta)",x.m.mensaje_3],["Leads IG registrados (front)",x.f.leads_ig],["Reservas IG (front)",x.f.res_ig]];
+  $("#embudoCtx").innerHTML = `Antes del chat: <b>${fmt(x.m.impresiones)}</b> impresiones → <b>${fmt(x.m.clics_enlace)}</b> clics (CTR ${pct(div(x.m.clics_enlace,x.m.impresiones),2)}) · costo por conversación <b>${money(x.cpConv)}</b> · costo de pauta Meta por reserva IG <b>${money(div(x.m.gasto,x.f.res_ig))}</b> · venta IG <b>${money(x.f.venta_ig)}</b>.`;
+  chart("chEmbudo").setOption({...base, tooltip:{trigger:"item",formatter:p=>`${p.name}: ${fmt(p.value)}`},
+    series:[{type:"funnel",left:"10%",width:"80%",sort:"none",minSize:"8%",gap:3,
+      data:pasos.map(([n,v],i)=>({name:n,value:v,itemStyle:{color:[C.ocean,C.sea,"#4F7A99",C.blood,"#8FB5CF","#B9D0E0"][i]}})),
+      label:{formatter:p=>{ const i=p.dataIndex; const prev=i?pasos[i-1][1]:null; return `${p.name}: ${fmt(p.value)}${prev?`  (${pct(div(p.value,prev))})`:""}`;},color:"#1B2B3A",position:"right"}}]}, true);
+  const s = serie(A,B);
+  const conv=new Map(), lig=new Map(), m2=new Map();
+  s.k.forEach(k=>{conv.set(k,0); lig.set(k,0); m2.set(k,0);});
+  const clave = r => { if(!s.semanal) return r.fecha; const d=toD(r.fecha); d.setDate(d.getDate()-diaSem(r.fecha)); return toS(d); };
+  META.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ conv.set(clave(r),(conv.get(clave(r))||0)+r.conversaciones); m2.set(clave(r),(m2.get(clave(r))||0)+r.mensaje_2); });
+  FRONT.filter(r=>enRango(r.fecha,A,B)).forEach(r=>lig.set(clave(r),(lig.get(clave(r))||0)+r.leads_ig));
+  chart("chConvVsLeads").setOption({...base, legend:{top:0}, xAxis:{type:"category",data:s.k.map(k=>k.slice(5))}, yAxis:{type:"value"},
+    series:[{name:"Conversaciones iniciadas",type:"line",data:s.k.map(k=>conv.get(k)),itemStyle:{color:C.ocean},symbol:"none"},
+            {name:"Chats con 2+ mensajes",type:"line",data:s.k.map(k=>m2.get(k)),itemStyle:{color:C.gray},lineStyle:{type:"dashed"},symbol:"none"},
+            {name:"Leads IG front",type:"line",data:s.k.map(k=>lig.get(k)),itemStyle:{color:C.blood},symbol:"none"}]}, true);
+  const pr=new Map(), bl=new Map();
+  s.k.forEach(k=>{pr.set(k,[0,0]);});
+  META.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{const o=pr.get(clave(r)); if(o){o[0]+=r.conversaciones; o[1]+=r.mensaje_2;} const b=bl.get(clave(r))||[0,0]; b[0]+=r.conversaciones; b[1]+=r.bloqueos; bl.set(clave(r),b);});
+  chart("chCalidad").setOption({...base, legend:{top:0}, xAxis:{type:"category",data:s.k.map(k=>k.slice(5))}, yAxis:{type:"value",axisLabel:{formatter:v=>fmt(v*100)+"%"}},
+    tooltip:{trigger:"axis",valueFormatter:v=>pct(v)},
+    series:[{name:"% que envió 2º mensaje",type:"line",data:s.k.map(k=>{const o=pr.get(k); return o[0]?o[1]/o[0]:null;}),itemStyle:{color:C.ocean},symbol:"none"},
+            {name:"% bloqueos",type:"line",data:s.k.map(k=>{const o=bl.get(k)||[0,0]; return o[0]?o[1]/o[0]:null;}),itemStyle:{color:C.gray},symbol:"none"}]}, true);
+  // razones
+  const agg = (a,b) => { const o={}; RAZ.filter(r=>enRango(r.fecha,a,b)).forEach(r=>o[r.razon]=(o[r.razon]||0)+r.leads); return o; };
+  const r1=agg(A,B), r0=agg(CA,CB); const t1=Object.values(r1).reduce((a,b)=>a+b,0), t0=Object.values(r0).reduce((a,b)=>a+b,0);
+  const ks = Object.keys(r1).sort((a,b)=>r1[b]-r1[a]).slice(0,12).reverse();
+  chart("chRazones").setOption({...base, grid:{left:300,right:40,top:30,bottom:30}, legend:{top:0}, tooltip:{trigger:"axis",valueFormatter:v=>pct(v)},
+    xAxis:{type:"value",axisLabel:{formatter:v=>fmt(v*100)+"%"}}, yAxis:{type:"category",data:ks,axisLabel:{width:280,overflow:"truncate"}},
+    series:[{name:"Periodo",type:"bar",data:ks.map(k=>div(r1[k],t1)),itemStyle:{color:C.ocean}},
+            {name:"Comparación",type:"bar",data:ks.map(k=>t0?div(r0[k]||0,t0):null),itemStyle:{color:C.glossy}}]}, true);
+}
+
+// --- horas ---
+function renderHoras(){
+  const h = HORA.filter(r=>enRango(r.fecha,A,B));
+  $("#notaHora").innerHTML = D.rango.hora_desde ? `Meta solo conserva el detalle por hora de los últimos ~13 meses (disponible desde ${D.rango.hora_desde}). Gasto a la hora de la impresión; conversaciones a la hora en que la persona escribió.` : "Sin datos por hora.";
+  const M = Array.from({length:7},()=>Array.from({length:24},()=>({g:0,c:0})));
+  h.forEach(r=>{ const o=M[diaSem(r.fecha)][r.hora]; o.g+=r.gasto; o.c+=r.conversaciones; });
+  const tg = h.reduce((s,r)=>s+r.gasto,0), tc = h.reduce((s,r)=>s+r.conversaciones,0);
+  const met = $("#metHora").value; const data=[];
+  M.forEach((fila,d)=>fila.forEach((o,hh)=>{
+    let v = met==="conv"?o.c : met==="gasto"?o.g : met==="cpa"? div(o.g,o.c) : div(div(o.c,tc), div(o.g,tg));
+    data.push([hh, d, v==null?null:+v.toFixed(met==="idx"?2:0)]);
+  }));
+  const vals = data.map(x=>x[2]).filter(v=>v!=null).sort((a,b)=>a-b);
+  const max = vals.length ? vals[Math.floor(vals.length*0.97)] : 1;
+  const invert = met==="cpa";
+  const colores = met==="idx" ? [C.neg,"#F4F4F4",C.pos] : (invert ? [C.ocean,"#DCE8F1","#FFFFFF"] : ["#FFFFFF","#DCE8F1",C.ocean]);
+  chart("chHeat").setOption({...base, grid:{left:60,right:30,top:20,bottom:80},
+    tooltip:{formatter:p=>`${DIAS[p.value[1]]} ${p.value[0]}:00<br>${met==="gasto"||met==="cpa"?money(p.value[2]):met==="idx"?fmt(p.value[2],2):fmt(p.value[2])}`},
+    xAxis:{type:"category",data:[...Array(24).keys()].map(x=>x+"h"),splitArea:{show:true}}, yAxis:{type:"category",data:DIAS,inverse:true},
+    visualMap:{min: met==="idx"?0:vals[0]||0, max: met==="idx"?2:max, calculable:true, orient:"horizontal", left:"center", bottom:10, inRange:{color:colores},
+      formatter:v=> met==="gasto"||met==="cpa"?money(v):fmt(v,met==="idx"?1:0)},
+    series:[{type:"heatmap",data,label:{show:false}}]}, true);
+  const porH = Array.from({length:24},(_,i)=>({g:M.reduce((s,f)=>s+f[i].g,0), c:M.reduce((s,f)=>s+f[i].c,0)}));
+  chart("chHoras").setOption({...base, legend:{top:0}, tooltip:{trigger:"axis",valueFormatter:v=>pct(v)}, xAxis:{type:"category",data:[...Array(24).keys()].map(x=>x+"h")},
+    yAxis:{type:"value",axisLabel:{formatter:v=>fmt(v*100)+"%"}},
+    series:[{name:"% del gasto",type:"bar",data:porH.map(o=>div(o.g,tg)),itemStyle:{color:C.glossy}},
+            {name:"% de conversaciones",type:"bar",data:porH.map(o=>div(o.c,tc)),itemStyle:{color:C.ocean}}]}, true);
+  // front por día de semana
+  const W = Array.from({length:7},()=>({l:0,r:0,n:0}));
+  FRONT.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const o=W[diaSem(r.fecha)]; o.l+=r.leads_ig+r.leads_web+r.leads_ref; o.r+=r.res_ig+r.res_web+r.res_ref; o.n++; });
+  chart("chDiaSemana").setOption({...base, legend:{top:0}, xAxis:{type:"category",data:DIAS},
+    yAxis:[{type:"value",name:"Promedio diario"},{type:"value",name:"Cierre",axisLabel:{formatter:v=>fmt(v*100)+"%"},splitLine:{show:false}}],
+    series:[{name:"Leads / día",type:"bar",data:W.map(o=>div(o.l,o.n)?.toFixed(1)),itemStyle:{color:C.blood}},
+            {name:"Reservas / día",type:"bar",data:W.map(o=>div(o.r,o.n)?.toFixed(1)),itemStyle:{color:C.ocean}},
+            {name:"Tasa de cierre",type:"line",yAxisIndex:1,data:W.map(o=>div(o.r,o.l)),itemStyle:{color:C.gray},tooltip:{valueFormatter:v=>pct(v)}}]}, true);
+  // Google heat (estático)
+  if(GHORA.length){
+    const G = Array.from({length:7},()=>Array.from({length:24},()=>({c:0,v:0})));
+    GHORA.forEach(r=>{ if(r.dia_semana==null) return; const o=G[r.dia_semana][r.hora]; o.c+=r.costo; o.v+=r.conversiones; });
+    const gd=[]; G.forEach((f,d)=>f.forEach((o,hh)=>gd.push([hh,d,o.c?Math.round(o.c):0, o.v])));
+    const gm = Math.max(...gd.map(x=>x[2]));
+    chart("chHeatG").setOption({...base, grid:{left:60,right:30,top:20,bottom:80},
+      tooltip:{formatter:p=>`${DIAS[p.value[1]]} ${p.value[0]}:00<br>Costo ${money(p.value[2])}<br>Conversiones ${fmt(p.value[3],1)}<br>Costo/conv ${money(div(p.value[2],p.value[3]))}`},
+      xAxis:{type:"category",data:[...Array(24).keys()].map(x=>x+"h")}, yAxis:{type:"category",data:DIAS,inverse:true},
+      visualMap:{min:0,max:gm,dimension:2,orient:"horizontal",left:"center",bottom:10,inRange:{color:["#FFFFFF","#DCE8F1",C.blood]},formatter:v=>money(v)},
+      series:[{type:"heatmap",data:gd}]}, true);
+  }
+}
+
+// --- segmentos ---
+function desperdicio(tipo, obj){
+  const meses = mesesDe(A,B);
+  const campo = obj==="compras" ? "compras_web" : "conversaciones";
+  const filas = SEG.filter(r=>r.tipo===tipo && meses.has(r.mes) && MCAMP[r.c] && (obj==="compras" ? MCAMP[r.c].etapa==="Ventas web" : ETAPAS_CONV.has(MCAMP[r.c].etapa)));
+  // costo promedio por campaña (referencia justa: cada segmento contra su propia campaña)
+  const porCamp = {}; filas.forEach(r=>{ const o=porCamp[r.c]||(porCamp[r.c]={g:0,v:0}); o.g+=r.gasto; o.v+=r[campo]; });
+  const seg = {};
+  filas.forEach(r=>{ const o=seg[r.valor]||(seg[r.valor]={valor:r.valor,gasto:0,res:0,imp:0,clics:0,esperado:0});
+    o.gasto+=r.gasto; o.res+=r[campo]; o.imp+=r.impresiones; o.clics+=r.clics_enlace;
+    const cpa = div(porCamp[r.c].g, porCamp[r.c].v); if(cpa) o.esperado += r[campo]*cpa; });
+  const arr = Object.values(seg).filter(o=>o.gasto>0);
+  const G = arr.reduce((s,o)=>s+o.gasto,0), R = arr.reduce((s,o)=>s+o.res,0);
+  arr.forEach(o=>{ o.cpa=div(o.gasto,o.res); o.pg=div(o.gasto,G); o.pr=div(o.res,R); o.idx=div(o.pr,o.pg); o.desp=Math.max(0,o.gasto-o.esperado); });
+  arr.sort((a,b)=>b.desp-a.desp);
+  return {filas:arr, total:arr.reduce((s,o)=>s+o.desp,0), gasto:G, res:R};
+}
+function renderGoogleDim(){
+  const meses = mesesDe(A,B), dim=$("#dimG").value, ft=$("#filtroTerm").value;
+  const ag={}; GDIM.filter(r=>r.dimension===dim && meses.has(r.mes)).forEach(r=>{ const o=ag[r.valor_dimension]||(ag[r.valor_dimension]={v:r.valor_dimension,marca:r.marca,costo:0,clics:0,imp:0,conv:0}); o.costo+=r.costo; o.clics+=r.clics; o.imp+=r.impresiones; o.conv+=r.conversiones; });
+  let arr=Object.values(ag); const TC=arr.reduce((s,o)=>s+o.costo,0), TV=arr.reduce((s,o)=>s+o.conv,0);
+  const sinConv = arr.filter(o=>o.costo>0 && o.conv<0.5 && !o.v.startsWith("(otros")); const costoSin = sinConv.reduce((s,o)=>s+o.costo,0);
+  if(ft==="sin") arr=sinConv; if(ft==="marca") arr=arr.filter(o=>o.marca); if(ft==="nomarca") arr=arr.filter(o=>!o.marca);
+  arr.sort((a,b)=>b.costo-a.costo);
+  if(!TC){ $("#kpisG").innerHTML=""; $("#tablaG").innerHTML='<div class="vacio">Sin informes de Google para estos meses.</div>'; return; }
+  const cpaProm = div(TC,TV);
+  $("#kpisG").innerHTML = `<div class="kpi"><div class="lbl">Costo analizado</div><div class="val">${money(TC)}</div></div>
+    <div class="kpi"><div class="lbl">Conversiones</div><div class="val">${fmt(TV,1)}</div></div>
+    <div class="kpi"><div class="lbl">Costo / conversión promedio</div><div class="val">${money(cpaProm)}</div></div>
+    <div class="kpi dest"><div class="lbl">Costo sin ninguna conversión</div><div class="val" style="color:${C.neg}">${money(costoSin)}</div><div class="ly">${pct(div(costoSin,TC))} del costo · ${fmt(sinConv.length)} ${dim==="termino_busqueda"?"términos":"valores"}</div></div>`;
+  const chip = o => o.v.startsWith("(otros") ? "" : o.conv<0.5 && o.costo>(cpaProm||0) ? '<span class="chip rojo">sin conversión, gasto > 1 CPA</span>' : (o.conv>=0.5 && div(o.costo,o.conv)>2*cpaProm ? '<span class="chip amar">CPA > 2× promedio</span>' : (o.conv>=1 && div(o.costo,o.conv)<0.6*cpaProm ? '<span class="chip verde">eficiente</span>':''));
+  $("#tablaG").innerHTML = `<table><thead><tr><th>${dim==="termino_busqueda"?"Término":dim==="pais"?"País":"Dispositivo"}</th><th class="n">Costo</th><th class="n">% costo</th><th class="n">Clics</th><th class="n">CTR</th><th class="n">Conversiones</th><th class="n">Costo/conv.</th><th>Señal</th></tr></thead><tbody>
+    ${arr.slice(0,300).map(o=>`<tr><td>${o.v}${o.marca&&dim==="termino_busqueda"?' <span class="chip">marca</span>':''}</td><td class="n">${money(o.costo)}</td><td class="n">${pct(div(o.costo,TC))}</td><td class="n">${fmt(o.clics)}</td><td class="n">${pct(div(o.clics,o.imp),2)}</td><td class="n">${fmt(o.conv,1)}</td><td class="n">${money(div(o.costo,o.conv))}</td><td>${chip(o)}</td></tr>`).join("")}</tbody></table>`;
+}
+function renderSegmentos(){
+  renderGoogleDim();
+  const tipo=$("#tipoSeg").value, obj=$("#objSeg").value;
+  const d = desperdicio(tipo,obj);
+  if(!d.filas.length){ $("#tablaSeg").innerHTML='<div class="vacio">Sin datos para este segmento en el rango.</div>'; chart("chSeg").clear(); $("#kpisSeg").innerHTML=""; return; }
+  const top = d.filas.slice(0,15);
+  $("#kpisSeg").innerHTML = `
+    <div class="kpi"><div class="lbl">Gasto analizado</div><div class="val">${money(d.gasto)}</div></div>
+    <div class="kpi"><div class="lbl">${obj==="compras"?"Compras web":"Conversaciones"}</div><div class="val">${fmt(d.res)}</div></div>
+    <div class="kpi"><div class="lbl">Costo promedio</div><div class="val">${money(div(d.gasto,d.res))}</div></div>
+    <div class="kpi dest"><div class="lbl">Desperdicio estimado</div><div class="val" style="color:${C.neg}">${money(d.total)}</div><div class="ly">${pct(div(d.total,d.gasto))} del gasto analizado</div></div>`;
+  const orden = [...d.filas].sort((a,b)=>b.gasto-a.gasto).slice(0,20).reverse();
+  chart("chSeg").setOption({...base, grid:{left:200,right:60,top:30,bottom:30}, legend:{top:0}, tooltip:{trigger:"axis",valueFormatter:v=>pct(v)},
+    xAxis:{type:"value",axisLabel:{formatter:v=>fmt(v*100)+"%"}}, yAxis:{type:"category",data:orden.map(o=>o.valor),axisLabel:{width:190,overflow:"truncate"}},
+    series:[{name:"% del gasto",type:"bar",data:orden.map(o=>o.pg),itemStyle:{color:C.glossy}},
+            {name:"% de resultados",type:"bar",data:orden.map(o=>o.pr),itemStyle:{color:C.ocean}}]}, true);
+  const chip = i => i==null?"":i<0.7?`<span class="chip rojo">▼ ${fmt(i,2)}</span>`:i>1.2?`<span class="chip verde">▲ ${fmt(i,2)}</span>`:`<span class="chip amar">▬ ${fmt(i,2)}</span>`;
+  $("#tablaSeg").innerHTML = `<table><thead><tr><th>Segmento</th><th class="n">Gasto</th><th class="n">% gasto</th><th class="n">Resultados</th><th class="n">% resultados</th><th class="n">Costo / resultado</th><th class="n">CTR</th><th class="n">Índice eficiencia</th><th class="n">Desperdicio estimado</th></tr></thead><tbody>
+    ${d.filas.map(o=>`<tr><td>${o.valor}</td><td class="n">${money(o.gasto)}</td><td class="n">${pct(o.pg)}</td><td class="n">${fmt(o.res)}</td><td class="n">${pct(o.pr)}</td><td class="n">${money(o.cpa)}</td><td class="n">${pct(div(o.clics,o.imp),2)}</td><td class="n">${chip(o.idx)}</td><td class="n">${money(o.desp)}</td></tr>`).join("")}</tbody></table>`;
+}
+
+// --- campañas ---
+function renderCampanas(){
+  // etapas mensual
+  const meses = [...mesesDe(A,B)].sort(); const etapas = [...new Set(MCAMP.map(c=>c.etapa))];
+  const M = {}; meses.forEach(m=>M[m]={conv:0,g:0});
+  const E = {}; etapas.forEach(e=>E[e]=Object.fromEntries(meses.map(m=>[m,0])));
+  META.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const m=r.fecha.slice(0,7); E[MCAMP[r.c].etapa][m]+=r.gasto; M[m].g+=r.gasto; M[m].conv+=r.conversaciones; });
+  const G = Object.fromEntries(meses.map(m=>[m,0])); GOO.filter(r=>enRango(r.fecha,A,B)).forEach(r=>G[r.fecha.slice(0,7)]+=r.costo);
+  const pal=[C.ocean,C.sea,"#4F7A99","#8FB5CF","#B9D0E0",C.gray];
+  chart("chEtapas").setOption({...base, legend:{top:0,type:"scroll"}, tooltip:{trigger:"axis",valueFormatter:v=>money(v)}, xAxis:{type:"category",data:meses},
+    yAxis:[{type:"value",axisLabel:{formatter:v=>money(v)}},{type:"value",name:"Costo/conv.",axisLabel:{formatter:v=>money(v)},splitLine:{show:false}}],
+    series:[...etapas.map((e,i)=>({name:"Meta · "+e,type:"bar",stack:"g",data:meses.map(m=>Math.round(E[e][m])),itemStyle:{color:pal[i%pal.length]}})),
+      {name:"Google Ads",type:"bar",stack:"g",data:meses.map(m=>Math.round(G[m])),itemStyle:{color:C.blood}},
+      {name:"Costo por conversación WhatsApp",type:"line",yAxisIndex:1,data:meses.map(m=>M[m].conv?Math.round(M[m].g/M[m].conv):null),itemStyle:{color:C.neg},lineStyle:{width:2}}]}, true);
+  // Google vs leads web
+  const sw = serie(A,B); const cl = r => { if(!sw.semanal) return r.fecha; const d=toD(r.fecha); d.setDate(d.getDate()-diaSem(r.fecha)); return toS(d); };
+  const gw = new Map(sw.k.map(k=>[k,{g:0,c:0,l:0,r:0}]));
+  GOO.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const o=gw.get(cl(r)); if(o){ o.g+=r.costo; o.c+=r.conversiones; } });
+  FRONT.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const o=gw.get(cl(r)); if(o){ o.l+=r.leads_web; o.r+=r.res_web; } });
+  chart("chGoogleWeb").setOption({...base, legend:{top:0}, xAxis:{type:"category",data:sw.k.map(k=>k.slice(5))},
+    yAxis:[{type:"value",name:"Costo Google",axisLabel:{formatter:v=>money(v)}},{type:"value",name:"Leads / reservas / conv.",splitLine:{show:false}}],
+    tooltip:{trigger:"axis",valueFormatter:v=>fmt(v,1)},
+    series:[{name:"Costo Google",type:"bar",data:sw.k.map(k=>Math.round(gw.get(k).g)),itemStyle:{color:C.blood}},
+      {name:"Leads Web (front)",type:"line",yAxisIndex:1,data:sw.k.map(k=>gw.get(k).l),itemStyle:{color:C.ocean},symbol:"none"},
+      {name:"Reservas Web (front)",type:"line",yAxisIndex:1,data:sw.k.map(k=>gw.get(k).r),itemStyle:{color:C.sea},lineStyle:{type:"dotted"},symbol:"none"},
+      {name:"Conversiones Google (compra web)",type:"line",yAxisIndex:1,data:sw.k.map(k=>+gw.get(k).c.toFixed(1)),itemStyle:{color:C.gray},lineStyle:{type:"dashed"},symbol:"none"}]}, true);
+  // tabla meta
+  const agg = {}; META.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const o=agg[r.c]||(agg[r.c]={...sumar([],CM)}); CM.forEach(c=>o[c]+=r[c]); });
+  const filas = Object.entries(agg).map(([c,o])=>({...MCAMP[c],...o})).sort((a,b)=>b.gasto-a.gasto);
+  $("#tablaCampMeta").innerHTML = filas.length ? `<table><thead><tr><th>Campaña</th><th>Etapa</th><th>Producto</th><th class="n">Gasto</th><th class="n">Impresiones</th><th class="n">CTR enlace</th><th class="n">Conversaciones</th><th class="n">Costo/conv.</th><th class="n">% 2+ mensajes</th><th class="n">Costo / chat 2+</th><th class="n">% bloqueo</th><th class="n">Compras web</th><th class="n">ROAS píxel</th></tr></thead><tbody>
+    ${filas.map(o=>`<tr><td>${o.campaign_name}<br><span class="chip">${o.cuenta_nombre}</span></td><td>${o.etapa}</td><td>${o.producto}</td><td class="n">${money(o.gasto)}</td><td class="n">${fmt(o.impresiones)}</td><td class="n">${pct(div(o.clics_enlace,o.impresiones),2)}</td><td class="n">${fmt(o.conversaciones)}</td><td class="n">${money(div(o.gasto,o.conversaciones))}</td><td class="n">${pct(div(o.mensaje_2,o.conversaciones))}</td><td class="n">${money(div(o.gasto,o.mensaje_2))}</td><td class="n">${pct(div(o.bloqueos,o.conversaciones))}</td><td class="n">${fmt(o.compras_web)}</td><td class="n">${o.valor_compras_web?fmt(o.valor_compras_web/o.gasto,1)+"x":"—"}</td></tr>`).join("")}</tbody></table>` : '<div class="vacio">Sin inversión Meta en el rango.</div>';
+  const ag = {}; GOO.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const o=ag[r.c]||(ag[r.c]=sumar([],CG)); CG.forEach(c=>o[c]+=r[c]); });
+  const fg = Object.entries(ag).map(([c,o])=>({...GCAMP[c],...o})).sort((a,b)=>b.costo-a.costo);
+  $("#tablaCampG").innerHTML = fg.length ? `<table><thead><tr><th>Campaña</th><th>Cuenta</th><th>Tipo</th><th class="n">Costo</th><th class="n">Clics</th><th class="n">CPC</th><th class="n">Conversiones</th><th class="n">Costo/conv.</th><th class="n">Valor conv.</th></tr></thead><tbody>
+    ${fg.map(o=>`<tr><td>${o.campana}</td><td>${o.cuenta}</td><td>${o.tipo}</td><td class="n">${money(o.costo)}</td><td class="n">${fmt(o.clics)}</td><td class="n">${money(div(o.costo,o.clics))}</td><td class="n">${fmt(o.conversiones,1)}</td><td class="n">${money(div(o.costo,o.conversiones))}</td><td class="n">${money(o.valor)}</td></tr>`).join("")}</tbody></table>` : '<div class="vacio">Sin inversión Google en el rango.</div>';
+}
+
+// --- presupuesto ---
+function renderPresupuesto(){
+  // solo días con campañas de conversación activas (mismo tipo de resultado)
+  const dia = {};
+  META.filter(r=>enRango(r.fecha,A,B) && ETAPAS_CONV.has(MCAMP[r.c].etapa)).forEach(r=>{ const o=dia[r.fecha]||(dia[r.fecha]={g:0,c:0}); o.g+=r.gasto; o.c+=r.conversaciones; });
+  const pts = Object.entries(dia).filter(([,o])=>o.g>0).map(([f,o])=>[o.g,o.c,f]);
+  if(pts.length<15){ chart("chCurva").clear(); $("#tablaTramos").innerHTML='<div class="vacio">Se necesitan al menos 15 días con campañas de conversación en el rango.</div>'; $("#insPresupuesto").innerHTML=""; return; }
+  // ajuste y = a + b ln(x)
+  const n=pts.length, lx=pts.map(p=>Math.log(p[0])), y=pts.map(p=>p[1]);
+  const mx=lx.reduce((s,v)=>s+v,0)/n, my=y.reduce((s,v)=>s+v,0)/n;
+  const b = lx.reduce((s,v,i)=>s+(v-mx)*(y[i]-my),0)/lx.reduce((s,v)=>s+(v-mx)**2,0); const a = my-b*mx;
+  const ssr = y.reduce((s,v,i)=>s+(v-(a+b*lx[i]))**2,0), sst = y.reduce((s,v)=>s+(v-my)**2,0); const r2 = 1-ssr/sst;
+  const xs = pts.map(p=>p[0]).sort((p,q)=>p-q); const curva=[]; for(let i=0;i<=40;i++){ const x=xs[0]+(xs[xs.length-1]-xs[0])*i/40; curva.push([x, a+b*Math.log(x)]); }
+  chart("chCurva").setOption({...base, legend:{top:0}, tooltip:{trigger:"item",formatter:p=>p.seriesIndex===0?`${p.value[2]}<br>Gasto ${money(p.value[0])}<br>Conversaciones ${fmt(p.value[1])}`:`Gasto ${money(p.value[0])} → ${fmt(p.value[1],1)} conv. esperadas`},
+    xAxis:{type:"value",name:"Gasto diario",axisLabel:{formatter:v=>money(v)}}, yAxis:{type:"value",name:"Conversaciones"},
+    series:[{name:"Días",type:"scatter",data:pts,symbolSize:7,itemStyle:{color:C.blood,opacity:.7}},
+            {name:`Curva ajustada (R² ${fmt(r2,2)})`,type:"line",data:curva,symbol:"none",itemStyle:{color:C.ocean},lineStyle:{width:3}}]}, true);
+  const ord=[...pts].sort((p,q)=>p[0]-q[0]); const q=5, tramos=[];
+  for(let i=0;i<q;i++){ const sl=ord.slice(Math.floor(i*n/q), Math.floor((i+1)*n/q)); const g=sl.reduce((s,p)=>s+p[0],0)/sl.length, c=sl.reduce((s,p)=>s+p[1],0)/sl.length; tramos.push({min:sl[0][0],max:sl[sl.length-1][0],g,c,dias:sl.length}); }
+  tramos.forEach((t,i)=>{ t.cpa=div(t.g,t.c); t.marg = i? div(t.g-tramos[i-1].g, t.c-tramos[i-1].c) : null; });
+  $("#tablaTramos").innerHTML = `<table><thead><tr><th>Tramo de gasto diario</th><th class="n">Días</th><th class="n">Gasto prom.</th><th class="n">Conv. prom.</th><th class="n">Costo/conv. medio</th><th class="n">Costo marginal</th></tr></thead><tbody>
+    ${tramos.map(t=>`<tr><td>${money(t.min)} – ${money(t.max)}</td><td class="n">${t.dias}</td><td class="n">${money(t.g)}</td><td class="n">${fmt(t.c,1)}</td><td class="n">${money(t.cpa)}</td><td class="n">${t.marg==null?"—":t.marg<0?'<span class="chip rojo">sin conversiones extra</span>':money(t.marg)}</td></tr>`).join("")}</tbody></table>`;
+  const cpaMed = div(tramos.reduce((s,t)=>s+t.g,0), tramos.reduce((s,t)=>s+t.c,0));
+  // Curva y = a + b·ln(x)  ->  dy/dx = b/x  ->  costo marginal = x/b. Quiebre: costo marginal = 2× costo medio.
+  const xQuiebre = b>0 ? 2*cpaMed*b : null;
+  const quiebre = xQuiebre && xQuiebre < xs[xs.length-1] ? {x:xQuiebre, dias: pts.filter(p=>p[0]>xQuiebre).length} : null;
+  const out=[];
+  out.push(`<div class="insight">Cada vez que el gasto diario se duplica, se ganan en promedio <b>${fmt(b*Math.log(2),1)}</b> conversaciones más (ajuste logarítmico, R² ${fmt(r2,2)}). ${r2<0.3?"El ajuste es débil: el gasto explica poco de la variación; pesan más la estacionalidad, los creativos y la segmentación.":""}</div>`);
+  if(b<=0) out.push(`<div class="insight alerta">En este rango, más gasto diario no se asocia con más conversaciones: revisa segmentación y creativos antes de subir presupuesto.</div>`);
+  else if(quiebre) out.push(`<div class="insight alerta">Según la curva, por encima de <b>${money(quiebre.x)}</b> diarios cada conversación adicional cuesta más del doble del costo medio (${money(cpaMed)}). ${quiebre.dias} días del rango estuvieron por encima de ese nivel. Ese gasto rinde más si se reparte entre días u horas de mejor eficiencia (ver "Días y horas") que concentrado en los días de mayor presupuesto.</div>`);
+  else out.push(`<div class="insight bien">En el rango observado el costo marginal no llega al doble del costo medio (${money(cpaMed)}): hay espacio para probar más presupuesto diario, vigilando que el front alcance a atender los chats.</div>`);
+  out.push(`<div class="insight">Importante: más conversaciones no implican más reservas si el front no alcanza a atenderlas. Revisa en "Embudo WhatsApp" que los leads IG y las reservas suban junto con las conversaciones.</div>`);
+  $("#insPresupuesto").innerHTML = out.join("");
+}
+
+// --- creativos ---
+function renderCreativos(){
+  const meses = mesesDe(A,B); const et = $("#etapaCrea").value;
+  const ag = {}; ADM.filter(r=>meses.has(r.mes)).forEach(r=>{ const o=ag[r.a]||(ag[r.a]={gasto:0,impresiones:0,alcance:0,clics_enlace:0,conversaciones:0,compras_web:0,video_thruplay:0,video_p25:0,video_p100:0,reproducciones_video:0}); Object.keys(o).forEach(k=>o[k]+=r[k]||0); });
+  let fil = Object.entries(ag).map(([a,o])=>({...ADS[a],...o, cpa:div(o.gasto,o.conversaciones), ctr:div(o.clics_enlace,o.impresiones)}))
+    .filter(o=>!et || (MCAMP[o.c] && MCAMP[o.c].etapa===et));
+  const ord=$("#ordCrea").value;
+  fil.sort((x,y)=> ord==="gasto"? y.gasto-x.gasto : ord==="ctr"? (y.ctr||0)-(x.ctr||0) : ord==="cpa"? ((x.cpa??1e15)-(y.cpa??1e15)) : ((y.cpa??-1)-(x.cpa??-1)));
+  if(ord.startsWith("cpa")) fil = fil.filter(o=>o.conversaciones>=5);
+  const rk = v => !v || v==="UNKNOWN" ? "" : v.startsWith("ABOVE")?`<span class="chip verde">sobre promedio</span>`: v==="AVERAGE"?`<span class="chip amar">promedio</span>`:`<span class="chip rojo">bajo promedio</span>`;
+  $("#galeria").innerHTML = fil.slice(0,60).map(o=>`<div class="crea">
+    <div class="img">${o.archivo?`<img loading="lazy" src="creativos/${o.archivo}" alt="">`:"Sin vista previa"}${o.es_video==="True"?'<span class="vid">▶ Video</span>':""}</div>
+    <div class="cuerpo"><div class="nom">${o.nombre}</div>
+      <div><span class="chip">${MCAMP[o.c]?.etapa||""}</span> <span class="chip">${MCAMP[o.c]?.producto||""}</span></div>
+      <div class="mets"><span>Gasto</span><b>${money(o.gasto)}</b><span>Conversaciones</span><b>${fmt(o.conversaciones)}</b><span>Costo/conv.</span><b>${money(o.cpa)}</b><span>CTR enlace</span><b>${pct(o.ctr,2)}</b>
+      ${o.compras_web?`<span>Compras web</span><b>${fmt(o.compras_web)}</b>`:""}${o.reproducciones_video?`<span>Video visto 100%</span><b>${pct(div(o.video_p100,o.reproducciones_video))}</b>`:""}</div>
+      <div>${o.quality_ranking?`Calidad ${rk(o.quality_ranking)}<br>Interacción ${rk(o.engagement_rate_ranking)}<br>Conversión ${rk(o.conversion_rate_ranking)}`:""}</div>
+      ${o.texto?`<div class="txt" title="${(o.texto||"").replace(/"/g,"'")}">${o.texto}</div>`:""}
+      ${o.permalink_ig?`<a href="${o.permalink_ig}" target="_blank" rel="noopener">Ver en Instagram ↗</a>`:""}
+      <div style="color:${C.gray}">Activo ${o.desde} → ${o.hasta}</div></div></div>`).join("") || '<div class="vacio">Sin creativos con gasto en el rango.</div>';
+}
+
+// --- historial ---
+function renderHistorial(){
+  const h = HIST.filter(r=>enRango(r.fecha,A,B));
+  const s = serie(A,B); const gd=new Map(s.k.map(k=>[k,0]));
+  const clave = f => { if(!s.semanal) return f; const d=toD(f); d.setDate(d.getDate()-diaSem(f)); return toS(d); };
+  META.filter(r=>enRango(r.fecha,A,B)).forEach(r=>gd.set(clave(r.fecha),(gd.get(clave(r.fecha))||0)+r.gasto));
+  const cambios = {}; h.forEach(r=>{ const k=clave(r.fecha); cambios[k]=(cambios[k]||0)+1; });
+  chart("chHist").setOption({...base, legend:{top:0}, xAxis:{type:"category",data:s.k.map(k=>k.slice(5))},
+    yAxis:[{type:"value",axisLabel:{formatter:v=>money(v)}},{type:"value",name:"Cambios",splitLine:{show:false}}],
+    series:[{name:"Gasto Meta",type:"line",data:s.k.map(k=>Math.round(gd.get(k))),itemStyle:{color:C.ocean},areaStyle:{opacity:.08},symbol:"none"},
+            {name:"Cambios en la cuenta",type:"bar",yAxisIndex:1,data:s.k.map(k=>cambios[k]||0),itemStyle:{color:C.blood},barMaxWidth:8}]}, true);
+  $("#tablaHist").innerHTML = h.length ? `<table><thead><tr><th>Fecha</th><th>Evento</th><th>Objeto</th><th>Quién</th><th>Detalle</th></tr></thead><tbody>
+    ${h.slice(0,400).map(r=>`<tr><td>${r.fecha}</td><td>${r.evento}</td><td>${r.objeto}</td><td>${r.actor}</td><td>${r.detalle||""}</td></tr>`).join("")}</tbody></table>` : '<div class="vacio">Sin cambios registrados en el rango.</div>';
+}
+
+// --- metodología ---
+function renderNotas(){
+  $("#metodologia").innerHTML = `
+  <p><b>Fuentes.</b> Meta Marketing API (cuentas "CP - Makani Luxury - Lógica", jun–sep 2025, y "CP - Makani Luxury", sep 2025 en adelante; token de solo lectura). Google Ads: API (cuenta del MCC) e informes descargados de las cuentas sin acceso API. Registro del front: "INF LEADS GENERAL MENSUAL" (pestañas Data Leads, Data General y Razones no cierre) desde ${D.rango.front_desde}.</p>
+  <p><b>Comparación.</b> "LY −364 días" compara contra el mismo periodo del año anterior alineado por día de la semana (recomendado para pasadías). Si el registro del front no cubre el periodo de comparación, esos KPIs muestran "comparación no disponible".</p>
+  <p><b>Conversaciones iniciadas (Meta)</b> = veces que una persona envió un mensaje a la empresa desde el anuncio, después de 7 días sin actividad. No es el clic en el anuncio: Meta reporta los clics por separado y son muchos más. Cerca del 97% de las conversaciones se atribuyen a un clic y solo ~2% a una vista sin clic. Muchas conversaciones son solo el mensaje automático precargado del anuncio; por eso también se muestran los <b>chats con 2+ mensajes</b> (la persona siguió escribiendo), una medida más exigente de interés real. Sin la API de WhatsApp no se puede auditar chat por chat: es una métrica de la plataforma.</p>
+  <p><b>Conversiones de Google</b> = compras en el motor de reservas web (acciones "Booking COP/USD/EUR"). Los clics al botón de WhatsApp de la web no se miden como conversión, así que Google también se evalúa con los <b>leads y reservas Web</b> del front. Esos leads Web incluyen tráfico orgánico y directo, no solo pauta.</p>
+  <p><b>Conversaciones WhatsApp</b> (KPI) = conversaciones iniciadas atribuidas por Meta (7 días). <b>Leads</b> = registrados por el front (IG, Web, Referidos). <b>Reservas digitales</b> = reservas cuyo origen es Instagram, Página web o Referido. <b>Venta</b> = sin IVA, según el front.</p>
+  <p><b>Costo por reserva digital</b> = inversión total Meta + Google ÷ reservas digitales. Es una medida de eficiencia conjunta: el front no registra qué anuncio originó cada lead.</p>
+  <p><b>Horas.</b> Meta conserva el detalle por hora de los últimos ~13 meses. El gasto se ubica a la hora de la impresión y las conversaciones a la hora en que la persona escribió. Zona horaria: Bogotá.</p>
+  <p><b>Desperdicio estimado.</b> Para cada segmento: gasto − (resultados × costo promedio de su propia campaña). Si un segmento rinde igual o mejor que su campaña, su desperdicio es 0. Es una estimación de ahorro potencial, no un gasto "perdido" en sentido contable: algunos segmentos aportan alcance o recordación.</p>
+  <p><b>Curva de presupuesto.</b> Ajuste logarítmico de conversaciones diarias vs gasto diario, solo en campañas de conversación. Una correlación no es causalidad: la estacionalidad y los cambios de creativos también mueven los resultados.</p>
+  <p><b>Datos de calidad pendientes.</b> El registro del front no guarda la hora del primer mensaje ni qué anuncio originó el lead; con esos dos datos se podría medir el costo por reserva por campaña y por franja horaria.</p>
+  <p>Actualizado: ${D.generado}.</p>`;
+}
+
+// --- orquestación ---
+function renderSeccion(s){
+  if(s==="embudo") renderEmbudo(agregado(A,B));
+  if(s==="horas") renderHoras();
+  if(s==="segmentos") renderSegmentos();
+  if(s==="campanas") renderCampanas();
+  if(s==="presupuesto") renderPresupuesto();
+  if(s==="creativos") renderCreativos();
+  if(s==="historial") renderHistorial();
+  if(s==="notas") renderNotas();
+}
+function render(){
+  A=$("#desde").value; B=$("#hasta").value; if(A>B){ [A,B]=[B,A]; }
+  [CA,CB]=rangoComp(A,B);
+  const x=agregado(A,B), y=agregado(CA,CB);
+  $("#periodo").innerHTML = `Periodo: <b>${A}</b> a <b>${B}</b> · Comparación: ${CA} a ${CB}`;
+  renderKPIs(x,y); insights(x,y); renderTendencia(); renderMix(x); renderOrigen(x,y);
+  const activa = document.querySelector("#nav a.on").dataset.s; if(activa!=="resumen") renderSeccion(activa);
+}
+(function init(){
+  $("#sub").textContent = `Datos al ${D.rango.max} · actualizado ${D.generado}`;
+  $("#footer").textContent = `Elaborado por: Agencia Digital · Dirección de Mercadeo · Oficina Central GHL · ${D.credito_fecha}`;
+  [...new Set(MCAMP.map(c=>c.etapa))].forEach(e=>{ const o=document.createElement("option"); o.value=e; o.textContent=e; $("#etapaCrea").appendChild(o); });
+  $("#desde").min=$("#hasta").min=D.rango.min; $("#desde").max=$("#hasta").max=D.rango.max;
+  document.querySelector('#presets button[data-p="mesant"]').classList.add("on");
+  preset("mesant");
+})();
+</script>
+</body>
+</html>
