@@ -304,7 +304,7 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
   <section id="creativos">
     <div class="card">
       <h3>Creativos de Meta</h3>
-      <div class="nota"><b>Para qué sirve:</b> decidir qué creativos escalar, cuáles apagar y qué producir después. <b>Métrica principal para elegir el ideal:</b> <i>costo por chat con 2+ mensajes</i> (interés real, no solo el saludo automático), comparando solo anuncios del mismo producto y objetivo y con volumen mínimo para que el dato sea confiable. Desempate: % de chats con 2+ mensajes (calidad) y rankings de Meta. En campañas a la web, mirar compras web. Meses completos que tocan el rango.</div>
+      <div class="nota"><b>Para qué sirve:</b> decidir qué creativos escalar, cuáles apagar y qué producir después. <b>Métrica principal para elegir el ideal:</b> <i>costo por chat con 2+ mensajes</i> (interés real, no solo el saludo automático), comparando solo anuncios del mismo producto y objetivo y con volumen mínimo para que el dato sea confiable. Desempate: % de chats con 2+ mensajes (calidad) y rankings de Meta (Meta solo los calcula para anuncios recientes, desde sep-2026, con suficientes impresiones; si no hay, dice "Sin diagnóstico de Meta"). En campañas a la web, mirar compras web. Meses completos que tocan el rango.</div>
       <select class="sel" id="ordCrea">
         <option value="cpi">Menor costo por chat con 2+ mensajes (recomendado)</option>
         <option value="cpi_desc">Mayor costo por chat con 2+ mensajes (candidatos a apagar)</option>
@@ -333,6 +333,7 @@ const fmt = (v, d=0) => v==null||!isFinite(v) ? "—" : Number(v).toLocaleString
 const money = v => v==null||!isFinite(v) ? "—" : "$" + (Math.abs(v)>=1e6 ? fmt(v/1e6,1)+" M" : fmt(v,0));
 const pct = (v,d=1) => v==null||!isFinite(v) ? "—" : fmt(v*100,d)+"%";
 const div = (a,b) => b ? a/b : null;
+const PAL_META = ["#2F6E73","#4D9499","#7FB3B6","#A9CFCF","#1F4B4F","#CFE3E2"], PAL_GOO = ["#C9A961","#E3CC86","#9C7F3C","#F0D78A"];
 const C = {ocean:"#2F6E73", blood:"#D2B263", sea:"#4D9499", gray:"#676767", glossy:"#D5D3CB", pos:"#4F8F63", neg:"#B9473F", neu:"#B58A1C", char:"#3A3A3A"};
 const DIAS = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
 const ETAPAS_CONV = new Set(["Conversaciones WhatsApp","Interacción / WhatsApp"]);
@@ -501,8 +502,9 @@ function renderMix(x){
   const porEtapa = {};
   META.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const e = MCAMP[r.c].etapa; porEtapa["Meta · "+e]=(porEtapa["Meta · "+e]||0)+r.gasto; });
   GOO.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const g=GCAMP[r.c]; const k="Google · "+g.tipo; porEtapa[k]=(porEtapa[k]||0)+r.costo; });
-  const pal = [C.ocean,C.sea,C.blood,"#7FB3B6","#E3CC86","#D5D3CB",C.gray,C.glossy];
-  const data = Object.entries(porEtapa).sort((a,b)=>b[1]-a[1]).map(([name,value],i)=>({name,value:Math.round(value),itemStyle:{color:pal[i%pal.length]}}));
+  let iM=0, iG=0;
+  const data = Object.entries(porEtapa).sort((a,b)=>b[1]-a[1]).map(([name,value])=>({name,value:Math.round(value),
+    itemStyle:{color: name.startsWith("Google") ? PAL_GOO[iG++%PAL_GOO.length] : PAL_META[iM++%PAL_META.length]}}));
   chart("chMix").setOption({...base, tooltip:{trigger:"item",formatter:p=>`${p.name}<br>${money(p.value)} (${fmt(p.percent,1)}%)`},
     series:[{type:"pie",radius:["45%","72%"],data,label:{formatter:"{b}\n{d}%",fontSize:11}}]}, true);
 }
@@ -808,11 +810,11 @@ function renderCampanas(){
   const E = {}; etapas.forEach(e=>E[e]=Object.fromEntries(meses.map(m=>[m,0])));
   META.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const m=r.fecha.slice(0,7); E[MCAMP[r.c].etapa][m]+=r.gasto; M[m].g+=r.gasto; M[m].conv+=r.conversaciones; });
   const G = Object.fromEntries(meses.map(m=>[m,0])); GOO.filter(r=>enRango(r.fecha,A,B)).forEach(r=>G[r.fecha.slice(0,7)]+=r.costo);
-  const pal=[C.ocean,C.sea,"#7FB3B6","#E3CC86","#D5D3CB",C.gray];
+  const pal=PAL_META;
   chart("chEtapas").setOption({...base, legend:{top:0,type:"scroll"}, tooltip:{trigger:"axis",valueFormatter:v=>money(v)}, xAxis:{type:"category",data:meses},
     yAxis:[{type:"value",axisLabel:{formatter:v=>money(v)}},{type:"value",name:"Costo/conv.",axisLabel:{formatter:v=>money(v)},splitLine:{show:false}}],
     series:[...etapas.map((e,i)=>({name:"Meta · "+e,type:"bar",stack:"g",data:meses.map(m=>Math.round(E[e][m])),itemStyle:{color:pal[i%pal.length]}})),
-      {name:"Google Ads",type:"bar",stack:"g",data:meses.map(m=>Math.round(G[m])),itemStyle:{color:C.blood}},
+      {name:"Google Ads",type:"bar",stack:"g",data:meses.map(m=>Math.round(G[m])),itemStyle:{color:PAL_GOO[0]}},
       {name:"Costo por conversación WhatsApp",type:"line",yAxisIndex:1,data:meses.map(m=>M[m].conv?Math.round(M[m].g/M[m].conv):null),itemStyle:{color:C.neg},lineStyle:{width:2}}]}, true);
   // Google vs leads web
   const sw = serie(A,B); const cl = r => { if(!sw.semanal) return r.fecha; const d=toD(r.fecha); d.setDate(d.getDate()-diaSem(r.fecha)); return toS(d); };
@@ -891,7 +893,7 @@ function renderCreativos(){
       <div><span class="chip">${MCAMP[o.c]?.etapa||""}</span> <span class="chip">${MCAMP[o.c]?.producto||""}</span></div>
       <div class="mets"><span>Gasto</span><b>${money(o.gasto)}</b><span>Conversaciones</span><b>${fmt(o.conversaciones)}</b><span>Chats 2+ msj.</span><b>${fmt(o.mensaje_2)} (${pct(o.cal,0)})</b><span>Costo / chat 2+</span><b>${money(o.cpi)}</b><span>Costo/conv.</span><b>${money(o.cpa)}</b><span>CTR enlace</span><b>${pct(o.ctr,2)}</b>
       ${o.compras_web?`<span>Compras web</span><b>${fmt(o.compras_web)}</b>`:""}${o.reproducciones_video?`<span>Video visto 100%</span><b>${pct(div(o.video_p100,o.reproducciones_video))}</b>`:""}</div>
-      <div>${o.quality_ranking?`Calidad ${rk(o.quality_ranking)}<br>Interacción ${rk(o.engagement_rate_ranking)}<br>Conversión ${rk(o.conversion_rate_ranking)}`:""}</div>
+      <div>${o.quality_ranking && o.quality_ranking!=="UNKNOWN" ? `Calidad ${rk(o.quality_ranking)}<br>Interacción ${rk(o.engagement_rate_ranking)}<br>Conversión ${rk(o.conversion_rate_ranking)}` : `<span style="color:var(--mid)">Sin diagnóstico de Meta</span>`}</div>
       ${o.texto?`<div class="txt" title="${(o.texto||"").replace(/"/g,"'")}">${o.texto}</div>`:""}
       ${o.permalink_ig?`<a href="${o.permalink_ig}" target="_blank" rel="noopener">Ver en Instagram ↗</a>`:""}
       <div style="color:${C.gray}">Activo ${o.desde} → ${o.hasta}</div></div></div>`).join("") || '<div class="vacio">Sin creativos con gasto en el rango.</div>';
