@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261105105429"></script>
+<script src="data.js?v=20261105104413"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -341,7 +341,7 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
       <div id="cMes"></div>
     </div>
     <div class="card"><h3>Capacidad del front</h3>
-      <div class="nota">Más pauta solo sirve si el front alcanza a atender los chats. Barras: <b>leads atendidos</b> por cada asesora y día = el mayor entre "Data Leads" y (reservas + leads con razón de no cierre). Ambas medidas coinciden (1,07 veces en la mediana), así que tomar la mayor cubre los días en que una de las dos no se anotó. Líneas: chats que llegan desde Meta. Responde al filtro de fechas de arriba (diario hasta 3 meses; semanal en rangos más largos).</div>
+      <div class="nota">Más pauta solo sirve si el front alcanza a atender los chats. Barras: <b>leads atendidos</b> por cada asesora = reservas + leads con razón de no cierre (cada lead atendido termina en una de las dos). Esta medida coincide con "Data Leads" (1,07 veces en la mediana) y además capta lo que no quedó anotado allí. Líneas: chats que llegan desde Meta. Últimos 28 días con registro.</div>
       <div class="kpis" id="kpisFront"></div>
       <div class="chart" id="chFront"></div>
       <div id="avisoFront"></div>
@@ -952,46 +952,34 @@ function percentil(arr, q){ const a=[...arr].sort((x,y)=>x-y); if(!a.length) ret
 const CPLAT = T(CAL.plataforma_dia), CASE = T(CAL.asesoras);
 function renderFront(){
   if(!CASE.length){ $("#kpisFront").innerHTML='<div class="vacio">Sin datos de asesoras.</div>'; return; }
-  // Usa el filtro de fechas global (A–B), recortado al periodo con registro del front
-  const ini = A > CASE[0].fecha ? A : [...CASE].sort((x,y)=>x.fecha<y.fecha?-1:1)[0].fecha;
-  const fin = B < CAL.fin_front ? B : CAL.fin_front;
-  if(ini > fin){ $("#kpisFront").innerHTML='<div class="vacio">El rango elegido no tiene registro del front (empieza en sep-2025).</div>'; chart("chFront").clear(); $("#avisoFront").innerHTML=""; return; }
-  const dias = []; for(let d=ini; d<=fin; d=addDays(d,1)) dias.push(d);
+  const fin = CAL.fin_front, ini = addDays(fin, -27), dias = []; for(let d=ini; d<=fin; d=addDays(d,1)) dias.push(d);
   const filas = CASE.filter(r=>enRango(r.fecha, ini, fin)), nombres = [...new Set(filas.map(r=>r.asesora))].sort();
-  // Leads atendidos por asesora-día = el mayor entre Data Leads y (reservas + no cierre): cubre huecos de cualquiera de los dos registros
-  const val = {}, dl = {}, at = {}; filas.forEach(r=>{ const k=r.fecha+"|"+r.asesora; val[k] = Math.max(r.atendidos, r.data_leads); dl[k] = r.data_leads; at[k] = r.con_razones ? r.atendidos : 0; });
+  const val = {}, dl = {}; filas.forEach(r=>{ val[r.fecha+"|"+r.asesora] = r.atendidos; dl[r.fecha+"|"+r.asesora] = r.data_leads; });
   const chats = {}, conv = {}; META_ALL.filter(r=>enRango(r.fecha, ini, fin)).forEach(r=>{ chats[r.fecha]=(chats[r.fecha]||0)+r.mensaje_2; conv[r.fecha]=(conv[r.fecha]||0)+r.conversaciones; });
   const nAse = d => nombres.filter(n=>val[d+"|"+n]>0).length;
-  // Capacidad demostrada: percentil 90 de leads atendidos por asesora en un día, últimos 120 días de registro
-  const cap = percentil(CASE.filter(r=>r.fecha > addDays(CAL.fin_front,-120)).map(r=>Math.max(r.atendidos, r.data_leads)).filter(x=>x>0), .9);
-  const prom = ds => ({ase: ds.reduce((s_,d)=>s_+nAse(d),0)/(ds.length||1), chats: ds.reduce((s_,d)=>s_+(chats[d]||0),0)/(ds.length||1),
-    reg: ds.reduce((s_,d)=>s_+nombres.reduce((t,n)=>t+(val[d+"|"+n]||0),0),0)/(ds.length||1)});
-  const uDias = dias.slice(-7), pDias = dias.slice(-14,-7);
-  const u = prom(uDias), p = prom(pDias), tot = prom(dias);
+  // Capacidad típica por asesora-día: mediana histórica (120 días) de leads registrados por asesora en un día
+  const cap = percentil(CASE.filter(r=>r.atendidos>0).map(r=>r.atendidos), .5);
+  const sem = (a,b) => { const ds = dias.filter(d=>d>=a && d<=b); return {ase: ds.reduce((s_,d)=>s_+nAse(d),0)/ds.length, chats: ds.reduce((s_,d)=>s_+(chats[d]||0),0)/ds.length,
+    reg: ds.reduce((s_,d)=>s_+nombres.reduce((t,n)=>t+(val[d+"|"+n]||0),0),0)/ds.length, sin: ds.filter(d=>nAse(d)===0).length}; };
+  const u = sem(addDays(fin,-6), fin), p = sem(addDays(fin,-13), addDays(fin,-7));
   $("#kpisFront").innerHTML = `
-    <div class="kpi"><div class="lbl">Asesoras atendiendo por día</div><div class="val">${fmt(tot.ase,1)}</div><div class="ly">últimos 7 días del rango: ${fmt(u.ase,1)}${pDias.length?` · 7 previos: ${fmt(p.ase,1)}`:""}</div></div>
-    <div class="kpi"><div class="lbl">Leads atendidos por día</div><div class="val">${fmt(tot.reg,0)}</div><div class="ly">últimos 7 días: ${fmt(u.reg,0)}${pDias.length?` · 7 previos: ${fmt(p.reg,0)}`:""}</div></div>
-    <div class="kpi"><div class="lbl">Chats con interés de Meta por día</div><div class="val">${fmt(tot.chats,0)}</div><div class="ly">últimos 7 días: ${fmt(u.chats,0)}${pDias.length?` · 7 previos: ${fmt(p.chats,0)}`:""}</div></div>
-    <div class="kpi dest"><div class="lbl">Capacidad demostrada por asesora / día</div><div class="val">${fmt(cap,0)}</div><div class="ly">percentil 90 de leads atendidos por una asesora en un día (últimos 120 días)</div></div>`;
-  // Diario hasta 92 días; semanal (lunes) en rangos más largos
-  const semanal = dias.length > 92;
-  const clave = d => { if(!semanal) return d; const x=toD(d); x.setDate(x.getDate()-diaSem(d)); return toS(x); };
-  const keys = [...new Set(dias.map(clave))];
-  const agg = f => keys.map(k=>Math.round(dias.filter(d=>clave(d)===k).reduce((s_,d)=>s_+f(d),0)));
+    <div class="kpi"><div class="lbl">Asesoras atendiendo por día (últimos 7)</div><div class="val">${fmt(u.ase,1)}</div><div class="ly">semana anterior ${fmt(p.ase,1)}</div></div>
+    <div class="kpi"><div class="lbl">Leads atendidos por día</div><div class="val">${fmt(u.reg,0)}</div><div class="ly">semana anterior ${fmt(p.reg,0)}</div></div>
+    <div class="kpi"><div class="lbl">Chats con interés de Meta por día</div><div class="val">${fmt(u.chats,0)}</div><div class="ly">semana anterior ${fmt(p.chats,0)}</div></div>
+    <div class="kpi dest"><div class="lbl">Capacidad típica por asesora / día</div><div class="val">${fmt(cap,0)}</div><div class="ly">mediana de leads atendidos por asesora en un día (120 días)</div></div>`;
   const pal = [PAL_META[0], PAL_GOO[0], PAL_META[2], PAL_GOO[1], "#9A9A9A", PAL_META[4]];
   chart("chFront").setOption({...base, legend:{top:0}, grid:{left:50,right:30,top:40,bottom:50}, tooltip:{trigger:"axis"},
-    xAxis: ejeX(keys, semanal), yAxis:{type:"value", splitLine:{lineStyle:{color:"#EFEBE3"}}},
-    series:[...nombres.map((n,i)=>({name:n, type:"bar", stack:"ase", data:agg(d=>val[d+"|"+n]||0), itemStyle:{color:pal[i%pal.length]}, barMaxWidth:22})),
-      {name:"Chats con 2+ mensajes (Meta)", type:"line", data:agg(d=>chats[d]||0), itemStyle:{color:C.char}, lineStyle:{width:2}, symbolSize:4},
-      {name:"Conversaciones iniciadas (Meta)", type:"line", data:agg(d=>conv[d]||0), itemStyle:{color:C.neg}, lineStyle:{width:1.5,type:"dashed"}, symbol:"none"}]}, true);
+    xAxis: ejeX(dias, false), yAxis:{type:"value", splitLine:{lineStyle:{color:"#EFEBE3"}}},
+    series:[...nombres.map((n,i)=>({name:n, type:"bar", stack:"ase", data:dias.map(d=>val[d+"|"+n]||0), itemStyle:{color:pal[i%pal.length]}, barMaxWidth:22})),
+      {name:"Chats con 2+ mensajes (Meta)", type:"line", data:dias.map(d=>Math.round(chats[d]||0)), itemStyle:{color:C.char}, lineStyle:{width:2}, symbolSize:4},
+      {name:"Conversaciones iniciadas (Meta)", type:"line", data:dias.map(d=>Math.round(conv[d]||0)), itemStyle:{color:C.neg}, lineStyle:{width:1.5,type:"dashed"}, symbol:"none"}]}, true);
   const sinReg = dias.filter(d=>nAse(d)===0);
-  // Hueco de registro: días con leads atendidos (reservas + no cierre, solo desde que existe "Razones no cierre") y sin fila en Data Leads
-  const hueco = nombres.map(n=>({n, d: dias.filter(d=>(at[d+"|"+n]||0)>0 && !(dl[d+"|"+n]>0)).length, l: dias.reduce((s_,d)=>s_+((at[d+"|"+n]||0)>0 && !(dl[d+"|"+n]>0) ? at[d+"|"+n] : 0),0)})).filter(o=>o.d>=3 && o.l>=50);
+  // Asesoras que atienden pero no aparecen en Data Leads (hueco de registro)
+  const hueco = nombres.map(n=>({n, d: dias.filter(d=>(val[d+"|"+n]||0)>0 && !(dl[d+"|"+n]>0)).length, l: dias.reduce((s_,d)=>s_+((val[d+"|"+n]||0)>0 && !(dl[d+"|"+n]>0) ? val[d+"|"+n] : 0),0)})).filter(o=>o.d>=3);
   const capDia = u.ase * cap;
-  $("#avisoFront").innerHTML = `<div class="nota" style="margin-top:8px">Rango: ${ini} a ${fin}${semanal?" · agrupado por semana (suma de la semana)":""}. Usa el filtro de fechas de arriba.</div>`
-    + (u.chats > capDia ? `<div class="aviso rojo"><b>Demanda mayor que la capacidad:</b> en los últimos 7 días del rango llegan ~${fmt(u.chats,0)} chats con interés por día y, con ${fmt(u.ase,1)} asesoras atendiendo, la capacidad demostrada es ~${fmt(capDia,0)}. Subir la pauta a WhatsApp en estas condiciones probablemente aumente los chats sin atender.</div>` : "")
-    + (hueco.length ? `<div class="aviso rojo"><b>Leads atendidos que no están en "Data Leads":</b> ${hueco.map(o=>`${o.n} atendió ${fmt(o.l)} leads en ${o.d} días sin ningún registro en Data Leads`).join("; ")}. En esos días los leads del dashboard (que salen de Data Leads) están subestimados.</div>` : "")
-    + (sinReg.length && sinReg.length <= 15 ? `<div class="aviso">Días sin ningún registro de actividad: ${sinReg.map(etiqFecha).join(", ")}.</div>` : sinReg.length ? `<div class="aviso">${sinReg.length} días sin ningún registro de actividad en el rango.</div>` : "");
+  $("#avisoFront").innerHTML = (u.chats > capDia ? `<div class="aviso rojo"><b>Demanda mayor que la capacidad:</b> llegan ~${fmt(u.chats,0)} chats con interés por día y, con ${fmt(u.ase,1)} asesoras registrando, la capacidad típica es ~${fmt(capDia,0)}. Subir la pauta a WhatsApp en estas condiciones probablemente aumente los chats sin atender.</div>` : "")
+    + (hueco.length ? `<div class="aviso rojo"><b>Leads atendidos que no están en "Data Leads":</b> ${hueco.map(o=>`${o.n} atendió ${fmt(o.l)} leads en ${o.d} días sin ningún registro en Data Leads`).join("; ")}. Por eso los leads del dashboard (que salen de Data Leads) están subestimados en esos días.</div>` : "")
+    + (sinReg.length ? `<div class="aviso">Días sin ningún registro de actividad: ${sinReg.map(etiqFecha).join(", ")}.</div>` : "");
 }
 const TIPO_G = {SEARCH:"Búsqueda", PERFORMANCE_MAX:"Máximo rendimiento", DISPLAY:"Display", VIDEO:"Video", DEMAND_GEN:"Demand Gen"};
 function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
