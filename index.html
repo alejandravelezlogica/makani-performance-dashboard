@@ -188,7 +188,7 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
       <div class="card canal"><h3>Google Ads</h3><div id="canalGoogle"></div></div>
     </div>
     <div class="card"><h3>Pasadías vs Villas</h3><div class="nota">Inversión atribuible por el nombre de la campaña; reservas y venta, por el concepto registrado en el front. La inversión de marca o mixta no se reparte: se muestra aparte.</div><div id="tablaProducto"></div></div>
-    <div class="card"><h3>Inversión y reservas en el tiempo</h3><div class="nota">Diario en rangos de hasta 3 meses; semanal en rangos más largos. Barras: inversión en Meta y Google. Línea: reservas por canales digitales (IG + Web + Referidos). Línea discontinua: reservas del periodo de comparación (sin dato antes de sep-2025).</div><div class="chart" id="chTendencia"></div></div>
+    <div class="card"><h3>Inversión y reservas en el tiempo</h3><div class="nota">Diario en rangos de hasta 3 meses; semanal en rangos más largos. Barras: inversión en Meta y Google. Línea: reservas totales registradas por el front (todos los orígenes). Línea discontinua: reservas totales del periodo de comparación (sin dato antes de sep-2025).</div><div class="chart" id="chTendencia"></div></div>
     <div class="card"><h3>Lectura del periodo</h3><div class="insights" id="insights"></div></div>
     <details class="card mas" id="detMas"><summary>Ver todos los indicadores</summary>
       <div class="kpis" id="kpis" style="margin-top:18px"></div>
@@ -222,7 +222,7 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
     </div>
     <div class="grid2">
       <div class="card"><h3>Por hora: % del gasto vs % de las conversaciones</h3><div class="nota">Donde la barra de gasto supera a la de conversaciones, se paga más de lo que rinde la franja.</div><div class="chart" id="chHoras"></div></div>
-      <div class="card"><h3>Front por día de la semana</h3><div class="nota">Leads y reservas registrados, y tasa de cierre (reservas IG+Web+Ref ÷ leads).</div><div class="chart" id="chDiaSemana"></div></div>
+      <div class="card"><h3>Front por día de la semana</h3><div class="nota">Leads y reservas registrados, y tasa de cierre (reservas IG+Web+Ref ÷ leads IG+Web+Ref).</div><div class="chart" id="chDiaSemana"></div></div>
     </div>
     <div class="card"><h3>Google Ads: día de la semana × hora (costo por conversión)</h3><div class="nota">Informe agregado por cuenta, sin fecha diaria: no responde al filtro de fechas.</div><div class="chart alto" id="chHeatG"></div></div>
   </section>
@@ -372,14 +372,16 @@ function agregado(a,b){
   const g = sumar(GOO.filter(r=>enRango(r.fecha,a,b)), CG);
   const frontCubre = a >= D.rango.front_desde;
   const leads = f.leads_ig+f.leads_web+f.leads_ref;
-  const resDig = f.res_ig+f.res_web+f.res_ref;
-  const ventaDig = f.venta_ig+f.venta_web+f.venta_ref;
-  const venta = ventaDig + f.venta_otro;
+  // Digital = canales donde actúa la pauta (IG + Web). Referidos y otros orígenes quedan fuera.
+  const resDig = f.res_ig+f.res_web;
+  const ventaDig = f.venta_ig+f.venta_web;
+  const resTot = f.res_ig+f.res_web+f.res_ref+f.res_otro;
+  const venta = f.venta_ig+f.venta_web+f.venta_ref+f.venta_otro;
   const inv = m.gasto + g.costo;
-  return {f,m,g,frontCubre,leads,resDig,ventaDig,venta,inv,
-    reservas: resDig + f.res_otro,
+  return {f,m,g,frontCubre,leads,resDig,ventaDig,venta,inv,resTot,
+    reservas: resTot, cpResTot: div(inv,resTot), roasTot: div(venta,inv),
     cpConv: div(m.gasto,m.conversaciones), cpLead: div(inv,leads), cpRes: div(inv,resDig),
-    roas: div(ventaDig,inv), conv: div(resDig,leads), registro: div(f.leads_ig,m.mensaje_2), sigue: div(m.mensaje_2,m.conversaciones),
+    roas: div(ventaDig,inv), conv: div(resDig, f.leads_ig+f.leads_web), registro: div(f.leads_ig,m.mensaje_2), sigue: div(m.mensaje_2,m.conversaciones),
     cpLeadWeb: div(g.costo,f.leads_web), cpResWeb: div(g.costo,f.res_web), cpConvReal: div(m.gasto,m.mensaje_2),
     convIG: div(f.res_ig,f.leads_ig)};
 }
@@ -431,12 +433,13 @@ function renderKPIs(x, y){
     kpi("Leads registrados (front)", x.leads, y.leads, v=>fmt(v), false, true, sf),
     kpi("Leads IG", x.f.leads_ig, y.f.leads_ig, v=>fmt(v), false, false, sf),
     kpi("Leads Web", x.f.leads_web, y.f.leads_web, v=>fmt(v), false, false, sf),
-    kpi("Reservas canales digitales (IG+Web+Ref)", x.resDig, y.resDig, v=>fmt(v), false, true, sf),
+    kpi("Reservas totales (todos los orígenes)", x.resTot, y.resTot, v=>fmt(v), false, true, sf),
+    kpi("Reservas digitales (IG + Web)", x.resDig, y.resDig, v=>fmt(v), false, false, sf),
     kpi("Venta sin IVA total (front)", x.venta, y.venta, money, false, false, sf),
-    kpi("Conversión lead → reserva", x.conv, y.conv, v=>pct(v), false, false, sf),
+    kpi("Conversión lead → reserva (IG + Web)", x.conv, y.conv, v=>pct(v), false, false, sf),
     kpi("Costo por lead", x.cpLead, y.cpLead, money, true, false, sf),
-    kpi("Costo por reserva digital", x.cpRes, y.cpRes, money, true, true, sf),
-    kpi("ROAS digital (venta IG+Web+Ref ÷ inversión)", x.roas, y.roas, v=>v==null?"—":fmt(v,1)+"x", false, false, sf),
+    kpi("Costo por reserva digital (inversión ÷ reservas IG+Web)", x.cpRes, y.cpRes, money, true, true, sf),
+    kpi("ROAS digital (venta IG+Web ÷ inversión)", x.roas, y.roas, v=>v==null?"—":fmt(v,1)+"x", false, false, sf),
     kpi("% de chats Meta que siguieron escribiendo (2+ mensajes)", x.sigue, y.sigue, v=>pct(v)),
     kpi("Costo Meta por chat con 2+ mensajes", x.cpConvReal, y.cpConvReal, money, true),
     kpi("Costo Google por lead Web (front)", x.cpLeadWeb, y.cpLeadWeb, money, true, false, sf),
@@ -454,7 +457,7 @@ function serie(a,b){
   for(let s=a; s<=b; s=addDays(s,1)) get(clave(s));
   META.forEach(r=>{ if(enRango(r.fecha,a,b)) get(clave(r.fecha)).meta += r.gasto; });
   GOO.forEach(r=>{ if(enRango(r.fecha,a,b)) get(clave(r.fecha)).goo += r.costo; });
-  FRONT.forEach(r=>{ if(enRango(r.fecha,a,b)){ const o=get(clave(r.fecha)); o.leads += r.leads_ig+r.leads_web+r.leads_ref; o.res += r.res_ig+r.res_web+r.res_ref; o.venta += r.venta_ig+r.venta_web+r.venta_ref; } });
+  FRONT.forEach(r=>{ if(enRango(r.fecha,a,b)){ const o=get(clave(r.fecha)); o.leads += r.leads_ig+r.leads_web+r.leads_ref; o.res += r.res_ig+r.res_web+r.res_ref+r.res_otro; o.venta += r.venta_ig+r.venta_web+r.venta_ref+r.venta_otro; } });
   return {semanal, k:[...mp.keys()].sort(), mp};
 }
 function renderTendencia(){
@@ -469,7 +472,7 @@ function renderTendencia(){
     series:[
       {name:"Meta",type:"bar",stack:"inv",data:s.k.map(k=>Math.round(s.mp.get(k).meta)),itemStyle:{color:C.sea},barMaxWidth:26},
       {name:"Google",type:"bar",stack:"inv",data:s.k.map(k=>Math.round(s.mp.get(k).goo)),itemStyle:{color:C.blood,borderRadius:[4,4,0,0]},barMaxWidth:26},
-      {name:"Reservas digitales",type:"line",yAxisIndex:1,data:s.k.map(k=>s.mp.get(k).res),itemStyle:{color:C.char},lineStyle:{width:2.5},symbol:"circle",symbolSize:5,smooth:true},
+      {name:"Reservas totales",type:"line",yAxisIndex:1,data:s.k.map(k=>s.mp.get(k).res),itemStyle:{color:C.char},lineStyle:{width:2.5},symbol:"circle",symbolSize:5,smooth:true},
       {name:"Reservas · comparación",type:"line",yAxisIndex:1,data:ly,connectNulls:false,itemStyle:{color:"#B6B0A2"},lineStyle:{type:"dashed",width:1.5},symbol:"none",smooth:true},
     ]}, true);
 }
@@ -520,19 +523,29 @@ function porProducto(a,b){
 function renderResumen(x, y){
   const sf = !y.frontCubre, s = serie(A,B);
   const inv = s.k.map(k=>s.mp.get(k).meta+s.mp.get(k).goo), res = s.k.map(k=>s.mp.get(k).res), ven = s.k.map(k=>s.mp.get(k).venta);
-  // Veredicto
-  const mejora = !sf && x.cpRes!=null && y.cpRes!=null ? x.cpRes < y.cpRes : null;
-  const estado = mejora==null ? '<span class="estado neutro">Sin comparación con el año anterior</span>'
-    : mejora ? '<span class="estado bien">Eficiencia mejorando vs año anterior</span>' : '<span class="estado mal">Eficiencia empeorando vs año anterior</span>';
+  // Veredicto: se juzga con reservas y venta TOTALES (no dependen de cómo el front etiquete el origen)
+  // y con la lectura incremental: cuánto trajo la inversión ADICIONAL frente al año anterior.
+  const comp = $("#modoComp").value==="prev" ? "periodo anterior" : "mismo periodo del año anterior";
+  const dInv = x.inv - y.inv, dRes = x.resTot - y.resTot, dVen = x.venta - y.venta;
+  const cpResInc = (!sf && dInv>0 && dRes>0) ? dInv/dRes : null, roasInc = (!sf && dInv>0) ? dVen/dInv : null;
+  const mejora = sf || x.cpResTot==null || y.cpResTot==null ? null : x.cpResTot < y.cpResTot;
+  const estado = mejora==null ? '<span class="estado neutro">Sin comparación (el registro del front empieza en sep-2025)</span>'
+    : mejora ? '<span class="estado bien">Eficiencia mejorando vs '+comp+'</span>' : '<span class="estado mal">Eficiencia empeorando vs '+comp+'</span>';
   const prod = $("#producto").value;
-  $("#veredicto").innerHTML = `${estado}<p>Se invirtieron <b>${money(x.inv)}</b> en pauta${prod?` de <b>${prod}</b>`:""}${y.inv?` (${delta(x.inv,y.inv,false,false,true)} vs ${$("#modoComp").value==="prev"?"periodo anterior":"año anterior"})`:""} y se lograron <b>${fmt(x.resDig)} reservas digitales</b>${sf?"":` (${delta(x.resDig,y.resDig,false)})`}. Cada reserva costó <b>${money(x.cpRes)}</b> en pauta y por cada $1 invertido se vendieron <b>$${x.roas==null?"—":fmt(x.roas,1)}</b>.</p>`;
+  let txt = `Se invirtieron <b>${money(x.inv)}</b> en pauta${prod?` de <b>${prod}</b>`:""} y el front registró <b>${fmt(x.resTot)} reservas</b> con <b>${money(x.venta)}</b> de venta sin IVA.`;
+  if(!sf && y.inv) {
+    txt += ` Frente al ${comp} se invirtió <b>${dInv>=0?money(dInv)+" más":money(-dInv)+" menos"}</b> (${delta(x.inv,y.inv,false,false,true)}) y se obtuvieron <b>${dRes>=0?"+":""}${fmt(dRes)} reservas</b> (${delta(x.resTot,y.resTot)}) y <b>${dVen>=0?"+":"−"}${money(Math.abs(dVen))}</b> de venta (${delta(x.venta,y.venta)}).`;
+    if(dInv>0) txt += dRes>0 ? ` Cada reserva adicional costó <b>${money(cpResInc)}</b> y cada $1 adicional de pauta trajo <b>$${fmt(roasInc,1)}</b> de venta adicional.`
+                             : ` La inversión adicional <b>no se tradujo en más reservas</b>.`;
+  }
+  $("#veredicto").innerHTML = `${estado}<p>${txt}</p>`;
   // 4 cifras grandes
-  const t = (lbl, val, d, que, spark, color) => `<div class="t"><div class="lbl">${lbl}</div><div class="val">${val}</div><div class="cmp">${d}</div><div class="que">${que}</div>${spark}</div>`;
+  const t = (lbl, val, d, que, spark) => `<div class="t"><div class="lbl">${lbl}</div><div class="val">${val}</div><div class="cmp">${d}</div><div class="que">${que}</div>${spark}</div>`;
   $("#kpisBig").innerHTML = [
     t("Inversión en pauta", money(x.inv), delta(x.inv,y.inv,false,false,true), `Meta ${money(x.m.gasto)} · Google ${money(x.g.costo)}`, sparkline(inv, C.sea)),
-    t("Reservas digitales", fmt(x.resDig), delta(x.resDig,y.resDig,false,sf), `IG ${fmt(x.f.res_ig)} · Web ${fmt(x.f.res_web)} · Referidos ${fmt(x.f.res_ref)}`, sparkline(res, C.char)),
-    t("Costo por reserva", money(x.cpRes), delta(x.cpRes,y.cpRes,true,sf), "Inversión total ÷ reservas digitales", sparkline(inv.map((v,i)=>res[i]?v/res[i]:null), C.blood)),
-    t("Retorno (ROAS)", x.roas==null?"—":fmt(x.roas,1)+"x", delta(x.roas,y.roas,false,sf), `Venta digital ${money(x.ventaDig)}`, sparkline(ven.map((v,i)=>inv[i]?v/inv[i]:null), C.pos)),
+    t("Reservas totales", fmt(x.resTot), delta(x.resTot,y.resTot,false,sf), `IG ${fmt(x.f.res_ig)} · Web ${fmt(x.f.res_web)} · Referidos ${fmt(x.f.res_ref)} · Otros ${fmt(x.f.res_otro)}`, sparkline(res, C.char)),
+    t("Venta sin IVA", money(x.venta), delta(x.venta,y.venta,false,sf), `Digital (IG + Web) ${money(x.ventaDig)}`, sparkline(ven, C.pos)),
+    t("Costo de pauta por reserva", money(x.cpResTot), delta(x.cpResTot,y.cpResTot,true,sf), "Inversión total ÷ reservas totales", sparkline(inv.map((v,i)=>res[i]?v/res[i]:null), C.blood)),
   ].join("");
   // Canales
   const fila = (k, v, d="") => `<div class="fila"><span class="k">${k}</span><span><span class="v">${v}</span><span class="d">${d}</span></span></div>`;
@@ -541,6 +554,7 @@ function renderResumen(x, y){
     fila("Chats con interés (2+ mensajes)", fmt(x.m.mensaje_2), delta(x.m.mensaje_2,y.m.mensaje_2)),
     fila("Costo por chat con interés", money(x.cpConvReal), delta(x.cpConvReal,y.cpConvReal,true)),
     fila("Reservas IG (front)", fmt(x.f.res_ig), delta(x.f.res_ig,y.f.res_ig,false,sf)),
+    fila("Reservas IG por cada $1M en Meta", fmt(div(x.f.res_ig,x.m.gasto/1e6),1), delta(div(x.f.res_ig,x.m.gasto),div(y.f.res_ig,y.m.gasto),false,sf)),
     fila("Costo de pauta por reserva IG", money(div(x.m.gasto,x.f.res_ig)), delta(div(x.m.gasto,x.f.res_ig),div(y.m.gasto,y.f.res_ig),true,sf)),
   ].join("");
   $("#canalGoogle").innerHTML = [
@@ -548,6 +562,7 @@ function renderResumen(x, y){
     fila("Leads Web (front)", fmt(x.f.leads_web), delta(x.f.leads_web,y.f.leads_web,false,sf)),
     fila("Costo por lead Web", money(x.cpLeadWeb), delta(x.cpLeadWeb,y.cpLeadWeb,true,sf)),
     fila("Reservas Web (front)", fmt(x.f.res_web), delta(x.f.res_web,y.f.res_web,false,sf)),
+    fila("Reservas Web por cada $1M en Google", fmt(div(x.f.res_web,x.g.costo/1e6),1), delta(div(x.f.res_web,x.g.costo),div(y.f.res_web,y.g.costo),false,sf)),
     fila("Costo por reserva Web", money(x.cpResWeb), delta(x.cpResWeb,y.cpResWeb,true,sf)),
   ].join("");
   // Producto
@@ -570,7 +585,9 @@ function insights(x,y){
   }
   if(x.f.leads_ig>0) add(`De cada 100 leads IG se cerraron <b>${fmt(100*(x.convIG||0),1)}</b> reservas${y.frontCubre && y.f.leads_ig? ` (antes ${fmt(100*(div(y.f.res_ig,y.f.leads_ig)||0),1)})`:""}. Costo de pauta Meta por reserva IG: <b>${money(div(x.m.gasto,x.f.res_ig))}</b>.`, (y.frontCubre && x.convIG < 0.8*div(y.f.res_ig,y.f.leads_ig)) ? "alerta":"");
   if(x.m.conversaciones && x.m.bloqueos/x.m.conversaciones > 0.03) add(`<b>${pct(x.m.bloqueos/x.m.conversaciones)}</b> de las conversaciones terminaron en bloqueo del chat: señal de público poco calificado o de mensajes que no responden lo que la persona busca.`, "alerta");
-  if(y.inv>0) add(`La inversión total varió <b>${fmt(100*(x.inv/y.inv-1),1)}%</b> frente al periodo de comparación${x.frontCubre&&y.frontCubre&&y.resDig?` y las reservas digitales <b>${fmt(100*(x.resDig/y.resDig-1),1)}%</b>`:""}.`);
+  if(y.frontCubre && y.f.res_ref>20 && x.f.res_ref < 0.6*y.f.res_ref && x.resDig > y.resDig)
+    add(`Las reservas con origen <b>Referido</b> bajaron de ${fmt(y.f.res_ref)} a ${fmt(x.f.res_ref)} mientras IG + Web subieron de ${fmt(y.resDig)} a ${fmt(x.resDig)}, y las reservas totales cambiaron solo ${delta(x.resTot,y.resTot)}. Parte del crecimiento de IG y Web puede ser un cambio en cómo el front etiqueta el origen, no demanda nueva. Por eso el veredicto usa reservas y venta totales.`, "alerta");
+  if(y.inv>0) add(`La inversión total varió <b>${fmt(100*(x.inv/y.inv-1),1)}%</b> frente al periodo de comparación${x.frontCubre&&y.frontCubre&&y.resTot?` y las reservas totales <b>${fmt(100*(x.resTot/y.resTot-1),1)}%</b>`:""}.`);
   // horas
   const h = HORA.filter(r=>enRango(r.fecha,A,B));
   if(h.length){
@@ -831,8 +848,8 @@ function renderNotas(){
   <p><b>Comparación.</b> "LY −364 días" compara contra el mismo periodo del año anterior alineado por día de la semana (recomendado para pasadías). Si el registro del front no cubre el periodo de comparación, esos KPIs muestran "comparación no disponible".</p>
   <p><b>Conversaciones iniciadas (Meta)</b> = veces que una persona envió un mensaje a la empresa desde el anuncio, después de 7 días sin actividad. No es el clic en el anuncio: Meta reporta los clics por separado y son muchos más. Cerca del 97% de las conversaciones se atribuyen a un clic y solo ~2% a una vista sin clic. Muchas conversaciones son solo el mensaje automático precargado del anuncio; por eso también se muestran los <b>chats con 2+ mensajes</b> (la persona siguió escribiendo), una medida más exigente de interés real. Sin la API de WhatsApp no se puede auditar chat por chat: es una métrica de la plataforma.</p>
   <p><b>Conversiones de Google</b> = compras en el motor de reservas web (acciones "Booking COP/USD/EUR"). Los clics al botón de WhatsApp de la web no se miden como conversión, así que Google también se evalúa con los <b>leads y reservas Web</b> del front. Esos leads Web incluyen tráfico orgánico y directo, no solo pauta.</p>
-  <p><b>Conversaciones WhatsApp</b> (KPI) = conversaciones iniciadas atribuidas por Meta (7 días). <b>Leads</b> = registrados por el front (IG, Web, Referidos). <b>Reservas digitales</b> = reservas cuyo origen es Instagram, Página web o Referido. <b>Venta</b> = sin IVA, según el front.</p>
-  <p><b>Costo por reserva digital</b> = inversión total Meta + Google ÷ reservas digitales. Es una medida de eficiencia conjunta: el front no registra qué anuncio originó cada lead.</p>
+  <p><b>Conversaciones WhatsApp</b> (KPI) = conversaciones iniciadas atribuidas por Meta (7 días). <b>Leads</b> = registrados por el front (IG, Web, Referidos). <b>Reservas totales</b> = todas las reservas registradas por el front (pasadías, villas, KLM), de cualquier origen: es la cifra principal porque no depende de cómo se etiquete el origen. <b>Reservas digitales</b> = origen Instagram o Página web (canales donde actúa la pauta); Referidos queda fuera. <b>Comparación</b> por defecto: mismo periodo del año anterior alineado por día de la semana (−364 días, STLY). <b>Lectura incremental</b>: (inversión hoy − inversión año anterior) frente a (reservas y venta hoy − año anterior); muestra cuánto trajo la inversión adicional, sin descontar estacionalidad ni demanda orgánica. <b>Venta</b> = sin IVA, según el front.</p>
+  <p><b>Costo de pauta por reserva</b> = inversión total Meta + Google ÷ reservas totales; el costo por reserva digital usa solo IG + Web. Es una medida de eficiencia conjunta: el front no registra qué anuncio originó cada lead.</p>
   <p><b>Horas.</b> Meta conserva el detalle por hora de los últimos ~13 meses. El gasto se ubica a la hora de la impresión y las conversaciones a la hora en que la persona escribió. Zona horaria: Bogotá.</p>
   <p><b>Desperdicio estimado.</b> Para cada segmento: gasto − (resultados × costo promedio de su propia campaña). Si un segmento rinde igual o mejor que su campaña, su desperdicio es 0. Es una estimación de ahorro potencial, no un gasto "perdido" en sentido contable: algunos segmentos aportan alcance o recordación.</p>
   <p><b>Curva de presupuesto.</b> Ajuste logarítmico de conversaciones diarias vs gasto diario, solo en campañas de conversación. Una correlación no es causalidad: la estacionalidad y los cambios de creativos también mueven los resultados.</p>
