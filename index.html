@@ -224,7 +224,7 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
     </div>
     <div class="grid2">
       <div class="card"><h3>Chats Meta vs leads IG registrados</h3><div class="nota">Conversaciones iniciadas y chats con 2+ mensajes (Meta) frente a los leads IG del front. Los leads IG se parecen más a los chats con 2+ mensajes: el front anota a quien realmente conversa.</div><div class="chart" id="chConvVsLeads"></div></div>
-      <div class="card"><h3>Calidad de la conversación (Meta)</h3><div class="nota">% de conversaciones iniciadas en las que la persona envió un 2º mensaje, es decir, siguió escribiendo después del mensaje automático del anuncio. Bloqueos = la persona bloqueó a la empresa.</div><div class="chart" id="chCalidad"></div></div>
+      <div class="card"><h3>Calidad de la conversación (Meta)</h3><div class="nota">Solo puntos con 30 o más conversaciones (antes de jun-2026 casi no hubo campañas a WhatsApp). % de conversaciones iniciadas en las que la persona envió un 2º mensaje, es decir, siguió escribiendo después del mensaje automático del anuncio. Bloqueos = la persona bloqueó a la empresa.</div><div class="chart" id="chCalidad"></div></div>
     </div>
     <div class="card"><h3>Razones de no cierre (front)</h3><div class="nota">Comparación con el periodo de referencia.</div><div class="chart alto" id="chRazones"></div></div>
   </section>
@@ -336,6 +336,12 @@ const div = (a,b) => b ? a/b : null;
 const PAL_META = ["#2F6E73","#4D9499","#7FB3B6","#A9CFCF","#1F4B4F","#CFE3E2"], PAL_GOO = ["#C9A961","#E3CC86","#9C7F3C","#F0D78A"];
 const C = {ocean:"#2F6E73", blood:"#D2B263", sea:"#4D9499", gray:"#676767", glossy:"#D5D3CB", pos:"#4F8F63", neg:"#B9473F", neu:"#B58A1C", char:"#3A3A3A"};
 const DIAS = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+const MES3 = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+const etiqFecha = k => `${+k.slice(8,10)} ${MES3[+k.slice(5,7)-1]} ${k.slice(2,4)}`;
+// Eje X temporal: nombre que dice si cada punto es un día o una semana
+const ejeX = (keys, semanal) => ({type:"category", data:keys.map(etiqFecha), name: semanal ? "Semana (lunes de inicio)" : "Día",
+  nameLocation:"middle", nameGap:30, nameTextStyle:{color:"#909090",fontSize:11}, axisLine:{lineStyle:{color:"#D5D3CB"}}, axisTick:{show:false}});
+const MIN_CONV = 30;  // mínimo de conversaciones por punto para calcular un % confiable
 const ETAPAS_CONV = new Set(["Conversaciones WhatsApp","Interacción / WhatsApp"]);
 const charts = {};
 function chart(id){ if(!charts[id]) charts[id] = echarts.init(document.getElementById(id)); return charts[id]; }
@@ -488,7 +494,7 @@ function renderTendencia(){
   const ly = s.k.map((k,i)=> ck[i]!=null && ck[i] >= D.rango.front_desde ? c.mp.get(ck[i]).res : null);
   chart("chTendencia").setOption({...base, legend:{top:0,icon:"roundRect",itemWidth:12,itemHeight:8},
     grid:{left:70,right:60,top:44,bottom:36},
-    xAxis:{type:"category", data:s.k.map(k=> s.semanal ? k.slice(5) : k.slice(5)), axisLine:{lineStyle:{color:"#D5D3CB"}}, axisTick:{show:false}},
+    xAxis:ejeX(s.k, s.semanal),
     yAxis:[{type:"value",axisLabel:{formatter:v=>money(v)},splitLine:{lineStyle:{color:"#EFEBE3"}}},{type:"value",name:"Reservas",splitLine:{show:false}}],
     tooltip:{trigger:"axis", valueFormatter:v=>fmt(v)},
     series:[
@@ -677,17 +683,17 @@ function renderEmbudo(x){
   const clave = r => { if(!s.semanal) return r.fecha; const d=toD(r.fecha); d.setDate(d.getDate()-diaSem(r.fecha)); return toS(d); };
   META.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ conv.set(clave(r),(conv.get(clave(r))||0)+r.conversaciones); m2.set(clave(r),(m2.get(clave(r))||0)+r.mensaje_2); });
   FRONT.filter(r=>enRango(r.fecha,A,B)).forEach(r=>lig.set(clave(r),(lig.get(clave(r))||0)+r.leads_ig));
-  chart("chConvVsLeads").setOption({...base, legend:{top:0}, xAxis:{type:"category",data:s.k.map(k=>k.slice(5))}, yAxis:{type:"value"},
+  chart("chConvVsLeads").setOption({...base, grid:{left:60,right:30,top:40,bottom:50}, legend:{top:0}, xAxis:ejeX(s.k, s.semanal), yAxis:{type:"value"},
     series:[{name:"Conversaciones iniciadas",type:"line",data:s.k.map(k=>conv.get(k)),itemStyle:{color:C.ocean},symbol:"none"},
             {name:"Chats con 2+ mensajes",type:"line",data:s.k.map(k=>m2.get(k)),itemStyle:{color:C.gray},lineStyle:{type:"dashed"},symbol:"none"},
             {name:"Leads IG front",type:"line",data:s.k.map(k=>lig.get(k)),itemStyle:{color:C.blood},symbol:"none"}]}, true);
   const pr=new Map(), bl=new Map();
   s.k.forEach(k=>{pr.set(k,[0,0]);});
   META.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{const o=pr.get(clave(r)); if(o){o[0]+=r.conversaciones; o[1]+=r.mensaje_2;} const b=bl.get(clave(r))||[0,0]; b[0]+=r.conversaciones; b[1]+=r.bloqueos; bl.set(clave(r),b);});
-  chart("chCalidad").setOption({...base, legend:{top:0}, xAxis:{type:"category",data:s.k.map(k=>k.slice(5))}, yAxis:{type:"value",axisLabel:{formatter:v=>fmt(v*100)+"%"}},
+  chart("chCalidad").setOption({...base, grid:{left:60,right:30,top:40,bottom:50}, legend:{top:0}, xAxis:ejeX(s.k, s.semanal), yAxis:{type:"value",axisLabel:{formatter:v=>fmt(v*100)+"%"}},
     tooltip:{trigger:"axis",valueFormatter:v=>pct(v)},
-    series:[{name:"% que envió 2º mensaje",type:"line",data:s.k.map(k=>{const o=pr.get(k); return o[0]?o[1]/o[0]:null;}),itemStyle:{color:C.ocean},symbol:"none"},
-            {name:"% bloqueos",type:"line",data:s.k.map(k=>{const o=bl.get(k)||[0,0]; return o[0]?o[1]/o[0]:null;}),itemStyle:{color:C.gray},symbol:"none"}]}, true);
+    series:[{name:"% que envió 2º mensaje",type:"line",data:s.k.map(k=>{const o=pr.get(k); return o[0]>=MIN_CONV?o[1]/o[0]:null;}),itemStyle:{color:C.ocean},symbol:"none"},
+            {name:"% bloqueos",type:"line",data:s.k.map(k=>{const o=bl.get(k)||[0,0]; return o[0]>=MIN_CONV?o[1]/o[0]:null;}),itemStyle:{color:C.gray},symbol:"none"}]}, true);
   // razones
   const agg = (a,b) => { const o={}; RAZ.filter(r=>enRango(r.fecha,a,b)).forEach(r=>o[r.razon]=(o[r.razon]||0)+r.leads); return o; };
   const r1=agg(A,B), r0=agg(CA,CB); const t1=Object.values(r1).reduce((a,b)=>a+b,0), t0=Object.values(r0).reduce((a,b)=>a+b,0);
@@ -821,7 +827,7 @@ function renderCampanas(){
   const gw = new Map(sw.k.map(k=>[k,{g:0,c:0,l:0,r:0}]));
   GOO.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const o=gw.get(cl(r)); if(o){ o.g+=r.costo; o.c+=r.conversiones; } });
   FRONT.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const o=gw.get(cl(r)); if(o){ o.l+=r.leads_web; o.r+=r.res_web; } });
-  chart("chGoogleWeb").setOption({...base, legend:{top:0}, xAxis:{type:"category",data:sw.k.map(k=>k.slice(5))},
+  chart("chGoogleWeb").setOption({...base, grid:{left:70,right:60,top:40,bottom:50}, legend:{top:0}, xAxis:ejeX(sw.k, sw.semanal),
     yAxis:[{type:"value",name:"Costo Google",axisLabel:{formatter:v=>money(v)}},{type:"value",name:"Leads / reservas / conv.",splitLine:{show:false}}],
     tooltip:{trigger:"axis",valueFormatter:v=>fmt(v,1)},
     series:[{name:"Costo Google",type:"bar",data:sw.k.map(k=>Math.round(gw.get(k).g)),itemStyle:{color:C.blood}},
