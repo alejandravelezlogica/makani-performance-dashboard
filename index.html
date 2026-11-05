@@ -288,6 +288,8 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
 
   <section id="campanas">
     <div class="card"><h3>Inversión y costo por resultado según etapa de estrategia</h3><div class="nota">Mensual. Barras: inversión por etapa de estrategia. Líneas (eje derecho): costo por conversación y por chat con 2+ mensajes, calculados <b>solo con el gasto de las campañas que llevan a WhatsApp</b>. Los meses con menos de 30 conversaciones no se dibujan: en ene–may 2026 casi toda la pauta de Meta fue de ventas web.</div><div class="chart alto" id="chEtapas"></div></div>
+    <div class="card"><h3>Costo de pauta por reserva, mes a mes</h3><div class="nota">Cierra la cadena: cuánto costó en pauta cada reserva. <b>Meta</b> = inversión Meta ÷ reservas IG; <b>Google</b> = inversión Google ÷ reservas Web; <b>Total</b> = inversión total ÷ reservas totales del front (todos los orígenes). Las reservas IG y Web también incluyen clientes orgánicos, así que es un costo "de caja", no incremental.</div><div class="chart" id="chCostoReserva"></div></div>
+    <div class="card"><h3>Cadena completa por mes</h3><div class="nota">De la inversión a la venta, mes a mes (el más reciente arriba). Leads y reservas, del registro del front, que empieza en sep-2025. Retorno = venta del canal ÷ inversión del canal.</div><div class="tabla" id="tablaCadena"></div></div>
     <div class="card"><h3>Campañas Meta</h3><div class="tabla" id="tablaCampMeta"></div></div>
     <div class="card"><h3>Google Ads frente a los leads Web del front</h3><div class="nota">Las "conversiones" de Google solo cuentan compras en el motor de reservas web. Quien llega desde Google y escribe por el botón de WhatsApp no aparece como conversión en Google, pero sí como lead Web en el registro del front. Por eso Google se evalúa también con leads y reservas Web (que además incluyen tráfico orgánico y directo).</div><div class="chart" id="chGoogleWeb"></div></div>
     <div class="card"><h3>Campañas Google Ads</h3><div class="tabla" id="tablaCampG"></div></div>
@@ -337,6 +339,7 @@ const PAL_META = ["#2F6E73","#4D9499","#7FB3B6","#A9CFCF","#1F4B4F","#CFE3E2"], 
 const C = {ocean:"#2F6E73", blood:"#D2B263", sea:"#4D9499", gray:"#676767", glossy:"#D5D3CB", pos:"#4F8F63", neg:"#B9473F", neu:"#B58A1C", char:"#3A3A3A"};
 const DIAS = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
 const MES3 = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+const etiqMes = m => `${MES3[+m.slice(5,7)-1]} ${m.slice(0,4)}`;
 const etiqFecha = k => `${+k.slice(8,10)} ${MES3[+k.slice(5,7)-1]} ${k.slice(2,4)}`;
 // Eje X temporal: nombre que dice si cada punto es un día o una semana
 const ejeX = (keys, semanal) => ({type:"category", data:keys.map(etiqFecha), name: semanal ? "Semana (lunes de inicio)" : "Día",
@@ -836,6 +839,33 @@ function renderCampanas(){
       {name:"Leads Web (front)",type:"line",yAxisIndex:1,data:sw.k.map(k=>gw.get(k).l),itemStyle:{color:C.ocean},symbol:"none"},
       {name:"Reservas Web (front)",type:"line",yAxisIndex:1,data:sw.k.map(k=>gw.get(k).r),itemStyle:{color:C.sea},lineStyle:{type:"dotted"},symbol:"none"},
       {name:"Conversiones Google (compra web)",type:"line",yAxisIndex:1,data:sw.k.map(k=>+gw.get(k).c.toFixed(1)),itemStyle:{color:C.gray},lineStyle:{type:"dashed"},symbol:"none"}]}, true);
+  // Cadena mensual: inversión -> chats -> leads -> reservas -> venta -> costo por reserva
+  const CM_ = {}; meses.forEach(m=>CM_[m]={meta:0,goo:0,chats:0,lig:0,lweb:0,rig:0,rweb:0,rtot:0,vig:0,vweb:0,vtot:0});
+  META.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const o=CM_[r.fecha.slice(0,7)]; o.meta+=r.gasto; o.chats+=r.mensaje_2; });
+  GOO.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ CM_[r.fecha.slice(0,7)].goo+=r.costo; });
+  FRONT.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const o=CM_[r.fecha.slice(0,7)]; o.lig+=r.leads_ig; o.lweb+=r.leads_web; o.rig+=r.res_ig; o.rweb+=r.res_web;
+    o.rtot+=r.res_ig+r.res_web+r.res_ref+r.res_otro; o.vig+=r.venta_ig; o.vweb+=r.venta_web; o.vtot+=r.venta_ig+r.venta_web+r.venta_ref+r.venta_otro; });
+  const conFront = m => m >= D.rango.front_desde.slice(0,7);
+  const cpr = (inv, res, m) => conFront(m) && res>0 ? Math.round(inv/res) : null;
+  chart("chCostoReserva").setOption({...base, legend:{top:0}, grid:{left:80,right:30,top:40,bottom:40},
+    tooltip:{trigger:"axis",valueFormatter:v=>money(v)}, xAxis:{type:"category",data:meses,axisTick:{show:false},axisLine:{lineStyle:{color:"#D5D3CB"}}},
+    yAxis:{type:"value",axisLabel:{formatter:v=>money(v)},splitLine:{lineStyle:{color:"#EFEBE3"}}},
+    series:[
+      {name:"Meta ÷ reservas IG",type:"line",data:meses.map(m=>cpr(CM_[m].meta,CM_[m].rig,m)),itemStyle:{color:PAL_META[0]},lineStyle:{width:2.5},symbolSize:6},
+      {name:"Google ÷ reservas Web",type:"line",data:meses.map(m=>cpr(CM_[m].goo,CM_[m].rweb,m)),itemStyle:{color:PAL_GOO[0]},lineStyle:{width:2.5},symbolSize:6},
+      {name:"Total ÷ reservas totales",type:"line",data:meses.map(m=>cpr(CM_[m].meta+CM_[m].goo,CM_[m].rtot,m)),itemStyle:{color:C.char},lineStyle:{width:2,type:"dashed"},symbolSize:5},
+    ]}, true);
+  const fm = (m,v,f) => conFront(m) ? f(v) : "—";
+  $("#tablaCadena").innerHTML = `<table><thead>
+    <tr><th rowspan="2">Mes</th><th colspan="7" style="text-align:center;border-left:2px solid #4D9499">Meta → Instagram / WhatsApp</th><th colspan="5" style="text-align:center;border-left:2px solid #C9A961">Google → Web</th><th class="n" rowspan="2" style="border-left:2px solid #D5D3CB">Costo por reserva total</th></tr>
+    <tr><th class="n" style="border-left:2px solid #4D9499">Inversión</th><th class="n">Chats 2+</th><th class="n">Leads IG</th><th class="n">Reservas IG</th><th class="n">Venta IG</th><th class="n">Costo / reserva IG</th><th class="n">Retorno</th>
+        <th class="n" style="border-left:2px solid #C9A961">Inversión</th><th class="n">Leads Web</th><th class="n">Reservas Web</th><th class="n">Costo / reserva Web</th><th class="n">Retorno</th></tr></thead><tbody>
+    ${[...meses].reverse().map(m=>{ const o=CM_[m]; return `<tr><td style="white-space:nowrap">${etiqMes(m)}</td>
+      <td class="n" style="border-left:2px solid #4D9499">${money(o.meta)}</td><td class="n">${fmt(o.chats)}</td><td class="n">${fm(m,o.lig,fmt)}</td><td class="n">${fm(m,o.rig,fmt)}</td><td class="n">${fm(m,o.vig,money)}</td>
+      <td class="n"><b>${money(cpr(o.meta,o.rig,m))}</b></td><td class="n">${conFront(m)&&o.meta?fmt(o.vig/o.meta,1)+"x":"—"}</td>
+      <td class="n" style="border-left:2px solid #C9A961">${money(o.goo)}</td><td class="n">${fm(m,o.lweb,fmt)}</td><td class="n">${fm(m,o.rweb,fmt)}</td>
+      <td class="n"><b>${money(cpr(o.goo,o.rweb,m))}</b></td><td class="n">${conFront(m)&&o.goo?fmt(o.vweb/o.goo,1)+"x":"—"}</td>
+      <td class="n" style="border-left:2px solid #D5D3CB"><b>${money(cpr(o.meta+o.goo,o.rtot,m))}</b></td></tr>`; }).join("")}</tbody></table>`;
   // tabla meta
   const agg = {}; META.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const o=agg[r.c]||(agg[r.c]={...sumar([],CM)}); CM.forEach(c=>o[c]+=r[c]); });
   const filas = Object.entries(agg).map(([c,o])=>({...MCAMP[c],...o})).sort((a,b)=>b.gasto-a.gasto);
