@@ -287,7 +287,7 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
   </section>
 
   <section id="campanas">
-    <div class="card"><h3>Inversión y costo por resultado según etapa de estrategia</h3><div class="nota">Mensual. La línea muestra el costo por conversación de WhatsApp.</div><div class="chart alto" id="chEtapas"></div></div>
+    <div class="card"><h3>Inversión y costo por resultado según etapa de estrategia</h3><div class="nota">Mensual. Barras: inversión por etapa de estrategia. Líneas (eje derecho): costo por conversación y por chat con 2+ mensajes, calculados <b>solo con el gasto de las campañas que llevan a WhatsApp</b>. Los meses con menos de 30 conversaciones no se dibujan: en ene–may 2026 casi toda la pauta de Meta fue de ventas web.</div><div class="chart alto" id="chEtapas"></div></div>
     <div class="card"><h3>Campañas Meta</h3><div class="tabla" id="tablaCampMeta"></div></div>
     <div class="card"><h3>Google Ads frente a los leads Web del front</h3><div class="nota">Las "conversiones" de Google solo cuentan compras en el motor de reservas web. Quien llega desde Google y escribe por el botón de WhatsApp no aparece como conversión en Google, pero sí como lead Web en el registro del front. Por eso Google se evalúa también con leads y reservas Web (que además incluyen tráfico orgánico y directo).</div><div class="chart" id="chGoogleWeb"></div></div>
     <div class="card"><h3>Campañas Google Ads</h3><div class="tabla" id="tablaCampG"></div></div>
@@ -812,16 +812,18 @@ function renderSegmentos(){
 function renderCampanas(){
   // etapas mensual
   const meses = [...mesesDe(A,B)].sort(); const etapas = [...new Set(MCAMP.map(c=>c.etapa))];
-  const M = {}; meses.forEach(m=>M[m]={conv:0,g:0});
+  // Costo por conversación: SOLO gasto de campañas a WhatsApp ÷ sus conversaciones (las de ventas web/tráfico no generan chats)
+  const M = {}; meses.forEach(m=>M[m]={conv:0,g:0,m2:0});
   const E = {}; etapas.forEach(e=>E[e]=Object.fromEntries(meses.map(m=>[m,0])));
-  META.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const m=r.fecha.slice(0,7); E[MCAMP[r.c].etapa][m]+=r.gasto; M[m].g+=r.gasto; M[m].conv+=r.conversaciones; });
+  META.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const m=r.fecha.slice(0,7); E[MCAMP[r.c].etapa][m]+=r.gasto; if(ETAPAS_CONV.has(MCAMP[r.c].etapa)){ M[m].g+=r.gasto; M[m].conv+=r.conversaciones; M[m].m2+=r.mensaje_2; } });
   const G = Object.fromEntries(meses.map(m=>[m,0])); GOO.filter(r=>enRango(r.fecha,A,B)).forEach(r=>G[r.fecha.slice(0,7)]+=r.costo);
   const pal=PAL_META;
   chart("chEtapas").setOption({...base, legend:{top:0,type:"scroll"}, tooltip:{trigger:"axis",valueFormatter:v=>money(v)}, xAxis:{type:"category",data:meses},
     yAxis:[{type:"value",axisLabel:{formatter:v=>money(v)}},{type:"value",name:"Costo/conv.",axisLabel:{formatter:v=>money(v)},splitLine:{show:false}}],
     series:[...etapas.map((e,i)=>({name:"Meta · "+e,type:"bar",stack:"g",data:meses.map(m=>Math.round(E[e][m])),itemStyle:{color:pal[i%pal.length]}})),
       {name:"Google Ads",type:"bar",stack:"g",data:meses.map(m=>Math.round(G[m])),itemStyle:{color:PAL_GOO[0]}},
-      {name:"Costo por conversación WhatsApp",type:"line",yAxisIndex:1,data:meses.map(m=>M[m].conv?Math.round(M[m].g/M[m].conv):null),itemStyle:{color:C.neg},lineStyle:{width:2}}]}, true);
+      {name:"Costo por conversación (campañas WhatsApp)",type:"line",yAxisIndex:1,data:meses.map(m=>M[m].conv>=MIN_CONV?Math.round(M[m].g/M[m].conv):null),itemStyle:{color:C.char},lineStyle:{width:2},symbolSize:6},
+      {name:"Costo por chat con 2+ mensajes",type:"line",yAxisIndex:1,data:meses.map(m=>M[m].m2>=MIN_CONV?Math.round(M[m].g/M[m].m2):null),itemStyle:{color:C.neg},lineStyle:{width:2,type:"dashed"},symbolSize:6}]}, true);
   // Google vs leads web
   const sw = serie(A,B); const cl = r => { if(!sw.semanal) return r.fecha; const d=toD(r.fecha); d.setDate(d.getDate()-diaSem(r.fecha)); return toS(d); };
   const gw = new Map(sw.k.map(k=>[k,{g:0,c:0,l:0,r:0}]));
