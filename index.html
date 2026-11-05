@@ -102,6 +102,13 @@ footer{color:var(--gray);font-size:12px;text-align:center;padding:24px}
           <option value="prev">Periodo anterior</option>
         </select>
       </label>
+      <label>Producto
+        <select id="producto">
+          <option value="">Todos</option>
+          <option value="Pasadías">Pasadías</option>
+          <option value="Villas">Villas</option>
+        </select>
+      </label>
       <div class="presets" id="presets">
         <button data-p="30">30 días</button><button data-p="90">90 días</button>
         <button data-p="mes">Mes actual</button><button data-p="mesant">Mes anterior</button>
@@ -258,8 +265,28 @@ const base = {textStyle:{fontFamily:"Elms Sans, Segoe UI, sans-serif"}, grid:{le
 
 // --- tablas columnares -> objetos ---
 function T(t){ if(!t) return []; return t.rows.map(r => Object.fromEntries(t.cols.map((c,i)=>[c,r[i]]))); }
-const FRONT = T(D.front), META = T(D.meta), MCAMP = T(D.meta_campanas), GOO = T(D.google), GCAMP = T(D.google_campanas);
-const HORA = T(D.hora), GHORA = T(D.google_hora), SEG = T(D.segmentos), ADM = T(D.anuncios_mes), ADS = T(D.anuncios);
+const MCAMP = T(D.meta_campanas), GCAMP = T(D.google_campanas), ADS = T(D.anuncios);
+const FRONT_ALL = T(D.front), META_ALL = T(D.meta), GOO_ALL = T(D.google), SEG_ALL = T(D.segmentos), ADM_ALL = T(D.anuncios_mes);
+const FRONTP = T(D.front_producto);
+const HORA = T(D.hora), GHORA = T(D.google_hora);
+// Vistas filtradas por producto (se recalculan en aplicarProducto)
+let FRONT = FRONT_ALL, META = META_ALL, GOO = GOO_ALL, SEG = SEG_ALL, ADM = ADM_ALL, SIN_PROD = {meta:0, goo:0};
+function aplicarProducto(){
+  const p = $("#producto").value;
+  if(!p){ FRONT=FRONT_ALL; META=META_ALL; GOO=GOO_ALL; SEG=SEG_ALL; ADM=ADM_ALL; return; }
+  const okM = c => MCAMP[c] && MCAMP[c].producto===p, okG = c => GCAMP[c] && GCAMP[c].producto===p;
+  META = META_ALL.filter(r=>okM(r.c)); GOO = GOO_ALL.filter(r=>okG(r.c)); SEG = SEG_ALL.filter(r=>okM(r.c));
+  ADM = ADM_ALL.filter(r=>ADS[r.a] && okM(ADS[r.a].c));
+  // Leads: el front no los separa por producto -> se mantienen totales. Reservas y venta: solo del producto.
+  const porFecha = new Map(FRONTP.filter(r=>r.producto===p).map(r=>[r.fecha,r]));
+  const RV = ["res_ig","res_web","res_ref","res_otro","venta_ig","venta_web","venta_ref","venta_otro","pax"];
+  FRONT = FRONT_ALL.map(r=>{ const o={...r}; const q=porFecha.get(r.fecha); RV.forEach(k=>o[k]= q ? q[k] : 0); return o; });
+}
+function inversionSinProducto(a,b){
+  const g = META_ALL.filter(r=>enRango(r.fecha,a,b) && !["Pasadías","Villas"].includes(MCAMP[r.c].producto)).reduce((s,r)=>s+r.gasto,0);
+  const h = GOO_ALL.filter(r=>enRango(r.fecha,a,b) && !["Pasadías","Villas"].includes(GCAMP[r.c].producto)).reduce((s,r)=>s+r.costo,0);
+  return {meta:g, goo:h};
+}
 const HIST = T(D.historial), RAZ = T(D.razones), PROD = T(D.producto), GDIM = T(D.google_dim);
 
 // --- fechas ---
@@ -312,6 +339,7 @@ function preset(p){
   return setRango(D.rango.min, max);
 }
 document.querySelectorAll("#presets button").forEach(b=>b.onclick=()=>{ document.querySelectorAll("#presets button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); preset(b.dataset.p); });
+$("#producto").onchange=()=>{ aplicarProducto(); render(); };
 ["#desde","#hasta","#modoComp"].forEach(s=>$(s).onchange=()=>{ document.querySelectorAll("#presets button").forEach(x=>x.classList.remove("on")); render(); });
 document.querySelectorAll("#nav a").forEach(a=>a.onclick=()=>{
   document.querySelectorAll("#nav a").forEach(x=>x.classList.remove("on")); a.classList.add("on");
@@ -471,7 +499,7 @@ function renderEmbudo(x){
 // --- horas ---
 function renderHoras(){
   const h = HORA.filter(r=>enRango(r.fecha,A,B));
-  $("#notaHora").innerHTML = D.rango.hora_desde ? `Meta solo conserva el detalle por hora de los últimos ~13 meses (disponible desde ${D.rango.hora_desde}). Gasto a la hora de la impresión; conversaciones a la hora en que la persona escribió.` : "Sin datos por hora.";
+  $("#notaHora").innerHTML = ($("#producto").value ? "<b>Este mapa es de toda la cuenta (Meta no entrega horas por campaña a diario): no se filtra por producto.</b> " : "") + (D.rango.hora_desde ? `Meta solo conserva el detalle por hora de los últimos ~13 meses (disponible desde ${D.rango.hora_desde}). Gasto a la hora de la impresión; conversaciones a la hora en que la persona escribió.` : "Sin datos por hora.");
   const M = Array.from({length:7},()=>Array.from({length:24},()=>({g:0,c:0})));
   h.forEach(r=>{ const o=M[diaSem(r.fecha)][r.hora]; o.g+=r.gasto; o.c+=r.conversaciones; });
   const tg = h.reduce((s,r)=>s+r.gasto,0), tc = h.reduce((s,r)=>s+r.conversaciones,0);
@@ -712,7 +740,10 @@ function render(){
   A=$("#desde").value; B=$("#hasta").value; if(A>B){ [A,B]=[B,A]; }
   [CA,CB]=rangoComp(A,B);
   const x=agregado(A,B), y=agregado(CA,CB);
-  $("#periodo").innerHTML = `Periodo: <b>${A}</b> a <b>${B}</b> · Comparación: ${CA} a ${CB}`;
+  const prod = $("#producto").value;
+  let avisoProd = "";
+  if(prod){ const sp = inversionSinProducto(A,B); avisoProd = ` · <span class="chip amar">Producto: ${prod}</span> Inversión excluida por no tener producto identificable (marca / mixta): Meta ${money(sp.meta)}, Google ${money(sp.goo)}. Los <b>leads</b> se muestran totales: el front no los separa por producto.`; }
+  $("#periodo").innerHTML = `Periodo: <b>${A}</b> a <b>${B}</b> · Comparación: ${CA} a ${CB}${avisoProd}`;
   renderKPIs(x,y); insights(x,y); renderTendencia(); renderMix(x); renderOrigen(x,y);
   const activa = document.querySelector("#nav a.on").dataset.s; if(activa!=="resumen") renderSeccion(activa);
 }
