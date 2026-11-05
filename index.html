@@ -125,7 +125,6 @@ footer{color:var(--gray);font-size:12px;text-align:center;padding:24px}
   <a data-s="campanas">Campañas</a>
   <a data-s="presupuesto">Presupuesto óptimo</a>
   <a data-s="creativos">Creativos</a>
-  <a data-s="historial">Historial de cambios</a>
   <a data-s="notas">Metodología</a>
 </nav>
 <main>
@@ -134,7 +133,7 @@ footer{color:var(--gray);font-size:12px;text-align:center;padding:24px}
   <section id="resumen" class="on">
     <div class="kpis" id="kpis"></div>
     <div class="card"><h3>Lectura automática del periodo</h3><div class="nota">Hallazgos calculados sobre el rango elegido. Se recalculan al cambiar las fechas.</div><div class="insights" id="insights"></div></div>
-    <div class="card"><h3>Inversión, leads y reservas en el tiempo</h3><div class="nota">Barras: inversión Meta y Google. Líneas: leads registrados por el front y reservas. Línea punteada gris: leads del periodo de comparación.</div><div class="chart alto" id="chTendencia"></div></div>
+    <div class="card"><h3>Inversión, leads y reservas en el tiempo</h3><div class="nota">Barras: inversión Meta y Google. Líneas: leads registrados por el front y reservas. Línea gris discontinua: leads del front en el periodo de comparación (por defecto, el año anterior); no se dibuja donde no hay registro del front (antes de sep-2025).</div><div class="chart alto" id="chTendencia"></div></div>
     <div class="grid2">
       <div class="card"><h3>Mezcla de inversión</h3><div class="chart" id="chMix"></div></div>
       <div class="card"><h3>Reservas y venta por origen del lead</h3><div class="chart" id="chOrigen"></div></div>
@@ -240,10 +239,6 @@ footer{color:var(--gray);font-size:12px;text-align:center;padding:24px}
     </div>
   </section>
 
-  <section id="historial">
-    <div class="card"><h3>Cambios en la cuenta Meta vs gasto diario</h3><div class="nota">Cada marca es un día con cambios de presupuesto, estado, puja o segmentación.</div><div class="chart" id="chHist"></div></div>
-    <div class="card"><h3>Detalle de cambios del periodo</h3><div class="tabla" id="tablaHist"></div></div>
-  </section>
 
   <section id="notas">
     <div class="card"><h3>Metodología y definiciones</h3><div class="leyenda-def" id="metodologia"></div></div>
@@ -290,7 +285,7 @@ function inversionSinProducto(a,b){
   const h = GOO_ALL.filter(r=>enRango(r.fecha,a,b) && !["Pasadías","Villas"].includes(GCAMP[r.c].producto)).reduce((s,r)=>s+r.costo,0);
   return {meta:g, goo:h};
 }
-const HIST = T(D.historial), RAZ = T(D.razones), PROD = T(D.producto), GDIM = T(D.google_dim);
+const RAZ = T(D.razones), PROD = T(D.producto), GDIM = T(D.google_dim);
 
 // --- fechas ---
 const toD = s => new Date(s+"T00:00:00");
@@ -405,7 +400,8 @@ function serie(a,b){
 function renderTendencia(){
   const s = serie(A,B), c = serie(CA,CB);
   const ck = c.k;
-  const ly = s.k.map((k,i)=> ck[i]!=null ? c.mp.get(ck[i]).leads : null);
+  // Sin registro del front en el periodo de comparación -> hueco (null), no cero
+  const ly = s.k.map((k,i)=> ck[i]!=null && ck[i] >= D.rango.front_desde ? c.mp.get(ck[i]).leads : null);
   chart("chTendencia").setOption({...base, legend:{top:0},
     xAxis:{type:"category", data:s.k.map(k=> s.semanal ? "Sem "+k.slice(5) : k.slice(5))},
     yAxis:[{type:"value",name:"Inversión",axisLabel:{formatter:v=>money(v)}},{type:"value",name:"Leads / reservas",splitLine:{show:false}}],
@@ -415,7 +411,7 @@ function renderTendencia(){
       {name:"Google",type:"bar",stack:"inv",data:s.k.map(k=>Math.round(s.mp.get(k).goo)),itemStyle:{color:C.blood}},
       {name:"Leads front",type:"line",yAxisIndex:1,data:s.k.map(k=>s.mp.get(k).leads),itemStyle:{color:C.sea},lineStyle:{width:2.5},symbol:"none"},
       {name:"Reservas digitales",type:"line",yAxisIndex:1,data:s.k.map(k=>s.mp.get(k).res),itemStyle:{color:C.gray},lineStyle:{width:2.5,type:"dotted"},symbol:"none"},
-      {name:"Leads comparación",type:"line",yAxisIndex:1,data:ly,itemStyle:{color:C.glossy},lineStyle:{type:"dashed"},symbol:"none"},
+      {name:"Leads front · periodo de comparación",type:"line",yAxisIndex:1,data:ly,connectNulls:false,itemStyle:{color:C.glossy},lineStyle:{type:"dashed"},symbol:"none"},
     ]}, true);
 }
 function renderMix(x){
@@ -700,20 +696,6 @@ function renderCreativos(){
       <div style="color:${C.gray}">Activo ${o.desde} → ${o.hasta}</div></div></div>`).join("") || '<div class="vacio">Sin creativos con gasto en el rango.</div>';
 }
 
-// --- historial ---
-function renderHistorial(){
-  const h = HIST.filter(r=>enRango(r.fecha,A,B));
-  const s = serie(A,B); const gd=new Map(s.k.map(k=>[k,0]));
-  const clave = f => { if(!s.semanal) return f; const d=toD(f); d.setDate(d.getDate()-diaSem(f)); return toS(d); };
-  META.filter(r=>enRango(r.fecha,A,B)).forEach(r=>gd.set(clave(r.fecha),(gd.get(clave(r.fecha))||0)+r.gasto));
-  const cambios = {}; h.forEach(r=>{ const k=clave(r.fecha); cambios[k]=(cambios[k]||0)+1; });
-  chart("chHist").setOption({...base, legend:{top:0}, xAxis:{type:"category",data:s.k.map(k=>k.slice(5))},
-    yAxis:[{type:"value",axisLabel:{formatter:v=>money(v)}},{type:"value",name:"Cambios",splitLine:{show:false}}],
-    series:[{name:"Gasto Meta",type:"line",data:s.k.map(k=>Math.round(gd.get(k))),itemStyle:{color:C.ocean},areaStyle:{opacity:.08},symbol:"none"},
-            {name:"Cambios en la cuenta",type:"bar",yAxisIndex:1,data:s.k.map(k=>cambios[k]||0),itemStyle:{color:C.blood},barMaxWidth:8}]}, true);
-  $("#tablaHist").innerHTML = h.length ? `<table><thead><tr><th>Fecha</th><th>Evento</th><th>Objeto</th><th>Quién</th><th>Detalle</th></tr></thead><tbody>
-    ${h.slice(0,400).map(r=>`<tr><td>${r.fecha}</td><td>${r.evento}</td><td>${r.objeto}</td><td>${r.actor}</td><td>${r.detalle||""}</td></tr>`).join("")}</tbody></table>` : '<div class="vacio">Sin cambios registrados en el rango.</div>';
-}
 
 // --- metodología ---
 function renderNotas(){
@@ -739,7 +721,6 @@ function renderSeccion(s){
   if(s==="campanas") renderCampanas();
   if(s==="presupuesto") renderPresupuesto();
   if(s==="creativos") renderCreativos();
-  if(s==="historial") renderHistorial();
   if(s==="notas") renderNotas();
 }
 function render(){
