@@ -821,8 +821,9 @@ function renderCampanas(){
   META.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const m=r.fecha.slice(0,7); E[MCAMP[r.c].etapa][m]+=r.gasto; if(ETAPAS_CONV.has(MCAMP[r.c].etapa)){ M[m].g+=r.gasto; M[m].conv+=r.conversaciones; M[m].m2+=r.mensaje_2; } });
   const G = Object.fromEntries(meses.map(m=>[m,0])); GOO.filter(r=>enRango(r.fecha,A,B)).forEach(r=>G[r.fecha.slice(0,7)]+=r.costo);
   const pal=PAL_META;
-  chart("chEtapas").setOption({...base, legend:{top:0,type:"scroll"}, tooltip:{trigger:"axis",valueFormatter:v=>money(v)}, xAxis:{type:"category",data:meses},
-    yAxis:[{type:"value",axisLabel:{formatter:v=>money(v)}},{type:"value",name:"Costo/conv.",axisLabel:{formatter:v=>money(v)},splitLine:{show:false}}],
+  chart("chEtapas").setOption({...base, legend:{top:0,left:"center",width:"92%",itemGap:14,icon:"roundRect",itemWidth:12,itemHeight:8,textStyle:{fontSize:11.5}},
+    grid:{left:70,right:70,top:92,bottom:36}, tooltip:{trigger:"axis",valueFormatter:v=>money(v)}, xAxis:{type:"category",data:meses.map(etiqMes),axisTick:{show:false},axisLine:{lineStyle:{color:"#D5D3CB"}}},
+    yAxis:[{type:"value",axisLabel:{formatter:v=>money(v)}},{type:"value",axisLabel:{formatter:v=>money(v)},splitLine:{show:false}}],
     series:[...etapas.map((e,i)=>({name:"Meta · "+e,type:"bar",stack:"g",data:meses.map(m=>Math.round(E[e][m])),itemStyle:{color:pal[i%pal.length]}})),
       {name:"Google Ads",type:"bar",stack:"g",data:meses.map(m=>Math.round(G[m])),itemStyle:{color:PAL_GOO[0]}},
       {name:"Costo por conversación (campañas WhatsApp)",type:"line",yAxisIndex:1,data:meses.map(m=>M[m].conv>=MIN_CONV?Math.round(M[m].g/M[m].conv):null),itemStyle:{color:C.char},lineStyle:{width:2},symbolSize:6},
