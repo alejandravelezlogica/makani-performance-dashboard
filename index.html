@@ -5,91 +5,141 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow, noarchive">
 <title>Makani · Performance Digital</title>
+<link rel="icon" href="assets/logo_makani_dorado_720.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Elms+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
 <script src="data.js"></script>
 <style>
+/* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
+   Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
 :root{
-  --ocean:#023859; --blood:#6399BA; --sea:#2A5E95; --gray:#808080; --glossy:#D1D1D1;
-  --pos:#74AD52; --neg:#D72D41; --neu:#FFC75F;
-  --bg:#F4F7FA; --card:#FFFFFF; --ink:#1B2B3A; --soft:#EEF3F7;
+  --gold:#C9A961; --gold-l:#F0D78A; --gold-d:#9C7F3C;
+  --sand:#D5D3CB; --cream:#F5F1EF; --cream-2:#FBF9F6;
+  --char:#3A3A3A; --gray:#676767; --mid:#909090; --line:#E7E2D8;
+  --teal:#4D9499; --teal-d:#2F6E73; --teal-l:#E3F0EF;
+  --pos:#4F8F63; --neg:#B9473F; --neu:#B58A1C;
+  --head:"Jost","Raleway",sans-serif; --body:"Raleway","Segoe UI",sans-serif;
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:"Elms Sans",-apple-system,"Segoe UI",Roboto,sans-serif;font-size:14px}
-h1,h2,h3{font-weight:600;margin:0}
-header{background:var(--ocean);color:#fff;padding:18px 28px 14px}
-.top{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
-.logo-lockup{display:flex;align-items:center;gap:10px}
-.logo-lockup .mark{width:34px;height:34px;border-radius:7px;background:#F2F7FA;color:var(--ocean);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
-.logo-lockup .word{font-size:12px;letter-spacing:.13em;text-transform:uppercase;font-weight:600;color:#BFD6E8}
-header h1{font-size:22px;margin-top:10px}
-header .sub{color:#BFD6E8;font-size:13px;margin-top:4px}
-.filtros{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
-.filtros label{display:flex;flex-direction:column;font-size:11px;color:#BFD6E8;gap:4px;text-transform:uppercase;letter-spacing:.05em}
-.filtros input,.filtros select{font-family:inherit;font-size:13px;padding:6px 8px;border-radius:6px;border:1px solid #4F7A99;background:#fff;color:var(--ink)}
-.presets{display:flex;gap:6px;flex-wrap:wrap}
-.presets button{font-family:inherit;font-weight:700;font-size:12px;border:1px solid #4F7A99;background:transparent;color:#fff;border-radius:16px;padding:5px 11px;cursor:pointer}
-.presets button.on,.presets button:hover{background:var(--blood);border-color:var(--blood)}
-nav{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid var(--glossy);display:flex;gap:4px;padding:0 20px;overflow-x:auto}
-nav a{padding:12px 14px;color:var(--gray);text-decoration:none;font-weight:600;white-space:nowrap;border-bottom:3px solid transparent}
-nav a.on{color:var(--ocean);border-bottom-color:var(--ocean)}
-main{padding:22px 28px;max-width:1500px;margin:0 auto}
+body{margin:0;background:var(--cream);color:var(--char);font-family:var(--body);font-size:14px;-webkit-font-smoothing:antialiased}
+h1,h2,h3{margin:0;font-family:var(--head);font-weight:400}
+
+/* ---------- Cabecera con foto de la marca ---------- */
+header{position:relative;color:#fff;padding:34px 40px 26px;
+  background:linear-gradient(180deg,rgba(18,42,44,.55) 0%,rgba(18,42,44,.72) 55%,rgba(18,42,44,.88) 100%),url("assets/hero_aerea.jpg") center 40%/cover no-repeat}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:28px;flex-wrap:wrap;max-width:1500px;margin:0 auto}
+.marca img{width:260px;display:block;filter:drop-shadow(0 2px 10px rgba(0,0,0,.25))}
+.marca .eyebrow{margin-top:18px;font-family:var(--head);font-weight:400;font-size:12px;letter-spacing:.42em;text-transform:uppercase;color:var(--gold-l)}
+.marca h1{font-size:30px;font-weight:300;letter-spacing:.06em;margin-top:6px;color:#fff}
+.marca .sub{color:#E9E4DA;font-size:12px;margin-top:8px;letter-spacing:.04em}
+.filtros{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;padding:16px 18px;border-radius:16px;
+  background:rgba(255,255,255,.10);border:1px solid rgba(240,215,138,.35);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.filtros label{display:flex;flex-direction:column;font-size:10px;color:var(--gold-l);gap:6px;text-transform:uppercase;letter-spacing:.18em;font-family:var(--head)}
+.filtros input,.filtros select{font-family:var(--body);font-size:13px;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.92);color:var(--char)}
+.presets{display:flex;gap:6px;flex-wrap:wrap;flex-basis:100%}
+.presets button{font-family:var(--head);font-weight:400;font-size:11px;letter-spacing:.14em;text-transform:uppercase;border:1px solid rgba(240,215,138,.55);background:transparent;color:#fff;border-radius:20px;padding:6px 14px;cursor:pointer;transition:all .2s}
+.presets button.on,.presets button:hover{background:var(--gold-l);border-color:var(--gold-l);color:var(--char)}
+
+/* ---------- Navegación ---------- */
+nav{position:sticky;top:0;z-index:5;background:rgba(251,249,246,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);display:flex;justify-content:center;gap:6px;padding:0 20px;overflow-x:auto}
+nav a{padding:16px 16px 14px;color:var(--mid);text-decoration:none;font-family:var(--head);font-size:12px;letter-spacing:.16em;text-transform:uppercase;white-space:nowrap;border-bottom:2px solid transparent;cursor:pointer;transition:color .2s}
+nav a:hover{color:var(--char)}
+nav a.on{color:var(--char);border-bottom-color:var(--gold)}
+
+/* ---------- Contenido ---------- */
+main{padding:30px 40px;max-width:1500px;margin:0 auto}
 section{display:none}
-section.on{display:block}
-.periodo{color:var(--gray);font-size:13px;margin-bottom:14px}
-.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:18px}
-.kpi{background:var(--card);border-radius:10px;padding:14px 16px;border:1px solid #E3EAF0}
-.kpi .lbl{font-size:12px;color:var(--gray)}
-.kpi .val{font-size:24px;font-weight:600;color:var(--ocean);margin:6px 0 4px}
-.kpi .ly{font-size:12px;color:var(--gray)}
+section.on{display:block;animation:fade .35s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.periodo{color:var(--gray);font-size:13px;margin-bottom:20px;line-height:1.6}
+.periodo b{color:var(--char);font-weight:600}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:14px;margin-bottom:24px}
+.kpi{background:#fff;border-radius:16px;padding:18px 20px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(58,58,58,.04);transition:box-shadow .2s}
+.kpi:hover{box-shadow:0 8px 24px rgba(58,58,58,.08)}
+.kpi .lbl{font-size:10.5px;color:var(--mid);text-transform:uppercase;letter-spacing:.12em;font-family:var(--head);line-height:1.5;min-height:31px}
+.kpi .val{font-family:var(--head);font-size:30px;font-weight:300;color:var(--char);margin:8px 0 6px;letter-spacing:.01em}
+.kpi .ly{font-size:12px;color:var(--mid)}
 .kpi .var{font-weight:700}
-.up{color:var(--pos)} .down{color:var(--neg)} .flat{color:#B8860B}
-.kpi.dest{border-left:4px solid var(--ocean)}
-.card{background:var(--card);border-radius:10px;padding:18px;border:1px solid #E3EAF0;margin-bottom:16px}
-.card h3{font-size:16px;color:var(--ocean);margin-bottom:4px}
-.card .nota{font-size:12px;color:var(--gray);margin-bottom:10px}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-@media(max-width:1000px){.grid2,.grid3{grid-template-columns:1fr}}
+.up{color:var(--pos)} .down{color:var(--neg)} .flat{color:var(--neu)} .neutro{color:var(--mid)}
+.kpi.dest{border-top:3px solid var(--gold)}
+.card{background:#fff;border-radius:18px;padding:26px 28px;border:1px solid var(--line);margin-bottom:20px;box-shadow:0 1px 2px rgba(58,58,58,.04)}
+.card h3{font-size:15px;color:var(--char);text-transform:uppercase;letter-spacing:.14em;font-weight:400}
+.card h3::after{content:"";display:block;width:42px;height:2px;background:var(--gold);margin:12px 0 12px}
+.card .nota{font-size:12.5px;color:var(--gray);margin-bottom:14px;line-height:1.6}
+.card .nota b{color:var(--char)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+@media(max-width:1000px){.grid2,.grid3{grid-template-columns:1fr} header{padding:24px 18px} main{padding:20px 16px}}
 .chart{width:100%;height:340px}
 .chart.alto{height:440px}
 table{width:100%;border-collapse:collapse;font-size:13px}
-th{background:var(--ocean);color:#fff;font-weight:600;text-align:left;padding:8px;position:sticky;top:0;cursor:pointer}
-td{padding:7px 8px;border-bottom:1px solid var(--glossy)}
-td.n,th.n{text-align:right}
-tr:hover td{background:var(--soft)}
-.tabla{max-height:520px;overflow:auto}
-.insights{display:grid;gap:10px}
-.insight{background:var(--soft);border-left:4px solid var(--sea);padding:10px 14px;border-radius:6px;line-height:1.45}
-.insight b{color:var(--ocean)}
+th{background:var(--cream);color:var(--gray);font-family:var(--head);font-weight:500;font-size:11px;letter-spacing:.1em;text-transform:uppercase;text-align:left;padding:11px 10px;position:sticky;top:0;border-bottom:1px solid var(--sand)}
+td{padding:10px;border-bottom:1px solid var(--line)}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tr:hover td{background:var(--cream-2)}
+.tabla{max-height:540px;overflow:auto;border-radius:12px;border:1px solid var(--line)}
+.insights{display:grid;gap:12px}
+.insight{background:var(--cream-2);border:1px solid var(--line);border-left:3px solid var(--teal);padding:13px 18px;border-radius:12px;line-height:1.6}
+.insight b{color:var(--char);font-weight:700}
 .insight.alerta{border-left-color:var(--neg)}
 .insight.bien{border-left-color:var(--pos)}
-.chip{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:var(--soft);color:var(--sea);font-weight:600}
-.chip.rojo{background:#FBE7EA;color:var(--neg)} .chip.verde{background:#EAF4E4;color:#4C7F33} .chip.amar{background:#FFF4DC;color:#9A6B00}
-.sel{font-family:inherit;padding:6px 8px;border-radius:6px;border:1px solid var(--glossy);margin-right:8px}
-.galeria{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
-.crea{background:#fff;border:1px solid #E3EAF0;border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
-.crea .img{height:250px;background:var(--soft);display:flex;align-items:center;justify-content:center;color:var(--gray);font-size:12px;position:relative}
+.chip{display:inline-block;font-size:10.5px;padding:3px 10px;border-radius:20px;background:var(--teal-l);color:var(--teal-d);font-weight:600;letter-spacing:.02em}
+.chip.rojo{background:#F7E6E3;color:var(--neg)} .chip.verde{background:#E5F1E8;color:var(--pos)} .chip.amar{background:#FBF1D9;color:var(--neu)}
+.sel{font-family:var(--body);font-size:13px;padding:8px 12px;border-radius:10px;border:1px solid var(--sand);background:#fff;color:var(--char);margin-right:8px}
+.galeria{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px}
+.crea{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s}
+.crea:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(58,58,58,.10)}
+.crea .img{height:270px;background:var(--cream);display:flex;align-items:center;justify-content:center;color:var(--mid);font-size:12px;position:relative}
 .crea img{width:100%;height:100%;object-fit:cover}
-.crea .vid{position:absolute;top:8px;left:8px;background:rgba(2,56,89,.85);color:#fff;font-size:11px;padding:2px 7px;border-radius:8px}
-.crea .cuerpo{padding:10px 12px;display:flex;flex-direction:column;gap:6px;font-size:12px}
-.crea .nom{font-weight:600;color:var(--ocean);font-size:13px;word-break:break-word}
-.crea .mets{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px}
-.crea .mets span{color:var(--gray)}
-.crea .txt{color:var(--gray);max-height:54px;overflow:hidden}
-.crea a{color:var(--sea);font-weight:700;text-decoration:none}
-footer{color:var(--gray);font-size:12px;text-align:center;padding:24px}
-.vacio{color:var(--gray);font-style:italic;padding:20px;text-align:center}
-.leyenda-def{font-size:12px;color:var(--gray);line-height:1.5}
+.crea .vid{position:absolute;top:10px;left:10px;background:rgba(58,58,58,.75);color:#fff;font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:4px 10px;border-radius:20px}
+.crea .cuerpo{padding:14px 16px;display:flex;flex-direction:column;gap:8px;font-size:12px}
+.crea .nom{font-family:var(--head);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--char);word-break:break-word}
+.crea .mets{display:grid;grid-template-columns:1fr 1fr;gap:5px 10px}
+.crea .mets span{color:var(--mid)}
+.crea .txt{color:var(--gray);max-height:56px;overflow:hidden;line-height:1.5}
+.crea a{color:var(--teal-d);font-weight:700;text-decoration:none}
+footer{color:var(--mid);font-size:12px;text-align:center;padding:40px 24px 50px;border-top:1px solid var(--line);margin-top:20px}
+footer img{width:120px;opacity:.9;display:block;margin:0 auto 14px}
+.vacio{color:var(--mid);font-style:italic;padding:24px;text-align:center}
+.leyenda-def{font-size:13px;color:var(--gray);line-height:1.7}
+.leyenda-def b{color:var(--char)}
+/* Resumen de un vistazo */
+.veredicto{background:#fff;border:1px solid var(--line);border-radius:20px;padding:26px 32px;margin-bottom:20px;box-shadow:0 1px 2px rgba(58,58,58,.04)}
+.veredicto p{font-family:var(--head);font-weight:300;font-size:21px;line-height:1.65;color:var(--char);margin:10px 0 0}
+.veredicto p b{font-weight:500}
+.estado{display:inline-block;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;padding:6px 14px;border-radius:20px;font-weight:600}
+.estado.bien{background:#E5F1E8;color:var(--pos)} .estado.mal{background:#F7E6E3;color:var(--neg)} .estado.neutro{background:var(--cream);color:var(--gray)}
+.big{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+@media(max-width:1100px){.big{grid-template-columns:repeat(2,1fr)}}
+.big .t{background:#fff;border:1px solid var(--line);border-radius:20px;padding:22px 24px 14px;box-shadow:0 1px 2px rgba(58,58,58,.04)}
+.big .t:first-child{border-top:3px solid var(--gold)}
+.big .lbl{font-family:var(--head);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mid)}
+.big .val{font-family:var(--head);font-weight:300;font-size:40px;color:var(--char);margin:10px 0 4px;line-height:1.1}
+.big .cmp{font-size:12.5px;color:var(--mid)}
+.big .que{font-size:11.5px;color:var(--mid);margin-top:2px}
+.big svg{width:100%;height:46px;margin-top:10px;display:block}
+.canal .fila{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.canal .fila:last-child{border-bottom:0}
+.canal .k{color:var(--gray);font-size:13px}
+.canal .v{font-family:var(--head);font-size:19px;color:var(--char);white-space:nowrap}
+.canal .d{font-family:var(--body);font-size:11.5px;margin-left:8px}
+.prod td.n{font-family:var(--head);font-size:15px}
+.prod .barra{height:6px;border-radius:3px;background:var(--gold-l);margin-top:6px}
+details.mas summary{cursor:pointer;font-family:var(--head);text-transform:uppercase;letter-spacing:.16em;font-size:12.5px;color:var(--gray);list-style:none}
+details.mas summary::before{content:"+ ";color:var(--gold)}
+details.mas[open] summary::before{content:"– "}
+h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gray);margin:18px 0 6px}
 </style>
 </head>
 <body>
 <header>
   <div class="top">
-    <div>
-      <div class="logo-lockup"><span class="mark">GHL</span><span class="word">Makani Luxury Wanderlust</span></div>
-      <h1>Performance digital · Meta + Google Ads + WhatsApp</h1>
+    <div class="marca">
+      <img src="assets/logo_makani_dorado_720.png" alt="Makani Luxury Wanderlust">
+      <div class="eyebrow">Performance digital</div>
+      <h1>Meta · Google Ads · WhatsApp</h1>
       <div class="sub" id="sub"></div>
     </div>
     <div class="filtros">
@@ -97,8 +147,8 @@ footer{color:var(--gray);font-size:12px;text-align:center;padding:24px}
       <label>Hasta<input type="date" id="hasta"></label>
       <label>Comparar con
         <select id="modoComp">
-          <option value="ly364">LY (−364 días, mismo día de semana)</option>
-          <option value="lyfecha">LY (misma fecha calendario)</option>
+          <option value="ly364">Año anterior (−364 días)</option>
+          <option value="lyfecha">Año anterior (misma fecha)</option>
           <option value="prev">Periodo anterior</option>
         </select>
       </label>
@@ -131,13 +181,22 @@ footer{color:var(--gray);font-size:12px;text-align:center;padding:24px}
   <div class="periodo" id="periodo"></div>
 
   <section id="resumen" class="on">
-    <div class="kpis" id="kpis"></div>
-    <div class="card"><h3>Lectura automática del periodo</h3><div class="nota">Hallazgos calculados sobre el rango elegido. Se recalculan al cambiar las fechas.</div><div class="insights" id="insights"></div></div>
-    <div class="card"><h3>Inversión, leads y reservas en el tiempo</h3><div class="nota">Barras: inversión Meta y Google. Líneas: leads registrados por el front y reservas. Línea gris discontinua: leads del front en el periodo de comparación (por defecto, el año anterior); no se dibuja donde no hay registro del front (antes de sep-2025).</div><div class="chart alto" id="chTendencia"></div></div>
+    <div class="veredicto" id="veredicto"></div>
+    <div class="big" id="kpisBig"></div>
     <div class="grid2">
-      <div class="card"><h3>Mezcla de inversión</h3><div class="chart" id="chMix"></div></div>
-      <div class="card"><h3>Reservas y venta por origen del lead</h3><div class="chart" id="chOrigen"></div></div>
+      <div class="card canal"><h3>Meta Ads</h3><div id="canalMeta"></div></div>
+      <div class="card canal"><h3>Google Ads</h3><div id="canalGoogle"></div></div>
     </div>
+    <div class="card"><h3>Pasadías vs Villas</h3><div class="nota">Inversión atribuible por el nombre de la campaña; reservas y venta, por el concepto registrado en el front. La inversión de marca o mixta no se reparte: se muestra aparte.</div><div id="tablaProducto"></div></div>
+    <div class="card"><h3>Inversión y reservas en el tiempo</h3><div class="nota">Diario en rangos de hasta 3 meses; semanal en rangos más largos. Barras: inversión en Meta y Google. Línea: reservas por canales digitales (IG + Web + Referidos). Línea discontinua: reservas del periodo de comparación (sin dato antes de sep-2025).</div><div class="chart" id="chTendencia"></div></div>
+    <div class="card"><h3>Lectura del periodo</h3><div class="insights" id="insights"></div></div>
+    <details class="card mas" id="detMas"><summary>Ver todos los indicadores</summary>
+      <div class="kpis" id="kpis" style="margin-top:18px"></div>
+      <div class="grid2">
+        <div><h3 class="sub3">Mezcla de inversión</h3><div class="chart" id="chMix"></div></div>
+        <div><h3 class="sub3">Reservas y venta por origen del lead</h3><div class="chart" id="chOrigen"></div></div>
+      </div>
+    </details>
   </section>
 
   <section id="embudo">
@@ -253,13 +312,14 @@ const fmt = (v, d=0) => v==null||!isFinite(v) ? "—" : Number(v).toLocaleString
 const money = v => v==null||!isFinite(v) ? "—" : "$" + (Math.abs(v)>=1e6 ? fmt(v/1e6,1)+" M" : fmt(v,0));
 const pct = (v,d=1) => v==null||!isFinite(v) ? "—" : fmt(v*100,d)+"%";
 const div = (a,b) => b ? a/b : null;
-const C = {ocean:"#023859", blood:"#6399BA", sea:"#2A5E95", gray:"#808080", glossy:"#D1D1D1", pos:"#74AD52", neg:"#D72D41", neu:"#FFC75F"};
+const C = {ocean:"#2F6E73", blood:"#D2B263", sea:"#4D9499", gray:"#676767", glossy:"#D5D3CB", pos:"#4F8F63", neg:"#B9473F", neu:"#B58A1C", char:"#3A3A3A"};
 const DIAS = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
 const ETAPAS_CONV = new Set(["Conversaciones WhatsApp","Interacción / WhatsApp"]);
 const charts = {};
 function chart(id){ if(!charts[id]) charts[id] = echarts.init(document.getElementById(id)); return charts[id]; }
 window.addEventListener("resize", () => Object.values(charts).forEach(c => c.resize()));
-const base = {textStyle:{fontFamily:"Elms Sans, Segoe UI, sans-serif"}, grid:{left:60,right:60,top:40,bottom:40}, tooltip:{trigger:"axis"}};
+document.addEventListener("toggle", e => { if(e.target.id==="detMas") Object.values(charts).forEach(c => c.resize()); }, true);
+const base = {textStyle:{fontFamily:"Raleway, Segoe UI, sans-serif",color:"#676767"}, grid:{left:60,right:60,top:40,bottom:40}, tooltip:{trigger:"axis"}};
 
 // --- tablas columnares -> objetos ---
 function T(t){ if(!t) return []; return t.rows.map(r => Object.fromEntries(t.cols.map((c,i)=>[c,r[i]]))); }
@@ -390,35 +450,34 @@ function serie(a,b){
   const dias = (toD(b)-toD(a))/864e5+1; const semanal = dias>92;
   const clave = s => { if(!semanal) return s; const d=toD(s); d.setDate(d.getDate()-diaSem(s)); return toS(d); };
   const mp = new Map();
-  const get = k => { if(!mp.has(k)) mp.set(k,{meta:0,goo:0,leads:0,res:0}); return mp.get(k); };
+  const get = k => { if(!mp.has(k)) mp.set(k,{meta:0,goo:0,leads:0,res:0,venta:0}); return mp.get(k); };
   for(let s=a; s<=b; s=addDays(s,1)) get(clave(s));
   META.forEach(r=>{ if(enRango(r.fecha,a,b)) get(clave(r.fecha)).meta += r.gasto; });
   GOO.forEach(r=>{ if(enRango(r.fecha,a,b)) get(clave(r.fecha)).goo += r.costo; });
-  FRONT.forEach(r=>{ if(enRango(r.fecha,a,b)){ const o=get(clave(r.fecha)); o.leads += r.leads_ig+r.leads_web+r.leads_ref; o.res += r.res_ig+r.res_web+r.res_ref; } });
+  FRONT.forEach(r=>{ if(enRango(r.fecha,a,b)){ const o=get(clave(r.fecha)); o.leads += r.leads_ig+r.leads_web+r.leads_ref; o.res += r.res_ig+r.res_web+r.res_ref; o.venta += r.venta_ig+r.venta_web+r.venta_ref; } });
   return {semanal, k:[...mp.keys()].sort(), mp};
 }
 function renderTendencia(){
   const s = serie(A,B), c = serie(CA,CB);
   const ck = c.k;
-  // Sin registro del front en el periodo de comparación -> hueco (null), no cero
-  const ly = s.k.map((k,i)=> ck[i]!=null && ck[i] >= D.rango.front_desde ? c.mp.get(ck[i]).leads : null);
-  chart("chTendencia").setOption({...base, legend:{top:0},
-    xAxis:{type:"category", data:s.k.map(k=> s.semanal ? "Sem "+k.slice(5) : k.slice(5))},
-    yAxis:[{type:"value",name:"Inversión",axisLabel:{formatter:v=>money(v)}},{type:"value",name:"Leads / reservas",splitLine:{show:false}}],
+  const ly = s.k.map((k,i)=> ck[i]!=null && ck[i] >= D.rango.front_desde ? c.mp.get(ck[i]).res : null);
+  chart("chTendencia").setOption({...base, legend:{top:0,icon:"roundRect",itemWidth:12,itemHeight:8},
+    grid:{left:70,right:60,top:44,bottom:36},
+    xAxis:{type:"category", data:s.k.map(k=> s.semanal ? k.slice(5) : k.slice(5)), axisLine:{lineStyle:{color:"#D5D3CB"}}, axisTick:{show:false}},
+    yAxis:[{type:"value",axisLabel:{formatter:v=>money(v)},splitLine:{lineStyle:{color:"#EFEBE3"}}},{type:"value",name:"Reservas",splitLine:{show:false}}],
     tooltip:{trigger:"axis", valueFormatter:v=>fmt(v)},
     series:[
-      {name:"Meta",type:"bar",stack:"inv",data:s.k.map(k=>Math.round(s.mp.get(k).meta)),itemStyle:{color:C.ocean}},
-      {name:"Google",type:"bar",stack:"inv",data:s.k.map(k=>Math.round(s.mp.get(k).goo)),itemStyle:{color:C.blood}},
-      {name:"Leads front",type:"line",yAxisIndex:1,data:s.k.map(k=>s.mp.get(k).leads),itemStyle:{color:C.sea},lineStyle:{width:2.5},symbol:"none"},
-      {name:"Reservas digitales",type:"line",yAxisIndex:1,data:s.k.map(k=>s.mp.get(k).res),itemStyle:{color:C.gray},lineStyle:{width:2.5,type:"dotted"},symbol:"none"},
-      {name:"Leads front · periodo de comparación",type:"line",yAxisIndex:1,data:ly,connectNulls:false,itemStyle:{color:C.glossy},lineStyle:{type:"dashed"},symbol:"none"},
+      {name:"Meta",type:"bar",stack:"inv",data:s.k.map(k=>Math.round(s.mp.get(k).meta)),itemStyle:{color:C.sea},barMaxWidth:26},
+      {name:"Google",type:"bar",stack:"inv",data:s.k.map(k=>Math.round(s.mp.get(k).goo)),itemStyle:{color:C.blood,borderRadius:[4,4,0,0]},barMaxWidth:26},
+      {name:"Reservas digitales",type:"line",yAxisIndex:1,data:s.k.map(k=>s.mp.get(k).res),itemStyle:{color:C.char},lineStyle:{width:2.5},symbol:"circle",symbolSize:5,smooth:true},
+      {name:"Reservas · comparación",type:"line",yAxisIndex:1,data:ly,connectNulls:false,itemStyle:{color:"#B6B0A2"},lineStyle:{type:"dashed",width:1.5},symbol:"none",smooth:true},
     ]}, true);
 }
 function renderMix(x){
   const porEtapa = {};
   META.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const e = MCAMP[r.c].etapa; porEtapa["Meta · "+e]=(porEtapa["Meta · "+e]||0)+r.gasto; });
   GOO.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const g=GCAMP[r.c]; const k="Google · "+g.tipo; porEtapa[k]=(porEtapa[k]||0)+r.costo; });
-  const pal = [C.ocean,C.sea,C.blood,"#4F7A99","#8FB5CF","#B9D0E0",C.gray,C.glossy];
+  const pal = [C.ocean,C.sea,C.blood,"#7FB3B6","#E3CC86","#D5D3CB",C.gray,C.glossy];
   const data = Object.entries(porEtapa).sort((a,b)=>b[1]-a[1]).map(([name,value],i)=>({name,value:Math.round(value),itemStyle:{color:pal[i%pal.length]}}));
   chart("chMix").setOption({...base, tooltip:{trigger:"item",formatter:p=>`${p.name}<br>${money(p.value)} (${fmt(p.percent,1)}%)`},
     series:[{type:"pie",radius:["45%","72%"],data,label:{formatter:"{b}\n{d}%",fontSize:11}}]}, true);
@@ -432,6 +491,74 @@ function renderOrigen(x,y){
     series:[{name:"Reservas",type:"bar",data:r1,itemStyle:{color:C.ocean}},
             {name:"Reservas comparación",type:"bar",data:y.frontCubre?r0:[],itemStyle:{color:C.glossy}},
             {name:"Venta sin IVA",type:"line",yAxisIndex:1,data:v1.map(Math.round),itemStyle:{color:C.blood}}]}, true);
+}
+
+// --- resumen de un vistazo ---
+// inverso: bajar es bueno (costos). neutro: ni bueno ni malo (inversión) -> gris.
+function delta(act, ant, inverso=false, sinComp=false, neutro=false){
+  if(sinComp || act==null || ant==null || !isFinite(act) || !isFinite(ant) || ant===0) return '<span class="cmp">sin comparación</span>';
+  const v = act/ant-1, bueno = inverso ? v<0 : v>0, cls = neutro ? "neutro" : Math.abs(v)<0.02 ? "flat" : (bueno ? "up" : "down");
+  return `<span class="var ${cls}">${Math.abs(v)<0.02?"▬":(v>0?"▲":"▼")} ${v>0?"+":""}${fmt(v*100,0)}%</span>`;
+}
+function sparkline(vals, color){
+  const v = vals.map(x=> (x==null||!isFinite(x)) ? null : x); const ok = v.filter(x=>x!=null);
+  if(ok.length<2) return "";
+  const mn=Math.min(...ok), mx=Math.max(...ok), W=200, H=40, n=v.length;
+  const pts = v.map((y,i)=> y==null ? null : [ (i/(n-1))*W, H-4-((y-mn)/((mx-mn)||1))*(H-8) ]);
+  let d=""; pts.forEach((p,i)=>{ if(!p) return; d += (d && pts[i-1] ? "L" : "M") + p[0].toFixed(1)+" "+p[1].toFixed(1); });
+  const last = [...pts].reverse().find(Boolean);
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><path d="${d}" fill="none" stroke="${color}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/><circle cx="${last[0]}" cy="${last[1]}" r="3" fill="${color}"/></svg>`;
+}
+function porProducto(a,b){
+  const out = {"Pasadías":{inv:0,res:0,venta:0},"Villas":{inv:0,res:0,venta:0},"Marca / mixta":{inv:0,res:null,venta:null}};
+  const k = p => (p==="Pasadías"||p==="Villas") ? p : "Marca / mixta";
+  META_ALL.filter(r=>enRango(r.fecha,a,b)).forEach(r=>out[k(MCAMP[r.c].producto)].inv += r.gasto);
+  GOO_ALL.filter(r=>enRango(r.fecha,a,b)).forEach(r=>out[k(GCAMP[r.c].producto)].inv += r.costo);
+  FRONTP.filter(r=>enRango(r.fecha,a,b)).forEach(r=>{ const o=out[r.producto]; if(!o) return; o.res += r.res_ig+r.res_web+r.res_ref+r.res_otro; o.venta += r.venta_ig+r.venta_web+r.venta_ref+r.venta_otro; });
+  return out;
+}
+function renderResumen(x, y){
+  const sf = !y.frontCubre, s = serie(A,B);
+  const inv = s.k.map(k=>s.mp.get(k).meta+s.mp.get(k).goo), res = s.k.map(k=>s.mp.get(k).res), ven = s.k.map(k=>s.mp.get(k).venta);
+  // Veredicto
+  const mejora = !sf && x.cpRes!=null && y.cpRes!=null ? x.cpRes < y.cpRes : null;
+  const estado = mejora==null ? '<span class="estado neutro">Sin comparación con el año anterior</span>'
+    : mejora ? '<span class="estado bien">Eficiencia mejorando vs año anterior</span>' : '<span class="estado mal">Eficiencia empeorando vs año anterior</span>';
+  const prod = $("#producto").value;
+  $("#veredicto").innerHTML = `${estado}<p>Se invirtieron <b>${money(x.inv)}</b> en pauta${prod?` de <b>${prod}</b>`:""}${y.inv?` (${delta(x.inv,y.inv,false,false,true)} vs ${$("#modoComp").value==="prev"?"periodo anterior":"año anterior"})`:""} y se lograron <b>${fmt(x.resDig)} reservas digitales</b>${sf?"":` (${delta(x.resDig,y.resDig,false)})`}. Cada reserva costó <b>${money(x.cpRes)}</b> en pauta y por cada $1 invertido se vendieron <b>$${x.roas==null?"—":fmt(x.roas,1)}</b>.</p>`;
+  // 4 cifras grandes
+  const t = (lbl, val, d, que, spark, color) => `<div class="t"><div class="lbl">${lbl}</div><div class="val">${val}</div><div class="cmp">${d}</div><div class="que">${que}</div>${spark}</div>`;
+  $("#kpisBig").innerHTML = [
+    t("Inversión en pauta", money(x.inv), delta(x.inv,y.inv,false,false,true), `Meta ${money(x.m.gasto)} · Google ${money(x.g.costo)}`, sparkline(inv, C.sea)),
+    t("Reservas digitales", fmt(x.resDig), delta(x.resDig,y.resDig,false,sf), `IG ${fmt(x.f.res_ig)} · Web ${fmt(x.f.res_web)} · Referidos ${fmt(x.f.res_ref)}`, sparkline(res, C.char)),
+    t("Costo por reserva", money(x.cpRes), delta(x.cpRes,y.cpRes,true,sf), "Inversión total ÷ reservas digitales", sparkline(inv.map((v,i)=>res[i]?v/res[i]:null), C.blood)),
+    t("Retorno (ROAS)", x.roas==null?"—":fmt(x.roas,1)+"x", delta(x.roas,y.roas,false,sf), `Venta digital ${money(x.ventaDig)}`, sparkline(ven.map((v,i)=>inv[i]?v/inv[i]:null), C.pos)),
+  ].join("");
+  // Canales
+  const fila = (k, v, d="") => `<div class="fila"><span class="k">${k}</span><span><span class="v">${v}</span><span class="d">${d}</span></span></div>`;
+  $("#canalMeta").innerHTML = [
+    fila("Inversión", money(x.m.gasto), delta(x.m.gasto,y.m.gasto,false,false,true)),
+    fila("Chats con interés (2+ mensajes)", fmt(x.m.mensaje_2), delta(x.m.mensaje_2,y.m.mensaje_2)),
+    fila("Costo por chat con interés", money(x.cpConvReal), delta(x.cpConvReal,y.cpConvReal,true)),
+    fila("Reservas IG (front)", fmt(x.f.res_ig), delta(x.f.res_ig,y.f.res_ig,false,sf)),
+    fila("Costo de pauta por reserva IG", money(div(x.m.gasto,x.f.res_ig)), delta(div(x.m.gasto,x.f.res_ig),div(y.m.gasto,y.f.res_ig),true,sf)),
+  ].join("");
+  $("#canalGoogle").innerHTML = [
+    fila("Inversión", money(x.g.costo), delta(x.g.costo,y.g.costo,false,false,true)),
+    fila("Leads Web (front)", fmt(x.f.leads_web), delta(x.f.leads_web,y.f.leads_web,false,sf)),
+    fila("Costo por lead Web", money(x.cpLeadWeb), delta(x.cpLeadWeb,y.cpLeadWeb,true,sf)),
+    fila("Reservas Web (front)", fmt(x.f.res_web), delta(x.f.res_web,y.f.res_web,false,sf)),
+    fila("Costo por reserva Web", money(x.cpResWeb), delta(x.cpResWeb,y.cpResWeb,true,sf)),
+  ].join("");
+  // Producto
+  const p1 = porProducto(A,B), p0 = porProducto(CA,CB), maxV = Math.max(...Object.values(p1).map(o=>o.venta||0), 1);
+  $("#tablaProducto").innerHTML = `<table class="prod"><thead><tr><th>Producto</th><th class="n">Inversión</th><th class="n">Reservas</th><th class="n">Venta sin IVA</th><th class="n">Costo por reserva</th><th class="n">Retorno</th></tr></thead><tbody>
+    ${Object.entries(p1).map(([k,o])=>`<tr><td>${k}${o.venta?`<div class="barra" style="width:${100*o.venta/maxV}%"></div>`:""}</td>
+      <td class="n">${money(o.inv)} ${delta(o.inv,p0[k].inv,false,false,true)}</td>
+      <td class="n">${o.res==null?"—":fmt(o.res)} ${o.res==null?"":delta(o.res,p0[k].res,false,sf)}</td>
+      <td class="n">${o.venta==null?"—":money(o.venta)}</td>
+      <td class="n">${o.res?money(o.inv/o.res):"—"}</td>
+      <td class="n">${o.venta&&o.inv?fmt(o.venta/o.inv,1)+"x":"—"}</td></tr>`).join("")}</tbody></table>`;
 }
 
 // --- insights automáticos ---
@@ -466,8 +593,8 @@ function renderEmbudo(x){
   $("#embudoCtx").innerHTML = `Antes del chat: <b>${fmt(x.m.impresiones)}</b> impresiones → <b>${fmt(x.m.clics_enlace)}</b> clics (CTR ${pct(div(x.m.clics_enlace,x.m.impresiones),2)}) · costo por conversación <b>${money(x.cpConv)}</b> · costo de pauta Meta por reserva IG <b>${money(div(x.m.gasto,x.f.res_ig))}</b> · venta IG <b>${money(x.f.venta_ig)}</b>.`;
   chart("chEmbudo").setOption({...base, tooltip:{trigger:"item",formatter:p=>`${p.name}: ${fmt(p.value)}`},
     series:[{type:"funnel",left:"10%",width:"80%",sort:"none",minSize:"8%",gap:3,
-      data:pasos.map(([n,v],i)=>({name:n,value:v,itemStyle:{color:[C.ocean,C.sea,"#4F7A99",C.blood,"#8FB5CF","#B9D0E0"][i]}})),
-      label:{formatter:p=>{ const i=p.dataIndex; const prev=i?pasos[i-1][1]:null; return `${p.name}: ${fmt(p.value)}${prev?`  (${pct(div(p.value,prev))})`:""}`;},color:"#1B2B3A",position:"right"}}]}, true);
+      data:pasos.map(([n,v],i)=>({name:n,value:v,itemStyle:{color:[C.ocean,C.sea,"#7FB3B6",C.blood,"#E3CC86","#D5D3CB"][i]}})),
+      label:{formatter:p=>{ const i=p.dataIndex; const prev=i?pasos[i-1][1]:null; return `${p.name}: ${fmt(p.value)}${prev?`  (${pct(div(p.value,prev))})`:""}`;},color:"#3A3A3A",position:"right"}}]}, true);
   const s = serie(A,B);
   const conv=new Map(), lig=new Map(), m2=new Map();
   s.k.forEach(k=>{conv.set(k,0); lig.set(k,0); m2.set(k,0);});
@@ -510,7 +637,7 @@ function renderHoras(){
   const vals = data.map(x=>x[2]).filter(v=>v!=null).sort((a,b)=>a-b);
   const max = vals.length ? vals[Math.floor(vals.length*0.97)] : 1;
   const invert = met==="cpa";
-  const colores = met==="idx" ? [C.neg,"#F4F4F4",C.pos] : (invert ? [C.ocean,"#DCE8F1","#FFFFFF"] : ["#FFFFFF","#DCE8F1",C.ocean]);
+  const colores = met==="idx" ? [C.neg,"#F4F4F4",C.pos] : (invert ? [C.ocean,"#CFE3E2","#FFFFFF"] : ["#FFFFFF","#CFE3E2",C.ocean]);
   chart("chHeat").setOption({...base, grid:{left:60,right:30,top:20,bottom:80},
     tooltip:{formatter:p=>`${DIAS[p.value[1]]} ${p.value[0]}:00<br>${met==="gasto"||met==="cpa"?money(p.value[2]):met==="idx"?fmt(p.value[2],2):fmt(p.value[2])}`},
     xAxis:{type:"category",data:[...Array(24).keys()].map(x=>x+"h"),splitArea:{show:true}}, yAxis:{type:"category",data:DIAS,inverse:true},
@@ -539,7 +666,7 @@ function renderHoras(){
     chart("chHeatG").setOption({...base, grid:{left:60,right:30,top:20,bottom:80},
       tooltip:{formatter:p=>`${DIAS[p.value[1]]} ${p.value[0]}:00<br>Costo ${money(p.value[2])}<br>Conversiones ${fmt(p.value[3],1)}<br>Costo/conv ${money(div(p.value[2],p.value[3]))}`},
       xAxis:{type:"category",data:[...Array(24).keys()].map(x=>x+"h")}, yAxis:{type:"category",data:DIAS,inverse:true},
-      visualMap:{min:0,max:gm,dimension:2,orient:"horizontal",left:"center",bottom:10,inRange:{color:["#FFFFFF","#DCE8F1",C.blood]},formatter:v=>money(v)},
+      visualMap:{min:0,max:gm,dimension:2,orient:"horizontal",left:"center",bottom:10,inRange:{color:["#FFFFFF","#CFE3E2",C.blood]},formatter:v=>money(v)},
       series:[{type:"heatmap",data:gd}]}, true);
   }
 }
@@ -607,7 +734,7 @@ function renderCampanas(){
   const E = {}; etapas.forEach(e=>E[e]=Object.fromEntries(meses.map(m=>[m,0])));
   META.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const m=r.fecha.slice(0,7); E[MCAMP[r.c].etapa][m]+=r.gasto; M[m].g+=r.gasto; M[m].conv+=r.conversaciones; });
   const G = Object.fromEntries(meses.map(m=>[m,0])); GOO.filter(r=>enRango(r.fecha,A,B)).forEach(r=>G[r.fecha.slice(0,7)]+=r.costo);
-  const pal=[C.ocean,C.sea,"#4F7A99","#8FB5CF","#B9D0E0",C.gray];
+  const pal=[C.ocean,C.sea,"#7FB3B6","#E3CC86","#D5D3CB",C.gray];
   chart("chEtapas").setOption({...base, legend:{top:0,type:"scroll"}, tooltip:{trigger:"axis",valueFormatter:v=>money(v)}, xAxis:{type:"category",data:meses},
     yAxis:[{type:"value",axisLabel:{formatter:v=>money(v)}},{type:"value",name:"Costo/conv.",axisLabel:{formatter:v=>money(v)},splitLine:{show:false}}],
     series:[...etapas.map((e,i)=>({name:"Meta · "+e,type:"bar",stack:"g",data:meses.map(m=>Math.round(E[e][m])),itemStyle:{color:pal[i%pal.length]}})),
@@ -731,12 +858,12 @@ function render(){
   let avisoProd = "";
   if(prod){ const sp = inversionSinProducto(A,B); avisoProd = ` · <span class="chip amar">Producto: ${prod}</span> Inversión excluida por no tener producto identificable (marca / mixta): Meta ${money(sp.meta)}, Google ${money(sp.goo)}. Los <b>leads</b> se muestran totales: el front no los separa por producto.`; }
   $("#periodo").innerHTML = `Periodo: <b>${A}</b> a <b>${B}</b> · Comparación: ${CA} a ${CB}${avisoProd}`;
-  renderKPIs(x,y); insights(x,y); renderTendencia(); renderMix(x); renderOrigen(x,y);
+  renderResumen(x,y); renderKPIs(x,y); insights(x,y); renderTendencia(); renderMix(x); renderOrigen(x,y);
   const activa = document.querySelector("#nav a.on").dataset.s; if(activa!=="resumen") renderSeccion(activa);
 }
 (function init(){
   $("#sub").textContent = `Datos al ${D.rango.max} · actualizado ${D.generado}`;
-  $("#footer").textContent = `Elaborado por: Agencia Digital · Dirección de Mercadeo · Oficina Central GHL · ${D.credito_fecha}`;
+  $("#footer").innerHTML = `<img src="assets/logo_makani_dorado_720.png" alt="Makani">Elaborado por: Agencia Digital · Dirección de Mercadeo · Oficina Central GHL · ${D.credito_fecha}`;
   [...new Set(MCAMP.map(c=>c.etapa))].forEach(e=>{ const o=document.createElement("option"); o.value=e; o.textContent=e; $("#etapaCrea").appendChild(o); });
   $("#desde").min=$("#hasta").min=D.rango.min; $("#desde").max=$("#hasta").max=D.rango.max;
   document.querySelector('#presets button[data-p="mesant"]').classList.add("on");
