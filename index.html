@@ -225,13 +225,16 @@ footer{color:var(--gray);font-size:12px;text-align:center;padding:24px}
   <section id="creativos">
     <div class="card">
       <h3>Creativos de Meta</h3>
-      <div class="nota">Ordenados por el criterio elegido, con gasto en el rango (meses completos). Los rankings son la comparación de Meta frente a anuncios que compiten por el mismo público (último mes con datos).</div>
+      <div class="nota"><b>Para qué sirve:</b> decidir qué creativos escalar, cuáles apagar y qué producir después. <b>Métrica principal para elegir el ideal:</b> <i>costo por chat con 2+ mensajes</i> (interés real, no solo el saludo automático), comparando solo anuncios del mismo producto y objetivo y con volumen mínimo para que el dato sea confiable. Desempate: % de chats con 2+ mensajes (calidad) y rankings de Meta. En campañas a la web, mirar compras web. Meses completos que tocan el rango.</div>
       <select class="sel" id="ordCrea">
+        <option value="cpi">Menor costo por chat con 2+ mensajes (recomendado)</option>
+        <option value="cpi_desc">Mayor costo por chat con 2+ mensajes (candidatos a apagar)</option>
         <option value="gasto">Mayor gasto</option>
-        <option value="cpa">Menor costo por conversación</option>
-        <option value="cpa_desc">Mayor costo por conversación</option>
+        <option value="calidad">Mayor % de chats con 2+ mensajes</option>
+        <option value="cpa">Menor costo por conversación iniciada</option>
         <option value="ctr">Mayor CTR</option>
       </select>
+      <label class="nota" style="display:inline">Mínimo de chats 2+ <input type="number" id="minCrea" value="20" min="0" step="5" class="sel" style="width:80px"></label>
       <select class="sel" id="etapaCrea"><option value="">Todas las etapas</option></select>
       <div class="galeria" id="galeria" style="margin-top:14px"></div>
     </div>
@@ -348,7 +351,7 @@ document.querySelectorAll("#nav a").forEach(a=>a.onclick=()=>{
 });
 ["#metHora"].forEach(s=>$(s).onchange=()=>renderHoras());
 ["#tipoSeg","#objSeg","#dimG","#filtroTerm"].forEach(s=>$(s).onchange=()=>renderSegmentos());
-["#ordCrea","#etapaCrea"].forEach(s=>$(s).onchange=()=>renderCreativos());
+["#ordCrea","#etapaCrea","#minCrea"].forEach(s=>$(s).onchange=()=>renderCreativos());
 
 // --- KPI ---
 function variacion(act, ant, inverso=false){
@@ -675,18 +678,21 @@ function renderPresupuesto(){
 // --- creativos ---
 function renderCreativos(){
   const meses = mesesDe(A,B); const et = $("#etapaCrea").value;
-  const ag = {}; ADM.filter(r=>meses.has(r.mes)).forEach(r=>{ const o=ag[r.a]||(ag[r.a]={gasto:0,impresiones:0,alcance:0,clics_enlace:0,conversaciones:0,compras_web:0,video_thruplay:0,video_p25:0,video_p100:0,reproducciones_video:0}); Object.keys(o).forEach(k=>o[k]+=r[k]||0); });
-  let fil = Object.entries(ag).map(([a,o])=>({...ADS[a],...o, cpa:div(o.gasto,o.conversaciones), ctr:div(o.clics_enlace,o.impresiones)}))
+  const ag = {}; ADM.filter(r=>meses.has(r.mes)).forEach(r=>{ const o=ag[r.a]||(ag[r.a]={gasto:0,impresiones:0,alcance:0,clics_enlace:0,conversaciones:0,mensaje_2:0,compras_web:0,video_thruplay:0,video_p25:0,video_p100:0,reproducciones_video:0}); Object.keys(o).forEach(k=>o[k]+=r[k]||0); });
+  let fil = Object.entries(ag).map(([a,o])=>({...ADS[a],...o, cpa:div(o.gasto,o.conversaciones), cpi:div(o.gasto,o.mensaje_2), cal:div(o.mensaje_2,o.conversaciones), ctr:div(o.clics_enlace,o.impresiones)}))
     .filter(o=>!et || (MCAMP[o.c] && MCAMP[o.c].etapa===et));
   const ord=$("#ordCrea").value;
-  fil.sort((x,y)=> ord==="gasto"? y.gasto-x.gasto : ord==="ctr"? (y.ctr||0)-(x.ctr||0) : ord==="cpa"? ((x.cpa??1e15)-(y.cpa??1e15)) : ((y.cpa??-1)-(x.cpa??-1)));
-  if(ord.startsWith("cpa")) fil = fil.filter(o=>o.conversaciones>=5);
+  const minC = +$("#minCrea").value || 0;
+  if(["cpi","cpi_desc","calidad"].includes(ord)) fil = fil.filter(o=>o.mensaje_2>=minC);
+  if(ord==="cpa") fil = fil.filter(o=>o.conversaciones>=minC);
+  const asc = (k)=>(x,y)=>((x[k]??1e15)-(y[k]??1e15)), desc=(k)=>(x,y)=>((y[k]??-1)-(x[k]??-1));
+  fil.sort({gasto:desc("gasto"), ctr:desc("ctr"), cpa:asc("cpa"), cpi:asc("cpi"), cpi_desc:desc("cpi"), calidad:desc("cal")}[ord]);
   const rk = v => !v || v==="UNKNOWN" ? "" : v.startsWith("ABOVE")?`<span class="chip verde">sobre promedio</span>`: v==="AVERAGE"?`<span class="chip amar">promedio</span>`:`<span class="chip rojo">bajo promedio</span>`;
   $("#galeria").innerHTML = fil.slice(0,60).map(o=>`<div class="crea">
     <div class="img">${o.archivo?`<img loading="lazy" src="creativos/${o.archivo}" alt="">`:"Sin vista previa"}${o.es_video==="True"?'<span class="vid">▶ Video</span>':""}</div>
     <div class="cuerpo"><div class="nom">${o.nombre}</div>
       <div><span class="chip">${MCAMP[o.c]?.etapa||""}</span> <span class="chip">${MCAMP[o.c]?.producto||""}</span></div>
-      <div class="mets"><span>Gasto</span><b>${money(o.gasto)}</b><span>Conversaciones</span><b>${fmt(o.conversaciones)}</b><span>Costo/conv.</span><b>${money(o.cpa)}</b><span>CTR enlace</span><b>${pct(o.ctr,2)}</b>
+      <div class="mets"><span>Gasto</span><b>${money(o.gasto)}</b><span>Conversaciones</span><b>${fmt(o.conversaciones)}</b><span>Chats 2+ msj.</span><b>${fmt(o.mensaje_2)} (${pct(o.cal,0)})</b><span>Costo / chat 2+</span><b>${money(o.cpi)}</b><span>Costo/conv.</span><b>${money(o.cpa)}</b><span>CTR enlace</span><b>${pct(o.ctr,2)}</b>
       ${o.compras_web?`<span>Compras web</span><b>${fmt(o.compras_web)}</b>`:""}${o.reproducciones_video?`<span>Video visto 100%</span><b>${pct(div(o.video_p100,o.reproducciones_video))}</b>`:""}</div>
       <div>${o.quality_ranking?`Calidad ${rk(o.quality_ranking)}<br>Interacción ${rk(o.engagement_rate_ranking)}<br>Conversión ${rk(o.conversion_rate_ranking)}`:""}</div>
       ${o.texto?`<div class="txt" title="${(o.texto||"").replace(/"/g,"'")}">${o.texto}</div>`:""}
