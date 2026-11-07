@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261107095946"></script>
+<script src="data.js?v=20261107101542"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -223,7 +223,7 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
 </header>
 <nav id="nav">
   <a data-s="resumen" class="on">Resumen</a>
-  <a data-s="llegadas">Línea de tiempo</a>
+  <a data-s="llegadas">Pick-up</a>
   <a data-s="embudo">Embudo WhatsApp</a>
   <a data-s="horas">Días y horas</a>
   <a data-s="segmentos">Segmentos y desperdicio</a>
@@ -260,7 +260,7 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
 
   <section id="llegadas">
     <div class="card">
-      <h3>Reservas por fecha de ingreso</h3>
+      <h3>Pick-up: reservas por fecha de registro</h3>
       <div class="nota" id="notaLleg"></div>
       <select class="sel" id="metLleg">
         <option value="reservas">Reservas</option>
@@ -268,8 +268,8 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
         <option value="venta">Venta sin IVA</option>
       </select>
     </div>
-    <div class="card"><h3>Villas · Web (CRS) y WhatsApp</h3><div class="tabla" id="totLlegV"></div><div class="chart alto" id="chLlegV"></div></div>
-    <div class="card"><h3>Pasadías · Palco y WhatsApp</h3><div class="tabla" id="totLlegP"></div><div class="chart alto" id="chLlegP"></div></div>
+    <div class="card"><h3>Villas · Total, CRS y WhatsApp</h3><div class="tabla" id="totLlegV"></div><div class="chart alto" id="chLlegV"></div></div>
+    <div class="card"><h3>Pasadías · Total, Palco y WhatsApp</h3><div class="tabla" id="totLlegP"></div><div class="chart alto" id="chLlegP"></div></div>
   </section>
 
   <section id="embudo">
@@ -1390,39 +1390,32 @@ function avisoRegistro(a, b, leads){
   const det = Object.entries(por).sort((x,y)=>y[1]-x[1]).map(([n,v])=>`${n} ${fmt(v)}`).join(", ");
   return `<br><span class="chip rojo">Registro de leads incompleto</span> <b>${fmt(tot)}</b> leads atendidos en este periodo no están en "Data Leads" (${det}). Los leads registrados y las tasas que dependen de ellos están subestimados. Detalle en Calculadora → Capacidad del front.`;
 }
-const LLEG = T(D.llegadas);
-const CANALES_LLEG = {"Villas":[["Web (CRS)", C.sea],["WhatsApp", C.blood]], "Pasadías":[["Palco", C.ocean],["WhatsApp", C.blood]]};
+const PICK = T(D.pickup);
+const CANALES_PICK = {"Villas":[["CRS", C.sea],["WhatsApp", C.blood]], "Pasadías":[["Palco", C.ocean],["WhatsApp", C.blood]]};
 function renderLlegadas(){
-  // Eje X = fecha de ingreso (llegada a la villa / visita de la pasadía). Desde el inicio del rango elegido hasta la última
-  // fecha con reservas en libros (máx. 1 año adelante): a la derecha de "hoy" está lo ya vendido para fechas futuras.
-  const met = $("#metLleg").value, _n = new Date(), hoy = `${_n.getFullYear()}-${String(_n.getMonth()+1).padStart(2,"0")}-${String(_n.getDate()).padStart(2,"0")}`;
-  const ultima = LLEG.reduce((m,r)=> r.fecha>m ? r.fecha : m, B);
-  const fin = ultima > addDays(hoy,365) ? addDays(hoy,365) : ultima, ini = A;
+  // Pick-up = reservas por FECHA DE REGISTRO (alta) dentro del rango elegido, por canal, con la línea del total.
+  const met = $("#metLleg").value, ini = A, fin = B;
   const dias = Math.round((toD(fin)-toD(ini))/864e5)+1, semanal = dias > 120;
   const kf = f => { if(!semanal) return f; const d=toD(f); d.setDate(d.getDate()-diaSem(f)); return toS(d); };
   const keys = []; for(let f=kf(ini); f<=fin; f=addDays(f, semanal?7:1)) keys.push(f);
-  const kHoy = kf(hoy), etiq = met==="venta" ? money : (v=>fmt(v));
-  $("#notaLleg").innerHTML = `Cada barra es lo vendido para ${semanal?"esa semana (lunes de inicio)":"ese día"} de ingreso, por canal. A la izquierda de la línea <b>hoy</b> están las llegadas ya ocurridas; a la derecha, lo que ya está reservado para fechas futuras (va subiendo a medida que entran reservas, como un pick-up). Solo digital: WhatsApp = registro del Front con origen Instagram o Página Web (FECHA INGRESO RESERVA); Web (CRS) = motor de reservas de villas (fecha de entrada, confirmadas o modificadas); Palco = venta online de pasadías (fecha de celebración, sin anuladas). Rango: del ${etiqFecha(ini)} al ${etiqFecha(fin)}. <b>Ojo:</b> WhatsApp incluye solo lo registrado por el Front hasta el ${etiqFecha(D.rango.front_hasta)}; las reservas por WhatsApp de días posteriores todavía no aparecen.`;
+  const etiq = met==="venta" ? money : (v=>fmt(v));
+  $("#notaLleg").innerHTML = `Cada punto es lo que se reservó ${semanal?"en esa semana (lunes de inicio)":"ese día"}, según la fecha en que se registró la reserva (alta), sin importar cuándo es la visita. Solo digital. <b>WhatsApp</b> = registro del Front con origen Instagram o Página Web (incluye lo que llega por la pauta de Meta). <b>CRS</b> = motor de reservas de villas (confirmadas o modificadas). <b>Palco</b> = venta online de pasadías (sin anuladas). WhatsApp tiene datos hasta el ${etiqFecha(D.rango.front_hasta)}, último día registrado por el Front.`;
   for(const [prod, idc, idt] of [["Villas","chLlegV","totLlegV"],["Pasadías","chLlegP","totLlegP"]]){
-    const canales = CANALES_LLEG[prod], mp = {};
-    canales.forEach(([c])=> mp[c] = new Map(keys.map(k=>[k,0])));
-    const tot = {}; canales.forEach(([c])=> tot[c] = {pas:0, fut:0});
-    LLEG.filter(r=>r.producto===prod && r.fecha>=ini && r.fecha<=fin && mp[r.canal]).forEach(r=>{
-      const k = kf(r.fecha); if(mp[r.canal].has(k)) mp[r.canal].set(k, mp[r.canal].get(k) + (r[met]||0));
-      tot[r.canal][r.fecha<=hoy ? "pas" : "fut"] += (r[met]||0);
-    });
-    const series = canales.map(([c,col],i)=>({name:c, type:"bar", stack:"t", barMaxWidth:22,
-      itemStyle:{color:col, borderRadius: i===canales.length-1 ? [3,3,0,0] : 0},
-      data: keys.map(k=>Math.round(mp[c].get(k))),
-      markLine: i===0 && keys.includes(kHoy) ? {symbol:"none", silent:true, label:{formatter:"hoy", color:C.char}, lineStyle:{color:C.char, type:"dashed"}, data:[{xAxis: etiqFecha(kHoy)}]} : undefined}));
+    const canales = CANALES_PICK[prod], mp = {}, tot = {};
+    canales.forEach(([c])=>{ mp[c] = new Map(keys.map(k=>[k,0])); tot[c] = 0; });
+    PICK.filter(r=>r.producto===prod && r.fecha>=ini && r.fecha<=fin && mp[r.canal]).forEach(r=>{
+      const k = kf(r.fecha), v = r[met]||0; if(mp[r.canal].has(k)) mp[r.canal].set(k, mp[r.canal].get(k)+v); tot[r.canal] += v; });
+    const total = keys.map(k=>canales.reduce((s_,[c])=>s_+mp[c].get(k),0));
+    const linea = (name, data, col, ancho, area) => ({name, type:"line", data:data.map(v=>Math.round(v)), smooth:semanal, symbol:"circle", symbolSize:4,
+      itemStyle:{color:col}, lineStyle:{width:ancho}, areaStyle: area ? {color:col, opacity:.08} : undefined});
     chart(idc).setOption({...base, legend:{top:0, icon:"roundRect", itemWidth:12, itemHeight:8},
       grid:{left:70, right:30, top:40, bottom:50},
-      xAxis:{type:"category", data:keys.map(etiqFecha), axisLabel:{hideOverlap:true}},
+      xAxis:{type:"category", data:keys.map(etiqFecha), axisLabel:{hideOverlap:true}, name: semanal ? "Semana de registro" : "Día de registro", nameLocation:"middle", nameGap:30},
       yAxis:{type:"value", axisLabel:{formatter: v=> met==="venta" ? money(v) : fmt(v)}, splitLine:{lineStyle:{color:"#EFEBE3"}}},
-      tooltip:{trigger:"axis", valueFormatter: etiq}, series}, true);
-    const fila = c => `<tr><td>${c}</td><td class="n">${etiq(tot[c].pas)}</td><td class="n">${etiq(tot[c].fut)}</td><td class="n"><b>${etiq(tot[c].pas+tot[c].fut)}</b></td></tr>`;
-    const sum = k => canales.reduce((s_,[c])=>s_+tot[c][k],0);
-    $("#"+idt).innerHTML = `<table><thead><tr><th>Canal</th><th class="n">Ya llegaron (hasta hoy)</th><th class="n">Reservado a futuro</th><th class="n">Total</th></tr></thead><tbody>${canales.map(([c])=>fila(c)).join("")}<tr><td><b>Total</b></td><td class="n"><b>${etiq(sum("pas"))}</b></td><td class="n"><b>${etiq(sum("fut"))}</b></td><td class="n"><b>${etiq(sum("pas")+sum("fut"))}</b></td></tr></tbody></table>`;
+      tooltip:{trigger:"axis", valueFormatter: etiq},
+      series:[linea("Total", total, C.char, 3, true), ...canales.map(([c,col])=>linea(c, keys.map(k=>mp[c].get(k)), col, 2, false))]}, true);
+    const sumT = canales.reduce((s_,[c])=>s_+tot[c],0);
+    $("#"+idt).innerHTML = `<table><thead><tr><th>Canal</th><th class="n">${$("#metLleg").selectedOptions[0].text} en el rango</th><th class="n">% del total</th></tr></thead><tbody>${canales.map(([c])=>`<tr><td>${c}</td><td class="n">${etiq(tot[c])}</td><td class="n">${sumT?pct(tot[c]/sumT,0):"—"}</td></tr>`).join("")}<tr><td><b>Total</b></td><td class="n"><b>${etiq(sumT)}</b></td><td class="n">100%</td></tr></tbody></table>`;
   }
 }
 $("#metLleg").onchange = renderLlegadas;
