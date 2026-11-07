@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261105180435"></script>
+<script src="data.js?v=20261106202049"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -243,7 +243,7 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
       <div class="card canal"><h3>Meta Ads</h3><div id="canalMeta"></div></div>
       <div class="card canal"><h3>Google Ads</h3><div id="canalGoogle"></div></div>
     </div>
-    <div class="card"><h3>Fuentes de venta digital</h3><div class="nota"><b>Digital = Instagram + Página Web</b>, lleguen por WhatsApp (registro del front), por el motor web de villas (CRS) o por Palco (pasadías online). Referidos, agencias, conserjes y demás orígenes no entran en las métricas. El Front no registra nada en el CRS, así que CRS y WhatsApp se suman sin duplicados. El detalle por afiliado del CRS es informativo: el costo por reserva usa todo el CRS. <b>Palco</b>: compras y tickets medidos por GA4 desde jul-2026 (1 ticket = 1 pax; pendiente de validar con Palco).</div><div id="fueraWA"></div></div>
+    <div class="card"><h3>Fuentes de venta digital</h3><div class="nota"><b>Digital = Instagram + Página Web</b>, lleguen por WhatsApp (registro del front), por el motor web de villas (CRS) o por Palco (pasadías online). Referidos, agencias, conserjes y demás orígenes no entran en las métricas. El Front no registra nada en el CRS, así que CRS y WhatsApp se suman sin duplicados. El detalle por afiliado del CRS es informativo: el costo por reserva usa todo el CRS. <b>Palco</b>: compras y pax medidos por GA4 desde jul-2026 (1 ticket = 1 pax; los tickets FOR TWO y X2 = 2 pax; pendiente de validar con Palco).</div><div id="fueraWA"></div></div>
     <div class="card"><h3>Pasadías vs Villas</h3><div class="nota">Solo canales digitales (IG + Página Web). Inversión atribuible por el nombre de la campaña. Reservas, pax y venta: Pasadías = WhatsApp IG + Web (front) + Palco; Villas = WhatsApp IG + Web (front) + CRS (todo el motor web, no solo los afiliados de pauta). La inversión de marca o mixta no se reparte: se muestra aparte.</div><div id="tablaProducto"></div></div>
     <div class="card"><h3>Inversión y reservas en el tiempo</h3><div class="nota">Diario en rangos de hasta 3 meses; semanal en rangos más largos. Barras: inversión en Meta y Google. Línea: reservas digitales (IG + Web: WhatsApp, CRS y Palco). Línea discontinua: reservas digitales del periodo de comparación (sin dato antes de sep-2025).</div><div class="chart" id="chTendencia"></div></div>
     <div class="card"><h3>Lectura del periodo</h3><div class="insights" id="insights"></div></div>
@@ -513,7 +513,7 @@ function agregado(a,b){
   const prodSel = $("#producto").value;
   const crs = crsRango(a,b);
   const onl = {c:0, v:0, t:0};
-  if(prodSel!=="Villas") ONLP.filter(r=>enRango(r.fecha,a,b)).forEach(r=>{ onl.c+=r.compras; onl.v+=r.ingresos; onl.t+=r.tickets||0; });
+  if(prodSel!=="Villas") ONLP.filter(r=>enRango(r.fecha,a,b)).forEach(r=>{ onl.c+=r.compras; onl.v+=r.ingresos; onl.t+=r.pax||0; });
   const crsPauta = {r: crs.google.r + crs.meta.r, v: crs.google.v + crs.meta.v};
   // DIGITAL = Instagram + Página Web, lleguen por WhatsApp (front), CRS (villas) o Palco (pasadías). Lo demás no entra.
   const resDigT = resDig + crs.tot.r + onl.c, ventaDigT = ventaDig + crs.tot.v + onl.v, paxDig = f.pax_ig + f.pax_web + crs.tot.p + onl.t;
@@ -601,7 +601,7 @@ function serie(a,b){
   // Solo DIGITAL: WhatsApp IG + Web (front) + CRS (villas) + Palco (pasadías)
   FRONT.forEach(r=>{ if(enRango(r.fecha,a,b)){ const o=get(clave(r.fecha)); o.leads += r.leads_ig+r.leads_web+r.leads_ref; o.res += r.res_ig+r.res_web; o.venta += r.venta_ig+r.venta_web; o.pax += r.pax_ig+r.pax_web; } });
   if($("#producto").value!=="Pasadías") CRSA.forEach(r=>{ if(enRango(r.fecha,a,b)){ const o=get(clave(r.fecha)); o.res += r.reservas; o.venta += r.venta; o.pax += r.pax||0; } });
-  if($("#producto").value!=="Villas") ONLP.forEach(r=>{ if(enRango(r.fecha,a,b)){ const o=get(clave(r.fecha)); o.res += r.compras; o.venta += r.ingresos; o.pax += r.tickets||0; } });
+  if($("#producto").value!=="Villas") ONLP.forEach(r=>{ if(enRango(r.fecha,a,b)){ const o=get(clave(r.fecha)); o.res += r.compras; o.venta += r.ingresos; o.pax += r.pax||0; } });
   return {semanal, k:[...mp.keys()].sort(), mp};
 }
 function renderTendencia(){
@@ -665,7 +665,7 @@ function porProducto(a,b){
   // Solo DIGITAL: WhatsApp IG + Web (front), CRS -> Villas, Palco -> Pasadías
   FRONTP.filter(r=>enRango(r.fecha,a,b)).forEach(r=>{ const o=out[r.producto]; if(!o) return; o.res += r.res_ig+r.res_web; o.venta += r.venta_ig+r.venta_web; o.pax += (r.pax_ig||0)+(r.pax_web||0); });
   CRSA.filter(r=>enRango(r.fecha,a,b)).forEach(r=>{ const o=out["Villas"]; o.res += r.reservas; o.venta += r.venta; o.pax += r.pax||0; });
-  ONLP.filter(r=>enRango(r.fecha,a,b)).forEach(r=>{ const o=out["Pasadías"]; o.res += r.compras; o.venta += r.ingresos; o.pax += r.tickets||0; });
+  ONLP.filter(r=>enRango(r.fecha,a,b)).forEach(r=>{ const o=out["Pasadías"]; o.res += r.compras; o.venta += r.ingresos; o.pax += r.pax||0; });
   return out;
 }
 function renderResumen(x, y){
@@ -729,7 +729,7 @@ function renderResumen(x, y){
     ${filaF("&nbsp;&nbsp;↳ atribuidas a Facebook Ads", x.crs.meta.r, x.crs.meta.v, delta(x.crs.meta.v, y.crs.meta.v))}
     ${filaF("&nbsp;&nbsp;↳ Google Hotel Ads (inversión fuera del dashboard)", x.crs.gha.r, x.crs.gha.v, delta(x.crs.gha.v, y.crs.gha.v))}
     ${filaF("&nbsp;&nbsp;↳ sin afiliado de pauta (orgánico, GMB, sin afiliado…)", x.crs.organico.r, x.crs.organico.v, delta(x.crs.organico.v, y.crs.organico.v))}
-    ${filaF(`<b>Pasadías online (Palco, vista por GA4)</b> · ${fmt(x.onl.t)} tickets`, x.onl.c, x.onl.v, delta(x.onl.v, y.onl.v))}
+    ${filaF(`<b>Pasadías online (Palco, vista por GA4)</b> · ${fmt(x.onl.t)} pax`, x.onl.c, x.onl.v, delta(x.onl.v, y.onl.v))}
   </tbody></table>` + (B >= "2026-07-01" && x.g.costo > 0 && x.crs.google.r === 0 && $("#producto").value!=="Pasadías"
     ? `<div class="aviso rojo"><b>Atribución de Google al CRS interrumpida:</b> hasta jun-2026 el afiliado "Google Ads - Hotel" atribuía de 2 a 6 reservas de villas al mes; desde jul-2026 (cuando la pauta pasó a la cuenta 2 de Google) atribuye 0, mientras suben las reservas "sin afiliado". Lo más probable es que las campañas de la cuenta 2 no lleven el parámetro de afiliado de Roiback en la URL final. No significa que Google no venda villas: hay que agregar el parámetro de afiliado en esas campañas.</div>` : "");
   // Producto
@@ -1340,7 +1340,7 @@ function renderNotas(){
   <p><b>Fuentes.</b> Meta Marketing API (cuentas "CP - Makani Luxury - Lógica", jun–sep 2025, y "CP - Makani Luxury", sep 2025 en adelante; token de solo lectura). Google Ads: API (cuenta del MCC) e informes descargados de las cuentas sin acceso API. Registro del front: "INF LEADS GENERAL MENSUAL" (pestañas Data Leads, Data General y Razones no cierre) desde ${D.rango.front_desde}.</p>
   <p><b>Comparación.</b> "LY −364 días" compara contra el mismo periodo del año anterior alineado por día de la semana (recomendado para pasadías). Si el registro del front no cubre el periodo de comparación, esos KPIs muestran "comparación no disponible".</p>
   <p><b>Conversaciones iniciadas (Meta)</b> = veces que una persona envió un mensaje a la empresa desde el anuncio, después de 7 días sin actividad. No es el clic en el anuncio: Meta reporta los clics por separado y son muchos más. Cerca del 97% de las conversaciones se atribuyen a un clic y solo ~2% a una vista sin clic. Muchas conversaciones son solo el mensaje automático precargado del anuncio; por eso también se muestran los <b>chats con 2+ mensajes</b> (la persona siguió escribiendo), una medida más exigente de interés real. Sin la API de WhatsApp no se puede auditar chat por chat: es una métrica de la plataforma.</p>
-  <p><b>Digital</b> = Instagram + Página Web, de villas o pasadías, lleguen por WhatsApp (registro del front: origen Instagram o Página Web), por el <b>CRS</b> (motor web de villas) o por <b>Palco</b> (pasadías online). Referidos, agencias, conserjes, KLM, "ya nos visitaron" y demás orígenes no entran en las métricas. <b>Pax</b>: front = columna NUMERO PAX de Data General; CRS = Ocupantes; Palco = tickets comprados (GA4 itemsPurchased; 1 ticket = 1 pax, pendiente de validar con Palco). <b>CRS</b>: se suma completo (el Front no registra nada en el CRS: no hay duplicados). Fecha = fecha de la reserva (Alta); valor = "Importe sin impuestos"; solo reservas confirmadas o modificadas. El detalle por afiliado ("Google Ads - …", "Facebook Ads", "Google Hotel Ads"…) es informativo; el costo por reserva usa todo el CRS para no depender del tracking del afiliado. <b>Palco</b>: compras y tickets en pasadias.makaniluxury.com medidos por GA4 desde jul-2026.</p>
+  <p><b>Digital</b> = Instagram + Página Web, de villas o pasadías, lleguen por WhatsApp (registro del front: origen Instagram o Página Web), por el <b>CRS</b> (motor web de villas) o por <b>Palco</b> (pasadías online). Referidos, agencias, conserjes, KLM, "ya nos visitaron" y demás orígenes no entran en las métricas. <b>Pax</b>: front = columna NUMERO PAX de Data General; CRS = Ocupantes; Palco = tickets comprados (GA4 itemsPurchased; 1 ticket = 1 pax, FOR TWO y X2 = 2 pax; pendiente de validar con Palco). <b>CRS</b>: se suma completo (el Front no registra nada en el CRS: no hay duplicados). Fecha = fecha de la reserva (Alta); valor = "Importe sin impuestos"; solo reservas confirmadas o modificadas. El detalle por afiliado ("Google Ads - …", "Facebook Ads", "Google Hotel Ads"…) es informativo; el costo por reserva usa todo el CRS para no depender del tracking del afiliado. <b>Palco</b>: compras y tickets en pasadias.makaniluxury.com medidos por GA4 desde jul-2026.</p>
   <p><b>Conversiones de Google</b> = compras en el motor de reservas web (acciones "Booking COP/USD/EUR"). Los clics al botón de WhatsApp de la web no se miden como conversión, así que Google también se evalúa con los <b>leads y reservas Web</b> del front. Esos leads Web incluyen tráfico orgánico y directo, no solo pauta.</p>
   <p><b>Conversaciones WhatsApp</b> (KPI) = conversaciones iniciadas atribuidas por Meta (7 días). <b>Leads</b> = registrados por el front (IG, Web, Referidos). <b>Reservas totales</b> = todas las reservas registradas por el front (pasadías, villas, KLM), de cualquier origen: es la cifra principal porque no depende de cómo se etiquete el origen. <b>Reservas digitales</b> = origen Instagram o Página web (canales donde actúa la pauta); Referidos queda fuera. <b>Comparación</b> por defecto: mismo periodo del año anterior alineado por día de la semana (−364 días, STLY). <b>Lectura incremental</b>: (inversión hoy − inversión año anterior) frente a (reservas y venta hoy − año anterior); muestra cuánto trajo la inversión adicional, sin descontar estacionalidad ni demanda orgánica. <b>Venta</b> = sin IVA, según el front.</p>
   <p><b>Costo de pauta por reserva</b> = inversión total Meta + Google ÷ reservas totales; el costo por reserva digital usa solo IG + Web. Es una medida de eficiencia conjunta: el front no registra qué anuncio originó cada lead.</p>
@@ -1373,7 +1373,7 @@ function avisoRegistro(a, b, leads){
 }
 function renderMeta(){
   // Meta del mes en curso (config/metas_pax.csv): pax de pasadías DIGITALES por FECHA DE VISITA.
-  // WhatsApp IG + Web (front, FECHA INGRESO RESERVA) + Palco (tickets GA4; sin fecha de visita -> se usa la fecha de compra).
+  // WhatsApp IG + Web (front, FECHA INGRESO RESERVA) + Palco (pax GA4, FOR TWO = 2; sin fecha de visita -> se usa la fecha de compra).
   const el = $("#metaMes"), fin = D.rango.front_hasta, mes = fin.slice(0,7);
   const m = (D.metas||[]).find(o=>o.mes===mes && o.producto==="Pasadías");
   if(!m){ el.innerHTML = ""; return; }
@@ -1382,7 +1382,7 @@ function renderMeta(){
   const VIS = T(D.pasadias_visita);
   let waHecho = 0, waFuturo = 0, pl = 0;
   VIS.filter(r=>enRango(r.fecha,ini,finMes)).forEach(r=>{ if(r.fecha<=fin) waHecho += r.pax; else waFuturo += r.pax; });
-  ONLP.filter(r=>enRango(r.fecha,ini,fin)).forEach(r=>{ pl += r.tickets||0; });
+  ONLP.filter(r=>enRango(r.fecha,ini,fin)).forEach(r=>{ pl += r.pax||0; });
   const hecho = waHecho + pl, vendido = hecho + waFuturo, esperado = meta*dia/diasMes, dif = hecho - esperado;
   const falta = Math.max(0, meta - vendido), rest = diasMes - dia, porDia = rest>0 ? falta/rest : null;
   const col = hecho >= esperado ? C.pos : (hecho >= 0.85*esperado ? C.neu : C.neg);
@@ -1396,7 +1396,7 @@ function renderMeta(){
       <div><div class="l">Faltan por vender</div><div class="v">${fmt(falta)} pax</div><div class="s">${porDia==null?"":`~${fmt(porDia)} pax por día en los ${rest} días que quedan · `}total vendido para el mes: ${fmt(vendido)} (${pct(vendido/meta,0)})</div></div>
     </div>
     <div class="meta-bar"><div class="fill" style="width:${Math.min(100,100*hecho/meta)}%;background:${col}"></div><div class="fill" style="position:absolute;top:0;left:${Math.min(100,100*hecho/meta)}%;width:${Math.min(100-100*hecho/meta,100*waFuturo/meta)}%;background:${col};opacity:.35;border-radius:0 10px 10px 0"></div><div class="marca" style="left:${100*dia/diasMes}%"><span>hoy: ${fmt(esperado)}</span></div></div>
-    <div class="nota" style="margin-top:26px">Barra llena: visitas ya realizadas. Barra clara: pax ya vendidos con visita en lo que queda del mes. Digital = Instagram + Página Web: WhatsApp IG + Web ${fmt(waHecho+waFuturo)} pax (front, NUMERO PAX por FECHA INGRESO RESERVA) + Palco ${fmt(pl)} tickets (GA4 no trae la fecha de visita: se cuentan por fecha de compra; 1 ticket = 1 pax, pendiente de validar con Palco). Referencia lineal de ${fmt(meta/diasMes,0)} pax/día: la necesidad real por día depende de la ocupación (se verá al conectar CoverManager).</div></div>`;
+    <div class="nota" style="margin-top:26px">Barra llena: visitas ya realizadas. Barra clara: pax ya vendidos con visita en lo que queda del mes. Digital = Instagram + Página Web: WhatsApp IG + Web ${fmt(waHecho+waFuturo)} pax (front, NUMERO PAX por FECHA INGRESO RESERVA) + Palco ${fmt(pl)} pax (GA4 no trae la fecha de visita: se cuentan por fecha de compra; 1 ticket = 1 pax y los tickets FOR TWO y X2 = 2 pax, pendiente de validar con Palco). Referencia lineal de ${fmt(meta/diasMes,0)} pax/día: la necesidad real por día depende de la ocupación (se verá al conectar CoverManager).</div></div>`;
 }
 function render(){
   A=$("#desde").value; B=$("#hasta").value; if(A>B){ [A,B]=[B,A]; }
