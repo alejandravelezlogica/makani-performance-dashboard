@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261107101542"></script>
+<script src="data.js?v=20261107102500"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -223,7 +223,6 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
 </header>
 <nav id="nav">
   <a data-s="resumen" class="on">Resumen</a>
-  <a data-s="llegadas">Pick-up</a>
   <a data-s="embudo">Embudo WhatsApp</a>
   <a data-s="horas">Días y horas</a>
   <a data-s="segmentos">Segmentos y desperdicio</a>
@@ -241,6 +240,17 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
     <div id="metaMes"></div>
     <div class="veredicto" id="veredicto"></div>
     <div class="big" id="kpisBig"></div>
+    <div class="card">
+      <h3>Pick-up: reservas por fecha de registro</h3>
+      <div class="nota" id="notaLleg"></div>
+      <select class="sel" id="metLleg">
+        <option value="reservas">Reservas</option>
+        <option value="pax">Pax</option>
+        <option value="venta">Venta sin IVA</option>
+      </select>
+    </div>
+    <div class="card"><h3>Villas · Total, CRS y WhatsApp</h3><div class="tabla" id="totLlegV"></div><div class="chart alto" id="chLlegV"></div></div>
+    <div class="card"><h3>Pasadías · Total, Palco y WhatsApp</h3><div class="tabla" id="totLlegP"></div><div class="chart alto" id="chLlegP"></div></div>
     <div class="grid2">
       <div class="card canal"><h3>Meta Ads</h3><div id="canalMeta"></div></div>
       <div class="card canal"><h3>Google Ads</h3><div id="canalGoogle"></div></div>
@@ -256,20 +266,6 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
         <div><h3 class="sub3">Reservas y venta por origen del lead</h3><div class="chart" id="chOrigen"></div></div>
       </div>
     </details>
-  </section>
-
-  <section id="llegadas">
-    <div class="card">
-      <h3>Pick-up: reservas por fecha de registro</h3>
-      <div class="nota" id="notaLleg"></div>
-      <select class="sel" id="metLleg">
-        <option value="reservas">Reservas</option>
-        <option value="pax">Pax</option>
-        <option value="venta">Venta sin IVA</option>
-      </select>
-    </div>
-    <div class="card"><h3>Villas · Total, CRS y WhatsApp</h3><div class="tabla" id="totLlegV"></div><div class="chart alto" id="chLlegV"></div></div>
-    <div class="card"><h3>Pasadías · Total, Palco y WhatsApp</h3><div class="tabla" id="totLlegP"></div><div class="chart alto" id="chLlegP"></div></div>
   </section>
 
   <section id="embudo">
@@ -1371,7 +1367,6 @@ function renderNotas(){
 
 // --- orquestación ---
 function renderSeccion(s){
-  if(s==="llegadas") renderLlegadas();
   if(s==="embudo") renderEmbudo(agregado(A,B));
   if(s==="horas") renderHoras();
   if(s==="segmentos") renderSegmentos();
@@ -1470,7 +1465,7 @@ function render(){
   let avisoProd = "";
   if(prod){ const sp = inversionSinProducto(A,B); avisoProd = ` · <span class="chip amar">Producto: ${prod}</span> Inversión excluida por no tener producto identificable (marca / mixta): Meta ${money(sp.meta)}, Google ${money(sp.goo)}. Los <b>leads</b> se muestran totales: el front no los separa por producto.`; }
   $("#periodo").innerHTML = `Periodo: <b>${A}</b> a <b>${B}</b> · Comparación: ${CA} a ${CB}${avisoProd}${avisoRegistro(A,B,x.leads)}`;
-  renderMeta(); renderResumen(x,y); renderKPIs(x,y); insights(x,y); renderTendencia(); renderMix(x); renderOrigen(x,y);
+  renderMeta(); renderLlegadas(); renderResumen(x,y); renderKPIs(x,y); insights(x,y); renderTendencia(); renderMix(x); renderOrigen(x,y);
   const activa = document.querySelector("#nav a.on").dataset.s; if(activa!=="resumen") renderSeccion(activa);
 }
 (function init(){
