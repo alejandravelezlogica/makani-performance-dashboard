@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261107111932"></script>
+<script src="data.js?v=20261107112250"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -1392,11 +1392,11 @@ const CANALES_PICK = {"Villas":[["CRS", COL_PICK.web],["WhatsApp · Instagram", 
                       "Pasadías":[["Palco", COL_PICK.web],["WhatsApp · Instagram", COL_PICK.ig],["WhatsApp · Web", COL_PICK.wweb]]};
 function renderLlegadas(){
   // Pick-up = reservas por FECHA DE REGISTRO (alta). SIEMPRE totales, nunca promedios (decisión de la usuaria):
-  //   hasta 31 días (un mes) → total por día · más de un mes y < 1 año → total por semana (etiqueta = rango de fechas) · ≥ 1 año → total por mes.
+  //   hasta 92 días (incluye el filtro de 90 días, en prueba desde el 7-nov) → total por día · más de 92 días y < 1 año → total por semana (etiqueta = rango de fechas) · ≥ 1 año → total por mes.
   // Los periodos de los extremos se recortan al rango y su etiqueta muestra las fechas reales.
   const met = $("#metLleg").value, ini = A, fin = B;
   const dias = Math.round((toD(fin)-toD(ini))/864e5)+1;
-  const modo = dias <= 31 ? "dia" : (dias < 365 ? "semana" : "mes");
+  const modo = dias <= 92 ? "dia" : (dias < 365 ? "semana" : "mes");
   const MESL = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
   const dm = f => `${+f.slice(8,10)} ${MESL[+f.slice(5,7)-1]}`;
   const finMes = f => { const d=toD(f.slice(0,7)+"-01"); d.setMonth(d.getMonth()+1); d.setDate(0); return toS(d); };
@@ -1414,7 +1414,7 @@ function renderLlegadas(){
   const etiq = met==="venta" ? money : (v=>fmt(v));
   const nomMet = {reservas:"reservas", pax:"pax", venta:"venta"}[met];
   const unidad = {dia:"ese día", semana:"esa semana (de lunes a domingo)", mes:"ese mes"}[modo];
-  $("#notaLleg").innerHTML = `Cada punto es el <b>total de ${nomMet} registradas ${unidad}</b>, según la fecha en que se registró la reserva (sin importar cuándo es la visita). Hasta un mes se ve por día; de más de un mes a un año, por semana; de un año o más, por mes. La línea oscura es el total; las demás, cada canal. Solo digital. <b>CRS</b> = motor de reservas de villas. <b>Palco</b> = venta online de pasadías (sin anuladas). <b>WhatsApp · Instagram</b> y <b>WhatsApp · Web</b> = registro del Front según el origen del cliente (Instagram incluye la pauta de Meta). WhatsApp tiene datos hasta el ${etiqFecha(D.rango.front_hasta)}.`;
+  $("#notaLleg").innerHTML = `Cada punto es el <b>total de ${nomMet} registradas ${unidad}</b>, según la fecha en que se registró la reserva (sin importar cuándo es la visita). Hasta 3 meses se ve por día; de 3 meses a un año, por semana; de un año o más, por mes. La línea oscura es el total; las demás, cada canal. Solo digital. <b>CRS</b> = motor de reservas de villas. <b>Palco</b> = venta online de pasadías (sin anuladas). <b>WhatsApp · Instagram</b> y <b>WhatsApp · Web</b> = registro del Front según el origen del cliente (Instagram incluye la pauta de Meta). WhatsApp tiene datos hasta el ${etiqFecha(D.rango.front_hasta)}.`;
   for(const [prod, idc, idt] of [["Villas","chLlegV","totLlegV"],["Pasadías","chLlegP","totLlegP"]]){
     const canales = CANALES_PICK[prod], ser = {}, tot = {};
     canales.forEach(([c])=>{ ser[c] = cubos.map(()=>0); tot[c] = 0; });
