@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261106222557"></script>
+<script src="data.js?v=20261106224318"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -117,6 +117,7 @@ footer img{width:120px;opacity:.9;display:block;margin:0 auto 14px}
 .meta-mes .nums{display:flex;flex-wrap:wrap;gap:28px;margin:12px 0 14px}
 .meta-mes .nums div{min-width:150px}.meta-mes .nums .l{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mid)}
 .meta-mes .nums .v{font-family:var(--head);font-weight:300;font-size:30px;color:var(--char)}.meta-mes .nums .s{font-size:12.5px;color:var(--mid)}
+.meta-bloque{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)} .meta-bloque:first-of-type{border-top:0;padding-top:0} .meta-preg{font-weight:600;margin-bottom:8px} .meta-preg span{font-weight:400;color:var(--gray);font-size:.9em;margin-left:6px} .meta-escala{display:flex;justify-content:space-between;font-size:.85em;color:var(--gray);margin-top:6px}
 .meta-bar{position:relative;height:16px;border-radius:10px;background:#EFEBE3;overflow:visible}
 .meta-bar .fill{height:100%;border-radius:10px}
 .meta-bar .marca{position:absolute;top:-6px;bottom:-6px;width:2px;background:var(--char)}
@@ -731,7 +732,7 @@ function renderResumen(x, y){
     ${filaF("&nbsp;&nbsp;↳ Google Hotel Ads (inversión fuera del dashboard)", x.crs.gha.r, x.crs.gha.v, delta(x.crs.gha.v, y.crs.gha.v))}
     ${filaF("&nbsp;&nbsp;↳ sin afiliado de pauta (orgánico, GMB, sin afiliado…)", x.crs.organico.r, x.crs.organico.v, delta(x.crs.organico.v, y.crs.organico.v))}
     ${filaF(`<b>Pasadías online (Palco · canal Internet)</b> · ${fmt(x.onl.t)} pax`, x.onl.c, x.onl.v, delta(x.onl.v, y.onl.v))}
-    ${(()=>{ const o=palcoOtros(A,B); return o.c ? filaF(`<span style="color:var(--muted)">Palco por otros canales (no digital): ${o.det} · ${fmt(o.p)} pax · Call center pendiente de confirmar si son ventas del front</span>`, o.c, o.v, "") : ""; })()}
+    ${(()=>{ const o=palcoOtros(A,B); return o.c ? filaF(`<span style="color:var(--gray)">Palco por otros canales (no digital): ${o.det} · ${fmt(o.p)} pax · Call center pendiente de confirmar si son ventas del front</span>`, o.c, o.v, "") : ""; })()}
   </tbody></table>` + (B >= "2026-07-01" && x.g.costo > 0 && x.crs.google.r === 0 && $("#producto").value!=="Pasadías"
     ? `<div class="aviso rojo"><b>Atribución de Google al CRS interrumpida:</b> hasta jun-2026 el afiliado "Google Ads - Hotel" atribuía de 2 a 6 reservas de villas al mes; desde jul-2026 (cuando la pauta pasó a la cuenta 2 de Google) atribuye 0, mientras suben las reservas "sin afiliado". Lo más probable es que las campañas de la cuenta 2 no lleven el parámetro de afiliado de Roiback en la URL final. No significa que Google no venda villas: hay que agregar el parámetro de afiliado en esas campañas.</div>` : "");
   // Producto
@@ -1392,16 +1393,29 @@ function renderMeta(){
   const falta = Math.max(0, meta - vendido), rest = diasMes - dia, porDia = rest>0 ? falta/rest : null;
   const col = hecho >= esperado ? C.pos : (hecho >= 0.85*esperado ? C.neu : C.neg);
   const nomMes = toD(ini).toLocaleDateString("es-CO",{month:"long", year:"numeric"});
-  el.innerHTML = `<div class="meta-mes"><h3>Meta de pax de pasadías digitales · ${nomMes} · por fecha de visita</h3>
-    <div class="nums">
-      <div><div class="l">Visitas ya realizadas</div><div class="v" style="color:${col}">${fmt(hecho)} pax</div><div class="s">${pct(hecho/meta,0)} de ${fmt(meta)} · del 1 al ${etiqFecha(fin)}</div></div>
-      <div><div class="l">Deberíamos llevar</div><div class="v">${fmt(esperado)} pax</div><div class="s">${pct(dia/diasMes,0)} del mes transcurrido (referencia lineal)</div></div>
-      <div><div class="l">Diferencia</div><div class="v" style="color:${col}">${dif>=0?"+":"−"}${fmt(Math.abs(dif))} pax</div><div class="s">visitas realizadas frente a lo esperado</div></div>
-      <div><div class="l">Ya vendidos para el resto del mes</div><div class="v">${fmt(waFuturo)} pax</div><div class="s">con visita entre el ${etiqFecha(addDays(fin,1))} y el ${etiqFecha(finMes)}</div></div>
-      <div><div class="l">Faltan por vender</div><div class="v">${fmt(falta)} pax</div><div class="s">${porDia==null?"":`~${fmt(porDia)} pax por día en los ${rest} días que quedan · `}total vendido para el mes: ${fmt(vendido)} (${pct(vendido/meta,0)})</div></div>
+  const pctHecho = esperado>0 ? hecho/esperado : 0;
+  const etiqFin = etiqFecha(fin), mesNom = toD(ini).toLocaleDateString("es-CO",{month:"long"});
+  el.innerHTML = `<div class="meta-mes"><h3>Meta de ${mesNom}: ${fmt(meta)} pax de pasadías digitales</h3>
+    <div class="meta-bloque">
+      <div class="meta-preg">1. ¿Cómo vamos en los días que ya pasaron? <span>del 1 al ${etiqFin}</span></div>
+      <div class="nums">
+        <div><div class="l">Vinieron</div><div class="v" style="color:${col}">${fmt(hecho)} pax</div></div>
+        <div><div class="l">Deberían haber venido</div><div class="v">${fmt(esperado)} pax</div><div class="s">${fmt(meta/diasMes,0)} por día × ${dia} días</div></div>
+        <div><div class="l">Diferencia</div><div class="v" style="color:${col}">${dif>=0?"+":"−"}${fmt(Math.abs(dif))} pax</div><div class="s">${pct(pctHecho,0)} de lo esperado</div></div>
+      </div>
+      <div class="meta-bar"><div class="fill" style="width:${Math.min(100,100*pctHecho)}%;background:${col}"></div></div>
+      <div class="meta-escala"><span>0</span><span>${fmt(esperado)} pax esperados a la fecha</span></div>
     </div>
-    <div class="meta-bar"><div class="fill" style="width:${Math.min(100,100*hecho/meta)}%;background:${col}"></div><div class="fill" style="position:absolute;top:0;left:${Math.min(100,100*hecho/meta)}%;width:${Math.min(100-100*hecho/meta,100*waFuturo/meta)}%;background:${col};opacity:.35;border-radius:0 10px 10px 0"></div><div class="marca" style="left:${100*dia/diasMes}%"><span>hoy: ${fmt(esperado)}</span></div></div>
-    <div class="nota" style="margin-top:26px">Barra llena: visitas ya realizadas. Barra clara: pax ya vendidos con visita en lo que queda del mes. Digital = Instagram + Página Web: WhatsApp IG + Web ${fmt(wa)} pax (front, NUMERO PAX por FECHA INGRESO RESERVA) + Palco web ${fmt(pl)} pax (${D.palco_fuente==="backoffice" ? "canal Internet del backoffice de Palco por fecha de celebración, neto de anulaciones; FOR TWO y X2 = 2 pax; niños cuentan como pax" : "GA4, por fecha de compra"}). Referencia lineal de ${fmt(meta/diasMes,0)} pax/día: la necesidad real por día depende de la ocupación (se verá al conectar CoverManager).</div></div>`;
+    <div class="meta-bloque">
+      <div class="meta-preg">2. ¿Cuánto llevamos vendido para todo ${mesNom}? <span>visitas ya hechas + reservas para los próximos días</span></div>
+      <div class="nums">
+        <div><div class="l">Vendido para el mes</div><div class="v">${fmt(vendido)} pax</div><div class="s">${pct(vendido/meta,0)} de la meta</div></div>
+        <div><div class="l">Faltan por vender</div><div class="v">${fmt(falta)} pax</div><div class="s">${porDia==null?"":`unos ${fmt(porDia)} por día en los ${rest} días que quedan`}</div></div>
+      </div>
+      <div class="meta-bar"><div class="fill" style="width:${Math.min(100,100*hecho/meta)}%;background:${C.ocean}"></div><div class="fill" style="position:absolute;top:0;left:${Math.min(100,100*hecho/meta)}%;width:${Math.min(100-100*hecho/meta,100*waFuturo/meta)}%;background:${C.ocean};opacity:.35;border-radius:0 10px 10px 0"></div></div>
+      <div class="meta-escala"><span><b style="color:${C.ocean}">■</b> ya vinieron ${fmt(hecho)} &nbsp; <b style="color:${C.ocean};opacity:.4">■</b> reservados para venir ${fmt(waFuturo)}</span><span>meta ${fmt(meta)}</span></div>
+    </div>
+    <div class="nota" style="margin-top:14px">Cómo se cuenta: un pax suma a la meta el día que visita Makani, no el día que compra. Digital = clientes que llegan por Instagram o la página web: por WhatsApp (${fmt(wa)} pax) o comprando en línea en Palco (${fmt(pl)} pax). La meta diaria es un promedio simple (${fmt(meta)} ÷ ${diasMes} días). Datos hasta el ${etiqFin}, último día registrado por el Front.</div></div>`;
 }
 function render(){
   A=$("#desde").value; B=$("#hasta").value; if(A>B){ [A,B]=[B,A]; }
