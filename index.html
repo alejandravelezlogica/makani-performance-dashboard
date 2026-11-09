@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261109104555"></script>
+<script src="data.js?v=20261109145933"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -293,13 +293,16 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
       <select class="sel" id="metHora">
         <option value="conv">Conversaciones iniciadas (hora real del mensaje)</option>
         <option value="gasto">Gasto</option>
+        <option value="m2">Conversaciones con 2º mensaje (la persona siguió escribiendo)</option>
         <option value="cpa">Costo por conversación</option>
+        <option value="cpa2">Costo por conversación con 2º mensaje</option>
+        <option value="tasa2">% de conversaciones que llegan al 2º mensaje</option>
         <option value="idx">Índice de eficiencia (% conversaciones ÷ % gasto)</option>
       </select>
       <div class="chart alto" id="chHeat"></div>
     </div>
     <div class="grid2">
-      <div class="card"><h3>Por hora: % del gasto vs % de las conversaciones</h3><div class="nota">Donde la barra de gasto supera a la de conversaciones, se paga más de lo que rinde la franja.</div><div class="chart" id="chHoras"></div></div>
+      <div class="card"><h3>Por hora: % del gasto vs % de las conversaciones y de los 2º mensajes</h3><div class="nota">Suma los 7 días de la semana: cada hora tiene más volumen que una celda del mapa. Si la barra de gasto supera a las otras, esa hora cuesta más de lo que rinde. Si una hora tiene más % de conversaciones que de 2º mensajes, ahí escriben pero no siguen la conversación.</div><div class="chart" id="chHoras"></div></div>
       <div class="card"><h3>Front por día de la semana</h3><div class="nota">Leads y reservas registrados, y tasa de cierre (reservas IG+Web+Ref ÷ leads IG+Web+Ref).</div><div class="chart" id="chDiaSemana"></div></div>
     </div>
     <div class="card"><h3>Google Ads: día de la semana × hora (costo por conversión)</h3><div class="nota">Informe agregado por cuenta, sin fecha diaria: no responde al filtro de fechas.</div><div class="chart alto" id="chHeatG"></div></div>
@@ -864,29 +867,31 @@ function renderEmbudo(x){
 function renderHoras(){
   const h = HORA.filter(r=>enRango(r.fecha,A,B));
   $("#notaHora").innerHTML = ($("#producto").value ? "<b>Este mapa es de toda la cuenta (Meta no entrega horas por campaña a diario): no se filtra por producto.</b> " : "") + (D.rango.hora_desde ? `Meta solo conserva el detalle por hora de los últimos ~13 meses (disponible desde ${D.rango.hora_desde}). Gasto a la hora de la impresión; conversaciones a la hora en que la persona escribió.` : "Sin datos por hora.");
-  const M = Array.from({length:7},()=>Array.from({length:24},()=>({g:0,c:0})));
-  h.forEach(r=>{ const o=M[diaSem(r.fecha)][r.hora]; o.g+=r.gasto; o.c+=r.conversaciones; });
-  const tg = h.reduce((s,r)=>s+r.gasto,0), tc = h.reduce((s,r)=>s+r.conversaciones,0);
+  const M = Array.from({length:7},()=>Array.from({length:24},()=>({g:0,c:0,m2:0})));
+  h.forEach(r=>{ const o=M[diaSem(r.fecha)][r.hora]; o.g+=r.gasto; o.c+=r.conversaciones; o.m2+=(r.mensaje_2||0); });
+  const tg = h.reduce((s,r)=>s+r.gasto,0), tc = h.reduce((s,r)=>s+r.conversaciones,0), tm2 = h.reduce((s,r)=>s+(r.mensaje_2||0),0);
   const met = $("#metHora").value; const data=[];
   M.forEach((fila,d)=>fila.forEach((o,hh)=>{
-    let v = met==="conv"?o.c : met==="gasto"?o.g : met==="cpa"? div(o.g,o.c) : div(div(o.c,tc), div(o.g,tg));
-    data.push([hh, d, v==null?null:+v.toFixed(met==="idx"?2:0)]);
+    let v = met==="conv"?o.c : met==="m2"?o.m2 : met==="gasto"?o.g : met==="cpa"? div(o.g,o.c) : met==="cpa2"? div(o.g,o.m2)
+          : met==="tasa2"? (o.c>=3 ? div(o.m2,o.c) : null) : div(div(o.c,tc), div(o.g,tg));
+    data.push([hh, d, v==null?null:+v.toFixed(met==="idx"||met==="tasa2"?2:0)]);
   }));
   const vals = data.map(x=>x[2]).filter(v=>v!=null).sort((a,b)=>a-b);
   const max = vals.length ? vals[Math.floor(vals.length*0.97)] : 1;
-  const invert = met==="cpa";
+  const invert = met==="cpa"||met==="cpa2";
   const colores = met==="idx" ? [C.neg,"#F4F4F4",C.pos] : (invert ? [C.ocean,"#CFE3E2","#FFFFFF"] : ["#FFFFFF","#CFE3E2",C.ocean]);
   chart("chHeat").setOption({...base, grid:{left:60,right:30,top:20,bottom:80},
-    tooltip:{formatter:p=>`${DIAS[p.value[1]]} ${p.value[0]}:00<br>${met==="gasto"||met==="cpa"?money(p.value[2]):met==="idx"?fmt(p.value[2],2):fmt(p.value[2])}`},
+    tooltip:{formatter:p=>`${DIAS[p.value[1]]} ${p.value[0]}:00<br>${p.value[2]==null?"sin dato":met==="gasto"||met==="cpa"||met==="cpa2"?money(p.value[2]):met==="idx"?fmt(p.value[2],2):met==="tasa2"?pct(p.value[2],0):fmt(p.value[2])}`},
     xAxis:{type:"category",data:[...Array(24).keys()].map(x=>x+"h"),splitArea:{show:true}}, yAxis:{type:"category",data:DIAS,inverse:true},
-    visualMap:{min: met==="idx"?0:vals[0]||0, max: met==="idx"?2:max, calculable:true, orient:"horizontal", left:"center", bottom:10, inRange:{color:colores},
-      formatter:v=> met==="gasto"||met==="cpa"?money(v):fmt(v,met==="idx"?1:0)},
+    visualMap:{min: met==="idx"||met==="tasa2"?0:vals[0]||0, max: met==="idx"?2:met==="tasa2"?1:max, calculable:true, orient:"horizontal", left:"center", bottom:10, inRange:{color:colores},
+      formatter:v=> met==="gasto"||met==="cpa"||met==="cpa2"?money(v):met==="tasa2"?pct(v,0):fmt(v,met==="idx"?1:0)},
     series:[{type:"heatmap",data,label:{show:false}}]}, true);
-  const porH = Array.from({length:24},(_,i)=>({g:M.reduce((s,f)=>s+f[i].g,0), c:M.reduce((s,f)=>s+f[i].c,0)}));
+  const porH = Array.from({length:24},(_,i)=>({g:M.reduce((s,f)=>s+f[i].g,0), c:M.reduce((s,f)=>s+f[i].c,0), m2:M.reduce((s,f)=>s+f[i].m2,0)}));
   chart("chHoras").setOption({...base, legend:{top:0}, tooltip:{trigger:"axis",valueFormatter:v=>pct(v)}, xAxis:{type:"category",data:[...Array(24).keys()].map(x=>x+"h")},
     yAxis:{type:"value",axisLabel:{formatter:v=>fmt(v*100)+"%"}},
     series:[{name:"% del gasto",type:"bar",data:porH.map(o=>div(o.g,tg)),itemStyle:{color:C.glossy}},
-            {name:"% de conversaciones",type:"bar",data:porH.map(o=>div(o.c,tc)),itemStyle:{color:C.ocean}}]}, true);
+            {name:"% de conversaciones",type:"bar",data:porH.map(o=>div(o.c,tc)),itemStyle:{color:C.sea}},
+            {name:"% de 2º mensajes",type:"bar",data:porH.map(o=>tm2?div(o.m2,tm2):null),itemStyle:{color:C.ocean}}]}, true);
   // front por día de semana
   const W = Array.from({length:7},()=>({l:0,r:0,n:0}));
   FRONT.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const o=W[diaSem(r.fecha)]; o.l+=r.leads_ig+r.leads_web; o.r+=r.res_ig+r.res_web; o.n++; });
