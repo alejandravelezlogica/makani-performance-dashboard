@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261109103206"></script>
+<script src="data.js?v=20261109104326"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -601,7 +601,7 @@ function renderKPIs(x, y){
     kpi("Costo por lead", x.cpLead, y.cpLead, money, true, false, sf),
     kpi("Costo de pauta por reserva digital", x.cpRes, y.cpRes, money, true, true, sf),
     kpi("Costo de pauta por pax digital", x.cpPax, y.cpPax, money, true, true, sf),
-    kpi("ROAS digital (venta digital ÷ inversión)", x.roas, y.roas, v=>v==null?"—":fmt(v,1)+"x", false, false, sf),
+    kpi("Retorno digital combinado (venta digital total ÷ inversión)", x.roas, y.roas, v=>v==null?"—":fmt(v,1)+"x", false, false, sf),
     kpi("% de chats Meta que siguieron escribiendo (2+ mensajes)", x.sigue, y.sigue, v=>pct(v)),
     kpi("Costo Meta por chat con 2+ mensajes", x.cpConvReal, y.cpConvReal, money, true),
     kpi("Costo Google por lead Web (front)", x.cpLeadWeb, y.cpLeadWeb, money, true, false, sf),
@@ -716,7 +716,7 @@ function renderResumen(x, y){
     t("Inversión en pauta", money(x.inv), delta(x.inv,y.inv,false,false,true), `Meta ${money(x.m.gasto)} · Google ${money(x.g.costo)}`, sparkline(inv, C.sea)),
     t("Reservas digitales", fmt(x.resDig), delta(x.resDig,y.resDig,false,sf), `WhatsApp IG ${fmt(x.f.res_ig)} · WhatsApp Web ${fmt(x.f.res_web)} · CRS ${fmt(x.crs.tot.r)} · Palco ${fmt(x.onl.c)}`, sparkline(res, C.char)),
     t("Pax digitales", fmt(x.paxDig), delta(x.paxDig,y.paxDig,false,sf), `WhatsApp IG ${fmt(x.f.pax_ig)} · WhatsApp Web ${fmt(x.f.pax_web)} · CRS ${fmt(x.crs.tot.p)} · Palco ${fmt(x.onl.t)}`, sparkline(paxS, C.char)),
-    t("Venta digital sin IVA", money(x.ventaDig), delta(x.ventaDig,y.ventaDig,false,sf), `ROAS ${x.roas==null?"—":fmt(x.roas,1)+"x"} (venta ÷ inversión)`, sparkline(ven, C.pos)),
+    t("Venta digital sin IVA", money(x.ventaDig), delta(x.ventaDig,y.ventaDig,false,sf), `Retorno combinado ${x.roas==null?"—":fmt(x.roas,1)+"x"} (venta digital total ÷ inversión)`, sparkline(ven, C.pos)),
     t("Costo de pauta por reserva", money(x.cpRes), delta(x.cpRes,y.cpRes,true,sf), ($("#producto").value ? `Inversión de campañas de ${$("#producto").value} ÷ reservas digitales` : "Inversión total (incluye marca) ÷ reservas digitales"), sparkline(inv.map((v,i)=>res[i]?v/res[i]:null), C.blood)),
     t("Costo de pauta por pax", money(x.cpPax), delta(x.cpPax,y.cpPax,true,sf), ($("#producto").value ? `Inversión de campañas de ${$("#producto").value} ÷ pax digitales` : "Inversión total (incluye marca) ÷ pax digitales"), sparkline(inv.map((v,i)=>paxS[i]?v/paxS[i]:null), C.blood)),
   ].join("");
@@ -743,7 +743,7 @@ function renderResumen(x, y){
   ].join("");
   // Producto
   const p1 = porProducto(A,B), p0 = porProducto(CA,CB), maxV = Math.max(...Object.values(p1).map(o=>o.venta||0), 1);
-  $("#tablaProducto").innerHTML = `<table class="prod"><thead><tr><th>Producto</th><th class="n">Inversión</th><th class="n">Reservas</th><th class="n">Pax</th><th class="n">Venta sin IVA</th><th class="n">Costo por reserva</th><th class="n">Costo por pax</th><th class="n">Retorno</th></tr></thead><tbody>
+  $("#tablaProducto").innerHTML = `<table class="prod"><thead><tr><th>Producto</th><th class="n">Inversión</th><th class="n">Reservas</th><th class="n">Pax</th><th class="n">Venta sin IVA</th><th class="n">Costo por reserva</th><th class="n">Costo por pax</th><th class="n">Retorno combinado</th></tr></thead><tbody>
     ${Object.entries(p1).map(([k,o])=>`<tr><td>${k}${o.venta?`<div class="barra" style="width:${100*o.venta/maxV}%"></div>`:""}</td>
       <td class="n">${money(o.inv)} ${delta(o.inv,p0[k].inv,false,false,true)}</td>
       <td class="n">${o.res==null?"—":fmt(o.res)} ${o.res==null?"":delta(o.res,p0[k].res,false,sf)}</td>
@@ -1272,8 +1272,8 @@ function renderCampanas(){
   const fm = (m,v,f) => conFront(m) ? f(v) : "—";
   $("#tablaCadena").innerHTML = `<table><thead>
     <tr><th rowspan="2">Mes</th><th colspan="7" style="text-align:center;border-left:2px solid #4D9499">Meta → Instagram / WhatsApp</th><th colspan="5" style="text-align:center;border-left:2px solid #C9A961">Google → Web</th><th class="n" rowspan="2" style="border-left:2px solid #D5D3CB">Costo por reserva total</th></tr>
-    <tr><th class="n" style="border-left:2px solid #4D9499">Inversión</th><th class="n">Chats 2+</th><th class="n">Leads IG</th><th class="n">Reservas IG</th><th class="n">Venta IG</th><th class="n">Costo / reserva IG</th><th class="n">Retorno</th>
-        <th class="n" style="border-left:2px solid #C9A961">Inversión</th><th class="n">Leads Web</th><th class="n">Reservas Web</th><th class="n">Costo / reserva Web</th><th class="n">Retorno</th></tr></thead><tbody>
+    <tr><th class="n" style="border-left:2px solid #4D9499">Inversión</th><th class="n">Chats 2+</th><th class="n">Leads IG</th><th class="n">Reservas IG</th><th class="n">Venta IG</th><th class="n">Costo / reserva IG</th><th class="n">Retorno combinado</th>
+        <th class="n" style="border-left:2px solid #C9A961">Inversión</th><th class="n">Leads Web</th><th class="n">Reservas Web</th><th class="n">Costo / reserva Web</th><th class="n">Retorno combinado</th></tr></thead><tbody>
     ${[...meses].reverse().map(m=>{ const o=CM_[m]; return `<tr><td style="white-space:nowrap">${etiqMes(m)}</td>
       <td class="n" style="border-left:2px solid #4D9499">${money(o.meta)}</td><td class="n">${fmt(o.chats)}</td><td class="n">${fm(m,o.lig,fmt)}</td><td class="n">${fm(m,o.rig,fmt)}</td><td class="n">${fm(m,o.vig,money)}</td>
       <td class="n"><b>${money(cpr(o.meta,o.rig,m))}</b></td><td class="n">${conFront(m)&&o.meta?fmt(o.vig/o.meta,1)+"x":"—"}</td>
@@ -1361,6 +1361,7 @@ function renderNotas(){
   <p><b>Digital</b> = Instagram + Página Web, de villas o pasadías, lleguen por WhatsApp (registro del front: origen Instagram o Página Web), por el <b>CRS</b> (motor web de villas) o por <b>Palco</b> (pasadías online). Referidos, agencias, conserjes, KLM, "ya nos visitaron" y demás orígenes no entran en las métricas. <b>Pax</b>: front = columna NUMERO PAX de Data General; CRS = Ocupantes; Palco = tickets del canal Internet del backoffice de Palco, netos de anulaciones (FOR TWO y X2 = 2 pax; niños cuentan como pax). <b>CRS</b>: se suma completo (el Front no registra nada en el CRS: no hay duplicados). Fecha = fecha de la reserva (Alta); valor = "Importe sin impuestos"; solo reservas confirmadas o modificadas. El detalle por afiliado ("Google Ads - …", "Facebook Ads", "Google Hotel Ads"…) es informativo; el costo por reserva usa todo el CRS para no depender del tracking del afiliado. <b>Palco</b>: compras del canal Internet del backoffice de Palco (desde ene-2025), netas de anulaciones; venta = Importe base (sin IVA). Las ventas de Palco por Call center, agencias o taquilla no entran en lo digital y se muestran aparte.</p>
   <p><b>Conversiones de Google</b> = compras en el motor de reservas web (acciones "Booking COP/USD/EUR"). Los clics al botón de WhatsApp de la web no se miden como conversión, así que Google también se evalúa con los <b>leads y reservas Web</b> del front. Esos leads Web incluyen tráfico orgánico y directo, no solo pauta.</p>
   <p><b>Conversaciones WhatsApp</b> (KPI) = conversaciones iniciadas atribuidas por Meta (7 días). <b>Leads</b> = registrados por el front (IG, Web, Referidos). <b>Reservas totales</b> = todas las reservas registradas por el front (pasadías, villas, KLM), de cualquier origen: es la cifra principal porque no depende de cómo se etiquete el origen. <b>Reservas digitales</b> = origen Instagram o Página web (canales donde actúa la pauta); Referidos queda fuera. <b>Comparación</b> por defecto: mismo periodo del año anterior alineado por día de la semana (−364 días, STLY). <b>Lectura incremental</b>: (inversión hoy − inversión año anterior) frente a (reservas y venta hoy − año anterior); muestra cuánto trajo la inversión adicional, sin descontar estacionalidad ni demanda orgánica. <b>Venta</b> = sin IVA, según el front.</p>
+  <p><b>Retorno digital combinado</b> = venta digital total (WhatsApp IG + Web, todo el CRS de villas y Palco canal Internet, incluida la venta orgánica) ÷ inversión total Meta + Google. <b>No es ROAS</b>: el ROAS solo cuenta la venta atribuida a la pauta. Mide cuánto vende el canal digital por cada peso invertido. En la tabla mensual, el retorno combinado de Meta es venta IG ÷ inversión Meta y el de Google es venta Web ÷ inversión Google. El único retorno atribuido del tablero es el de Google al CRS (reservas con afiliado de Google Ads ÷ inversión Google).</p>
   <p><b>Costo de pauta por reserva</b> = inversión total Meta + Google ÷ reservas totales; el costo por reserva digital usa solo IG + Web. Es una medida de eficiencia conjunta: el front no registra qué anuncio originó cada lead.</p>
   <p><b>Horas.</b> Meta conserva el detalle por hora de los últimos ~13 meses. El gasto se ubica a la hora de la impresión y las conversaciones a la hora en que la persona escribió. Zona horaria: Bogotá.</p>
   <p><b>Desperdicio estimado.</b> Para cada segmento: gasto − (resultados × costo promedio de su propia campaña). Si un segmento rinde igual o mejor que su campaña, su desperdicio es 0. Es una estimación de ahorro potencial, no un gasto "perdido" en sentido contable: algunos segmentos aportan alcance o recordación.</p>
