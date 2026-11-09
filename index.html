@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261109163607"></script>
+<script src="data.js?v=20261109173209"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -142,6 +142,20 @@ footer img{width:120px;opacity:.9;display:block;margin:0 auto 14px}
 .canal .d{font-family:var(--body);font-size:11.5px;margin-left:8px}
 .prod td.n{font-family:var(--head);font-size:15px}
 .prod .barra{height:6px;border-radius:3px;background:var(--gold-l);margin-top:6px}
+.cv{width:100%;border-collapse:collapse}
+.cv th{font-family:var(--head);font-weight:400;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mid);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+.cv th.n,.cv td.n{text-align:right;white-space:nowrap}
+.cv td{padding:7px 10px;border-bottom:1px solid var(--line);font-size:13.5px;color:var(--char)}
+.cv td.n{font-family:var(--head);font-size:14.5px}
+.cv tr.cat td{background:var(--cream-2);font-family:var(--head);font-size:13px;letter-spacing:.1em;text-transform:uppercase;border-top:12px solid #fff}
+.cv tr.cat td.n{font-size:15.5px;letter-spacing:0;text-transform:none}
+.cv tr.sub td:first-child{padding-left:28px;color:var(--gray)}
+.cv tr.tot td{border-top:2px solid var(--char);font-weight:600}
+.cv .mix{display:flex;height:8px;border-radius:4px;overflow:hidden;margin-top:6px;max-width:260px;gap:2px;background:#fff}
+.cv .mix span{display:block;height:100%}
+.cvley{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--gray);margin:4px 0 10px}
+.cvley i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+@media(max-width:760px){.cv .opc{display:none}}
 details.mas summary{cursor:pointer;font-family:var(--head);text-transform:uppercase;letter-spacing:.16em;font-size:12.5px;color:var(--gray);list-style:none}
 details.mas summary::before{content:"+ ";color:var(--gold)}
 details.mas[open] summary::before{content:"– "}
@@ -241,6 +255,11 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
   <div class="periodo" id="periodo"></div>
 
   <section id="resumen" class="on">
+    <div class="card" id="cardCV">
+      <h3>Cómo vamos: venta digital por canal</h3>
+      <div class="nota" id="notaCV"></div>
+      <div id="tablaCV"></div>
+    </div>
     <div id="metaMes"></div>
     <div class="veredicto" id="veredicto"></div>
     <div class="big" id="kpisBig"></div>
@@ -435,7 +454,9 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
 
 
   <section id="notas">
-    <div class="card"><h3>Metodología y definiciones</h3><div class="leyenda-def" id="metodologia"></div></div>
+    <div class="card">
+<h3>Metodología y definiciones</h3><div class="leyenda-def" id="metodologia"></div>
+      <p><b>Cómo vamos (venta digital por canal).</b> Villas: reservas del motor web (CRS) por afiliado — "Google Ads - Hotel" = Google Ads, "Facebook Ads" = Meta Ads, Google Hotel Ads / Trivago / Tripadvisor = metabuscadores (su inversión no está en este tablero), el resto (Google My Business, bio de Instagram, email, App GHL Plus, sin afiliado) = orgánico. Pasadías: cada compra de Palco por Internet se cruza por localizador con la compra de GA4 (transactionId) y toma la fuente de esa visita: google / cpc = Google Ads; anuncios de Meta (fb / ig con medio pagado o de colocación, o ID de campaña de Meta) = Meta Ads; GHADirect / Tripadvisor / Trivago pagados = metabuscadores; lo demás (orgánico, directo, Google My Business, bio de Instagram, referidos) = orgánico. GA4 registra las compras de Palco desde jul-2026 y no ve todas (≈ 20–35% por mes queda fuera): esas quedan <b>sin identificar</b>, sin repartirlas en proporción. Las ventas por WhatsApp quedan sin identificar hasta que el código de campaña llegue en el mensaje. La inversión de campañas de marca o mixtas va aparte y entra en el total. El costo por pax se muestra solo por categoría.</p></div>
   </section>
 </main>
 <footer id="footer"></footer>
@@ -488,11 +509,11 @@ function inversionSinProducto(a,b){
   const h = GOO_ALL.filter(r=>enRango(r.fecha,a,b) && !["Pasadías","Villas"].includes(GCAMP[r.c].producto)).reduce((s,r)=>s+r.costo,0);
   return {meta:g, goo:h};
 }
-const CRSA = T(D.crs), ONLP = T(D.online_pasadias), PALO = T(D.palco_otros);
+const CRSA = T(D.crs), ONLP = T(D.online_pasadias), PALO = T(D.palco_otros), PATR = T(D.palco_atr);
 function palcoOtros(a,b){ const o={c:0,v:0,p:0,por:{}}; PALO.filter(r=>enRango(r.fecha,a,b)).forEach(r=>{ o.c+=r.compras; o.v+=r.ingresos; o.p+=r.pax; o.por[r.canal]=(o.por[r.canal]||0)+r.compras; }); o.det=Object.entries(o.por).map(([k,n])=>`${k} ${fmt(n)}`).join(", "); return o; }
 // CRS (villas, motor web = canal Página Web) en un rango: total y detalle por afiliado (informativo). Respeta el filtro de producto.
 function crsRango(a, b){
-  const o = {tot:{r:0,v:0,p:0}, google:{r:0,v:0,p:0}, meta:{r:0,v:0,p:0}, gha:{r:0,v:0,p:0}, organico:{r:0,v:0,p:0}};
+  const o = {tot:{r:0,v:0,p:0}, google:{r:0,v:0,p:0}, meta:{r:0,v:0,p:0}, metabuscador:{r:0,v:0,p:0}, organico:{r:0,v:0,p:0}};
   if($("#producto").value==="Pasadías") return o;
   CRSA.filter(r=>enRango(r.fecha,a,b)).forEach(r=>{ for(const k of ["tot", r.plataforma]){ o[k].r+=r.reservas; o[k].v+=r.venta; o[k].p+=r.pax||0; } });
   return o;
@@ -665,6 +686,64 @@ function renderOrigen(x,y){
             {name:"Venta sin IVA",type:"line",yAxisIndex:1,data:v1.map(Math.round),itemStyle:{color:C.blood}}]}, true);
 }
 
+// --- Cómo vamos: venta digital por canal (Meta Ads / Google Ads / metabuscadores / orgánico / sin identificar) ---
+const CV_CANALES = [["meta","Meta Ads"],["google","Google Ads"],["metabuscador","Metabuscadores"],["organico","Orgánico"],["sin_identificar","Sin identificar"]];
+// Desde cuándo GA4 registra las compras de Palco (antes, toda la venta de pasadías queda sin identificar)
+const PATR_DESDE = PATR.filter(r=>r.plataforma!=="sin_identificar").reduce((m,r)=>!m||r.fecha<m?r.fecha:m, null);
+const CV_COLOR = {meta:"#2F6E73", google:"#4D9499", metabuscador:"#9C7F3C", organico:"#C9A961", sin_identificar:"#D5D3CB"};
+function cvDatos(a, b){
+  const cero = () => ({inv:0, pax:0, venta:0});
+  const out = {"Villas":{}, "Pasadías":{}, mixta:{inv:0}, compl:0};
+  for(const p of ["Villas","Pasadías"]) CV_CANALES.forEach(([k])=>out[p][k]=cero());
+  const prodInv = pr => (pr==="Pasadías"||pr==="Villas") ? pr : null;
+  META_ALL.filter(r=>enRango(r.fecha,a,b)).forEach(r=>{ const p=prodInv(MCAMP[r.c].producto); if(p) out[p].meta.inv+=r.gasto; else out.mixta.inv+=r.gasto; });
+  GOO_ALL.filter(r=>enRango(r.fecha,a,b)).forEach(r=>{ const p=prodInv(GCAMP[r.c].producto); if(p) out[p].google.inv+=r.costo; else out.mixta.inv+=r.costo; });
+  // Villas: CRS por afiliado; WhatsApp (front IG + Web) = sin identificar (el front no sabe si vino de un anuncio)
+  CRSA.filter(r=>enRango(r.fecha,a,b)).forEach(r=>{ const o=out["Villas"][r.plataforma] || out["Villas"].organico; o.pax+=r.pax||0; o.venta+=r.venta; });
+  // Pasadías: Palco Internet por la fuente de GA4 de cada localizador; lo que GA4 no vio = sin identificar
+  if(PATR.length) PATR.filter(r=>enRango(r.fecha,a,b)).forEach(r=>{ const o=out["Pasadías"][r.plataforma] || out["Pasadías"].sin_identificar; o.pax+=r.pax||0; o.venta+=r.ingresos; });
+  else ONLP.filter(r=>enRango(r.fecha,a,b)).forEach(r=>{ const o=out["Pasadías"].sin_identificar; o.pax+=r.pax||0; o.venta+=r.ingresos; });
+  FRONTP.filter(r=>enRango(r.fecha,a,b)).forEach(r=>{ const o=out[r.producto] && out[r.producto].sin_identificar; if(!o) return; o.pax+=(r.pax_ig||0)+(r.pax_web||0); o.venta+=r.venta_ig+r.venta_web; });
+  out.compl = FRONT_ALL.filter(r=>enRango(r.fecha,a,b)).reduce((s_,r)=>s_+r.venta_ig+r.venta_web,0)
+            - FRONTP.filter(r=>enRango(r.fecha,a,b)).reduce((s_,r)=>s_+r.venta_ig+r.venta_web,0);
+  return out;
+}
+function renderComoVamos(){
+  const d1 = cvDatos(A,B), d0 = cvDatos(CA,CB), prod = $("#producto").value;
+  const comp = $("#modoComp").value==="prev" ? "periodo anterior" : "mismo periodo del año anterior";
+  const sum = (o,f) => CV_CANALES.reduce((s_,[k])=>s_+o[k][f],0);
+  const mix = o => { const t = sum(o,"venta"); return t ? `<div class="mix">${CV_CANALES.map(([k])=>o[k].venta>0?`<span style="width:${100*o[k].venta/t}%;background:${CV_COLOR[k]}" title="${k}"></span>`:"").join("")}</div>` : ""; };
+  const td = v => `<td class="n">${v}</td>`;
+  let filas = "", T1 = {inv:0,pax:0,venta:0}, T0 = {inv:0,pax:0,venta:0};
+  for(const p of ["Villas","Pasadías"]){
+    if(prod && prod!==p) continue;
+    const o1 = d1[p], o0 = d0[p], inv = sum(o1,"inv"), pax = sum(o1,"pax"), ven = sum(o1,"venta"), ven0 = sum(o0,"venta");
+    T1.inv+=inv; T1.pax+=pax; T1.venta+=ven; T0.inv+=sum(o0,"inv"); T0.pax+=sum(o0,"pax"); T0.venta+=ven0;
+    filas += `<tr class="cat"><td>${p}${mix(o1)}</td>${td(money(inv))}${td(fmt(pax))}${td(money(ven))}${td("100%")}${td(pax?money(inv/pax):"—")}<td class="n opc">${delta(ven,ven0)}</td></tr>`;
+    const sinCompCanal = p==="Pasadías" && (!PATR_DESDE || CA < PATR_DESDE);
+    CV_CANALES.forEach(([k,lbl])=>{
+      const a = o1[k], b = o0[k];
+      if(k==="metabuscador" && !a.venta && !b.venta) return;
+      const nota = k==="sin_identificar" ? (p==="Villas" ? " · WhatsApp" : " · WhatsApp y Palco que GA4 no registró") : k==="metabuscador" ? " · inversión fuera del tablero"
+                 : k==="meta" ? " · solo venta web; sus chats de WhatsApp quedan en sin identificar" : k==="google" ? " · solo venta web; sus chats de WhatsApp quedan en sin identificar" : "";
+      filas += `<tr class="sub"><td><i style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${CV_COLOR[k]};margin-right:7px"></i>${lbl}<span style="font-size:11.5px;color:var(--mid)">${nota}</span></td>
+        ${td(k==="meta"||k==="google" ? money(a.inv) : "—")}${td(fmt(a.pax))}${td(money(a.venta))}${td(ven?pct(a.venta/ven,0):"—")}${td("")}<td class="n opc">${delta(a.venta,b.venta,false,sinCompCanal)}</td></tr>`;
+    });
+  }
+  if(!prod){
+    T1.inv += d1.mixta.inv; T0.inv += d0.mixta.inv; T1.venta += d1.compl; T0.venta += d0.compl;
+    if(Math.abs(d1.compl)>=1) filas += `<tr class="sub"><td>Complementos sin producto (ubicaciones…)</td>${td("—")}${td("—")}${td(money(d1.compl))}${td("")}${td("")}<td class="n opc">${delta(d1.compl,d0.compl)}</td></tr>`;
+    filas += `<tr class="sub"><td>Campañas de marca o mixtas (solo inversión)</td>${td(money(d1.mixta.inv))}${td("—")}${td("—")}${td("")}${td("")}<td class="n opc">${delta(d1.mixta.inv,d0.mixta.inv,false,false,true)}</td></tr>`;
+  }
+  // Mezcla total (para la nota): % de la venta por tipo
+  const mt = {}; CV_CANALES.forEach(([k])=>mt[k] = ["Villas","Pasadías"].filter(p=>!prod||prod===p).reduce((s_,p)=>s_+d1[p][k].venta,0));
+  const tv = Object.values(mt).reduce((a_,b_)=>a_+b_,0);
+  filas += `<tr class="tot"><td>Total digital</td>${td(money(T1.inv))}${td(fmt(T1.pax))}${td(money(T1.venta))}${td("")}${td(T1.pax?money(T1.inv/T1.pax):"—")}<td class="n opc">${delta(T1.venta,T0.venta)}</td></tr>`;
+  $("#tablaCV").innerHTML = `<div class="cvley">${CV_CANALES.map(([k,l])=>`<span><i style="background:${CV_COLOR[k]}"></i>${l} ${tv?pct(mt[k]/tv,0):""}</span>`).join("")}</div>
+    <div style="overflow-x:auto"><table class="cv"><thead><tr><th>Categoría / canal</th><th class="n">Inversión</th><th class="n">Pax</th><th class="n">Venta sin IVA</th><th class="n">% de la venta</th><th class="n">Costo por pax</th><th class="n opc">Venta vs ${comp}</th></tr></thead><tbody>${filas}</tbody></table></div>`;
+  $("#notaCV").innerHTML = `Venta digital (WhatsApp, motor web de villas y Palco) por fecha de compra. <b>Meta Ads / Google Ads</b> = venta que llegó por un anuncio (afiliado del motor web en villas; visita de GA4 en Palco). <b>Sin identificar</b> = WhatsApp, donde todavía no sabemos si la persona vino de un anuncio, y compras de Palco que GA4 no registró${PATR_DESDE?` (GA4 registra Palco desde ${etiqFecha(PATR_DESDE)})`:""}. Detalle en Metodología.`;
+}
+
 // --- resumen de un vistazo ---
 // inverso: bajar es bueno (costos). neutro: ni bueno ni malo (inversión) -> gris.
 function delta(act, ant, inverso=false, sinComp=false, neutro=false){
@@ -756,7 +835,7 @@ function renderResumen(x, y){
       <td class="n">${o.pax?money(o.inv/o.pax):"—"}</td>
       <td class="n">${o.venta&&o.inv?fmt(o.venta/o.inv,1)+"x":"—"}</td></tr>`).join("")}
     ${(()=>{ // Complementos sin producto (UBICACION…): venta del Front IG+Web que no es pasadía ni villa
-      const compl = (a,b) => FRONT.filter(r=>enRango(r.fecha,a,b)).reduce((s_,r)=>s_+r.venta_ig+r.venta_web,0)
+      const compl = (a,b) => FRONT_ALL.filter(r=>enRango(r.fecha,a,b)).reduce((s_,r)=>s_+r.venta_ig+r.venta_web,0)
                            - FRONTP.filter(r=>enRango(r.fecha,a,b)).reduce((s_,r)=>s_+r.venta_ig+r.venta_web,0);
       const c1 = compl(A,B), tot = k => ["Pasadías","Villas","Marca / mixta"].reduce((s_,n)=>s_+(p1[n][k]||0),0);
       const T1 = {inv: tot("inv"), res: tot("res"), pax: tot("pax"), venta: tot("venta") + c1};
@@ -1460,7 +1539,7 @@ function renderLlegadas(){
     canales.forEach(([c,col])=>{
       filas.push(`<tr><td>${dot(col)}${c}</td><td class="n">${etiq(tot[c])}</td><td class="n">${sumT?pct(tot[c]/sumT,0):"—"}</td><td class="n">${delta(tot[c], totC[c], false, esWA(c) && !compFront)}</td></tr>`);
       if(c==="CRS"){
-        const PLAT = [["google","atribuidas a Google Ads"],["meta","atribuidas a Facebook Ads"],["gha","Google Hotel Ads (inversión fuera del tablero)"],["organico","sin afiliado de pauta (orgánico, GMB…)"]];
+        const PLAT = [["google","atribuidas a Google Ads"],["meta","atribuidas a Facebook Ads"],["metabuscador","metabuscadores: Google Hotel Ads, Trivago, Tripadvisor (inversión fuera del tablero)"],["organico","sin afiliado de pauta (orgánico, GMB…)"]];
         const campo = met==="reservas" ? "reservas" : met;
         const sp = (a,b,pl) => CRSA.filter(r=>r.plataforma===pl && r.fecha>=a && r.fecha<=b).reduce((s_,r)=>s_+(r[campo]||0),0);
         PLAT.forEach(([pl,lbl])=>{ const v1 = sp(ini,fin,pl), v0 = sp(CA0,CB0,pl);
@@ -1531,7 +1610,7 @@ function render(){
   let avisoProd = "";
   if(prod){ const sp = inversionSinProducto(A,B); avisoProd = ` · <span class="chip amar">Producto: ${prod}</span> Inversión excluida por no tener producto identificable (marca / mixta): Meta ${money(sp.meta)}, Google ${money(sp.goo)}. Los <b>leads</b> se muestran totales: el front no los separa por producto.`; }
   $("#periodo").innerHTML = `Periodo: <b>${A}</b> a <b>${B}</b> · Comparación: ${CA} a ${CB}${avisoProd}${avisoRegistro(A,B,x.leadsTot)}`;
-  renderMeta(); renderLlegadas(); renderResumen(x,y); renderKPIs(x,y); insights(x,y); renderTendencia(); renderMix(x); renderOrigen(x,y);
+  renderComoVamos(); renderMeta(); renderLlegadas(); renderResumen(x,y); renderKPIs(x,y); insights(x,y); renderTendencia(); renderMix(x); renderOrigen(x,y);
   const activa = document.querySelector("#nav a.on").dataset.s; if(activa!=="resumen") renderSeccion(activa);
 }
 (function init(){
