@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261109094823"></script>
+<script src="data.js?v=20261109103206"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -520,7 +520,9 @@ function agregado(a,b){
   const m = sumar(META.filter(r=>enRango(r.fecha,a,b)), CM);
   const g = sumar(GOO.filter(r=>enRango(r.fecha,a,b)), CG);
   const frontCubre = a >= D.rango.front_desde;
-  const leads = f.leads_ig+f.leads_web+f.leads_ref;
+  // Leads DIGITALES (IG + Web), igual que reservas, pax y venta: los referidos no entran (9-nov-2026: la usuaria vio
+  // 380 leads = 309 IG + 58 Web + 13 referidos y no cuadraba). leadsTot (con referidos) solo para el aviso de registro.
+  const leads = f.leads_ig+f.leads_web, leadsTot = leads + f.leads_ref;
   // Digital = canales donde actúa la pauta (IG + Web). Referidos y otros orígenes quedan fuera.
   const resDig = f.res_ig+f.res_web;
   const ventaDig = f.venta_ig+f.venta_web;
@@ -534,7 +536,7 @@ function agregado(a,b){
   const crsPauta = {r: crs.google.r + crs.meta.r, v: crs.google.v + crs.meta.v};
   // DIGITAL = Instagram + Página Web, lleguen por WhatsApp (front), CRS (villas) o Palco (pasadías). Lo demás no entra.
   const resDigT = resDig + crs.tot.r + onl.c, ventaDigT = ventaDig + crs.tot.v + onl.v, paxDig = f.pax_ig + f.pax_web + crs.tot.p + onl.t;
-  return {f,m,g,frontCubre,leads,inv,crs,onl,crsPauta,
+  return {f,m,g,frontCubre,leads,leadsTot,inv,crs,onl,crsPauta,
     resDig: resDigT, ventaDig: ventaDigT, paxDig, resTot: resTot + crs.tot.r + onl.c, venta: venta + crs.tot.v + onl.v,
     reservas: resTot + crs.tot.r + onl.c, cpResTot: div(inv,resTot + crs.tot.r + onl.c), roasTot: div(venta + crs.tot.v + onl.v,inv),
     cpConv: div(m.gasto,m.conversaciones), cpLead: div(inv,leads), cpRes: div(inv,resDigT), cpPax: div(inv,paxDig),
@@ -589,7 +591,7 @@ function renderKPIs(x, y){
     kpi("Inversión Google Ads", x.g.costo, y.g.costo, money),
     kpi("Conversaciones WhatsApp (Meta)", x.m.conversaciones, y.m.conversaciones, v=>fmt(v)),
     kpi("Costo por conversación", x.cpConv, y.cpConv, money, true),
-    kpi("Leads registrados (front)", x.leads, y.leads, v=>fmt(v), false, true, sf),
+    kpi("Leads digitales (IG + Web, front)", x.leads, y.leads, v=>fmt(v), false, true, sf),
     kpi("Leads IG", x.f.leads_ig, y.f.leads_ig, v=>fmt(v), false, false, sf),
     kpi("Leads Web", x.f.leads_web, y.f.leads_web, v=>fmt(v), false, false, sf),
     kpi("Reservas digitales (IG + Web: WhatsApp, CRS y Palco)", x.resDig, y.resDig, v=>fmt(v), false, true, sf),
@@ -618,7 +620,7 @@ function serie(a,b){
   META.forEach(r=>{ if(enRango(r.fecha,a,b)) get(clave(r.fecha)).meta += r.gasto; });
   GOO.forEach(r=>{ if(enRango(r.fecha,a,b)) get(clave(r.fecha)).goo += r.costo; });
   // Solo DIGITAL: WhatsApp IG + Web (front) + CRS (villas) + Palco (pasadías)
-  FRONT.forEach(r=>{ if(enRango(r.fecha,a,b)){ const o=get(clave(r.fecha)); o.leads += r.leads_ig+r.leads_web+r.leads_ref; o.res += r.res_ig+r.res_web; o.venta += r.venta_ig+r.venta_web; o.pax += r.pax_ig+r.pax_web; } });
+  FRONT.forEach(r=>{ if(enRango(r.fecha,a,b)){ const o=get(clave(r.fecha)); o.leads += r.leads_ig+r.leads_web; o.res += r.res_ig+r.res_web; o.venta += r.venta_ig+r.venta_web; o.pax += r.pax_ig+r.pax_web; } });
   if($("#producto").value!=="Pasadías") CRSA.forEach(r=>{ if(enRango(r.fecha,a,b)){ const o=get(clave(r.fecha)); o.res += r.reservas; o.venta += r.venta; o.pax += r.pax||0; } });
   if($("#producto").value!=="Villas") ONLP.forEach(r=>{ if(enRango(r.fecha,a,b)){ const o=get(clave(r.fecha)); o.res += r.compras; o.venta += r.ingresos; o.pax += r.pax||0; } });
   return {semanal, k:[...mp.keys()].sort(), mp};
@@ -887,7 +889,7 @@ function renderHoras(){
             {name:"% de conversaciones",type:"bar",data:porH.map(o=>div(o.c,tc)),itemStyle:{color:C.ocean}}]}, true);
   // front por día de semana
   const W = Array.from({length:7},()=>({l:0,r:0,n:0}));
-  FRONT.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const o=W[diaSem(r.fecha)]; o.l+=r.leads_ig+r.leads_web+r.leads_ref; o.r+=r.res_ig+r.res_web+r.res_ref; o.n++; });
+  FRONT.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const o=W[diaSem(r.fecha)]; o.l+=r.leads_ig+r.leads_web; o.r+=r.res_ig+r.res_web; o.n++; });
   chart("chDiaSemana").setOption({...base, legend:{top:0}, xAxis:{type:"category",data:DIAS},
     yAxis:[{type:"value",name:"Promedio diario"},{type:"value",name:"Cierre",axisLabel:{formatter:v=>fmt(v*100)+"%"},splitLine:{show:false}}],
     series:[{name:"Leads / día",type:"bar",data:W.map(o=>div(o.l,o.n)?.toFixed(1)),itemStyle:{color:C.blood}},
@@ -1522,7 +1524,7 @@ function render(){
   const prod = $("#producto").value;
   let avisoProd = "";
   if(prod){ const sp = inversionSinProducto(A,B); avisoProd = ` · <span class="chip amar">Producto: ${prod}</span> Inversión excluida por no tener producto identificable (marca / mixta): Meta ${money(sp.meta)}, Google ${money(sp.goo)}. Los <b>leads</b> se muestran totales: el front no los separa por producto.`; }
-  $("#periodo").innerHTML = `Periodo: <b>${A}</b> a <b>${B}</b> · Comparación: ${CA} a ${CB}${avisoProd}${avisoRegistro(A,B,x.leads)}`;
+  $("#periodo").innerHTML = `Periodo: <b>${A}</b> a <b>${B}</b> · Comparación: ${CA} a ${CB}${avisoProd}${avisoRegistro(A,B,x.leadsTot)}`;
   renderMeta(); renderLlegadas(); renderResumen(x,y); renderKPIs(x,y); insights(x,y); renderTendencia(); renderMix(x); renderOrigen(x,y);
   const activa = document.querySelector("#nav a.on").dataset.s; if(activa!=="resumen") renderSeccion(activa);
 }
