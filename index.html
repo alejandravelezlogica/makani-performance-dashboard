@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261109090636"></script>
+<script src="data.js?v=20261109093835"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -254,13 +254,12 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
       </select>
       <div class="agr" id="agrLleg"><span>Agrupar</span><button data-g="auto" class="on">Automático</button><button data-g="dia">Día</button><button data-g="semana">Semana</button><button data-g="mes">Mes</button></div>
     </div>
-    <div class="card"><h3>Villas · CRS y WhatsApp (Instagram / Web)</h3><div class="tabla" id="totLlegV"></div><div class="chart alto" id="chLlegV"></div></div>
+    <div class="card"><h3>Villas · CRS y WhatsApp (Instagram / Web)</h3><div class="tabla" id="totLlegV"></div><div class="chart alto" id="chLlegV"></div><div id="avisoLlegV"></div></div>
     <div class="card"><h3>Pasadías · Palco y WhatsApp (Instagram / Web)</h3><div class="tabla" id="totLlegP"></div><div class="chart alto" id="chLlegP"></div></div>
     <div class="grid2">
       <div class="card canal"><h3>Meta Ads</h3><div id="canalMeta"></div></div>
       <div class="card canal"><h3>Google Ads</h3><div id="canalGoogle"></div></div>
     </div>
-    <div class="card"><h3>Fuentes de venta digital</h3><div class="nota"><b>Digital = Instagram + Página Web</b>, lleguen por WhatsApp (registro del front), por el motor web de villas (CRS) o por Palco (pasadías online). Referidos, agencias, conserjes y demás orígenes no entran en las métricas. El Front no registra nada en el CRS, así que CRS y WhatsApp se suman sin duplicados. El detalle por afiliado del CRS es informativo: el costo por reserva usa todo el CRS. <b>Palco</b>: ventas del canal Internet del backoffice de Palco (desde ene-2025), netas de anulaciones; venta = Importe base (sin IVA); pax = tickets × personas (FOR TWO y X2 = 2; niños cuentan como pax). Las ventas Palco por Call center, agencias y taquilla se muestran aparte y no entran en lo digital.</div><div id="fueraWA"></div></div>
     <div class="card"><h3>Pasadías vs Villas</h3><div class="nota">Solo canales digitales (IG + Página Web). Inversión atribuible por el nombre de la campaña. Reservas, pax y venta: Pasadías = WhatsApp IG + Web (front) + Palco; Villas = WhatsApp IG + Web (front) + CRS (todo el motor web, no solo los afiliados de pauta). La inversión de marca o mixta no se reparte: se muestra aparte.</div><div id="tablaProducto"></div></div>
     <div class="card"><h3>Inversión y reservas en el tiempo</h3><div class="nota">Diario en rangos de hasta 3 meses; semanal en rangos más largos. Barras: inversión en Meta y Google. Línea: reservas digitales (IG + Web: WhatsApp, CRS y Palco). Línea discontinua: reservas digitales del periodo de comparación (sin dato antes de sep-2025).</div><div class="chart" id="chTendencia"></div></div>
     <div class="card"><h3>Lectura del periodo</h3><div class="insights" id="insights"></div></div>
@@ -738,19 +737,6 @@ function renderResumen(x, y){
     fila("Reservas motor web atribuidas a Google Ads (CRS)", `${fmt(x.crs.google.r)} · ${money(x.crs.google.v)}`, delta(x.crs.google.r,y.crs.google.r)),
     fila("Retorno atribuido (venta CRS ÷ inversión Google)", x.g.costo?fmt(x.crs.google.v/x.g.costo,1)+"x":"—", delta(div(x.crs.google.v,x.g.costo),div(y.crs.google.v,y.g.costo))),
   ].join("");
-  // Ventas fuera del registro de WhatsApp
-  const filaF = (k, n, v, d) => `<tr><td>${k}</td><td class="n">${fmt(n)}</td><td class="n">${money(v)}</td><td class="n">${d}</td></tr>`;
-  $("#fueraWA").innerHTML = `<table><thead><tr><th>Concepto</th><th class="n">Compras / reservas</th><th class="n">Venta sin IVA</th><th class="n">vs comparación</th></tr></thead><tbody>
-    ${filaF("<b>Villas por WhatsApp</b> (IG + Web, front)", (x.f.res_ig+x.f.res_web+x.f.res_ref+x.f.res_otro) && $("#producto").value!=="Pasadías" ? porProducto(A,B)["Villas"].res - x.crs.tot.r : 0, $("#producto").value!=="Pasadías" ? porProducto(A,B)["Villas"].venta - x.crs.tot.v : 0, "")}
-    ${filaF("<b>Villas por motor web (CRS)</b>", x.crs.tot.r, x.crs.tot.v, delta(x.crs.tot.v, y.crs.tot.v))}
-    ${filaF("&nbsp;&nbsp;↳ atribuidas a Google Ads", x.crs.google.r, x.crs.google.v, delta(x.crs.google.v, y.crs.google.v))}
-    ${filaF("&nbsp;&nbsp;↳ atribuidas a Facebook Ads", x.crs.meta.r, x.crs.meta.v, delta(x.crs.meta.v, y.crs.meta.v))}
-    ${filaF("&nbsp;&nbsp;↳ Google Hotel Ads (inversión fuera del dashboard)", x.crs.gha.r, x.crs.gha.v, delta(x.crs.gha.v, y.crs.gha.v))}
-    ${filaF("&nbsp;&nbsp;↳ sin afiliado de pauta (orgánico, GMB, sin afiliado…)", x.crs.organico.r, x.crs.organico.v, delta(x.crs.organico.v, y.crs.organico.v))}
-    ${filaF(`<b>Pasadías online (Palco · canal Internet)</b> · ${fmt(x.onl.t)} pax`, x.onl.c, x.onl.v, delta(x.onl.v, y.onl.v))}
-    ${(()=>{ const o=palcoOtros(A,B); return o.c ? filaF(`<span style="color:var(--gray)">Palco por otros canales (no digital): ${o.det} · ${fmt(o.p)} pax · Call center pendiente de confirmar si son ventas del front</span>`, o.c, o.v, "") : ""; })()}
-  </tbody></table>` + (B >= "2026-07-01" && x.g.costo > 0 && x.crs.google.r === 0 && $("#producto").value!=="Pasadías"
-    ? `<div class="aviso rojo"><b>Atribución de Google al CRS interrumpida:</b> hasta jun-2026 el afiliado "Google Ads - Hotel" atribuía de 2 a 6 reservas de villas al mes; desde jul-2026 (cuando la pauta pasó a la cuenta 2 de Google) atribuye 0, mientras suben las reservas "sin afiliado". Lo más probable es que las campañas de la cuenta 2 no lleven el parámetro de afiliado de Roiback en la URL final. No significa que Google no venda villas: hay que agregar el parámetro de afiliado en esas campañas.</div>` : "");
   // Producto
   const p1 = porProducto(A,B), p0 = porProducto(CA,CB), maxV = Math.max(...Object.values(p1).map(o=>o.venta||0), 1);
   $("#tablaProducto").innerHTML = `<table class="prod"><thead><tr><th>Producto</th><th class="n">Inversión</th><th class="n">Reservas</th><th class="n">Pax</th><th class="n">Venta sin IVA</th><th class="n">Costo por reserva</th><th class="n">Costo por pax</th><th class="n">Retorno</th></tr></thead><tbody>
@@ -1402,6 +1388,7 @@ function renderLlegadas(){
   // El eje termina en el último día registrado por el Front: un día sin datos todavía caería a 0 y parecería una caída real.
   const met = $("#metLleg").value, ini = A, fin = (D.rango.front_hasta && D.rango.front_hasta < B) ? D.rango.front_hasta : B;
   const dias = Math.round((toD(fin)-toD(ini))/864e5)+1;
+  const [CA0, CB0] = rangoComp(ini, fin), compFront = CA0 >= D.rango.front_desde;
   const agr = (document.querySelector("#agrLleg button.on")||{}).dataset?.g || "auto";
   const modo = agr!=="auto" ? agr : (dias <= 92 ? "dia" : (dias <= 183 ? "semana" : "mes"));
   const MESL = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
@@ -1421,7 +1408,7 @@ function renderLlegadas(){
   const etiq = met==="venta" ? money : (v=>fmt(v));
   const nomMet = {reservas:"reservas", pax:"pax", venta:"venta"}[met];
   const unidad = {dia:"ese día", semana:"esa semana (de lunes a domingo)", mes:"ese mes"}[modo];
-  $("#notaLleg").innerHTML = `Cada punto es el <b>total de ${nomMet} registradas ${unidad}</b>, según la fecha en que se registró la reserva (sin importar cuándo es la visita). En "Automático": hasta 3 meses se ve por día; de 3 a 6 meses, por semana; más de 6 meses, por mes calendario. Con los botones de agrupar se puede elegir día, semana o mes. La línea oscura es el total; las demás, cada canal. Solo digital. <b>CRS</b> = motor de reservas de villas. <b>Palco</b> = venta online de pasadías (sin anuladas). <b>WhatsApp · Instagram</b> y <b>WhatsApp · Web</b> = registro del Front según el origen del cliente (Instagram incluye la pauta de Meta). WhatsApp tiene datos hasta el ${etiqFecha(D.rango.front_hasta)}.`;
+  $("#notaLleg").innerHTML = `Cada punto es el <b>total de ${nomMet} registradas ${unidad}</b>, según la fecha en que se registró la reserva (sin importar cuándo es la visita). En "Automático": hasta 3 meses se ve por día; de 3 a 6 meses, por semana; más de 6 meses, por mes calendario. La línea oscura es el total; las demás, cada canal. <b>Solo digital</b> (Instagram + Página Web): referidos, agencias y demás orígenes no entran. <b>CRS</b> = todo el motor de reservas de villas, con o sin afiliado de pauta (el detalle por afiliado está en la tabla). <b>Palco</b> = compras en línea de pasadías (canal Internet del backoffice), sin anuladas: una compra anulada completa no cuenta y de una anulada en parte cuenta solo lo vigente; pax = tickets × personas (FOR TWO y X2 = 2; niños cuentan como pax). <b>WhatsApp · Instagram</b> y <b>WhatsApp · Web</b> = registro del Front según el origen del cliente (Instagram incluye la pauta de Meta); tiene datos hasta el ${etiqFecha(D.rango.front_hasta)}. El Front no registra nada en el CRS ni en Palco web, así que los canales se suman sin duplicados. Venta sin IVA. La columna "vs comparación" usa el periodo elegido en "Comparar con".`;
   for(const [prod, idc, idt] of [["Villas","chLlegV","totLlegV"],["Pasadías","chLlegP","totLlegP"]]){
     const canales = CANALES_PICK[prod], ser = {}, tot = {};
     canales.forEach(([c])=>{ ser[c] = cubos.map(()=>0); tot[c] = 0; });
@@ -1442,9 +1429,38 @@ function renderLlegadas(){
       tooltip:{trigger:"axis", axisPointer:{type:"line", lineStyle:{color:"#D5D3CB"}},
         formatter: ps => `<b>${ps[0].axisValue}</b><br>` + ps.map(x=>`${x.marker}${x.seriesName}: <b>${etiq(x.value)}</b>`).join("<br>")},
       series}, true);
-    const sumT = canales.reduce((s_,[c])=>s_+tot[c],0);
+    // Tabla unificada (reemplaza el cuadro "Fuentes de venta digital", 9-nov-2026): valor del selector,
+    // % del total y variación vs el periodo de comparación; afiliados del CRS como sub-filas; Palco por
+    // otros canales en gris, sin sumar (Call center pendiente de confirmar si son ventas del Front).
+    const totC = {}; canales.forEach(([c])=>totC[c]=0);
+    PICK.filter(r=>r.producto===prod && r.fecha>=CA0 && r.fecha<=CB0 && totC[r.canal]!=null).forEach(r=>{ totC[r.canal] += r[met]||0; });
+    const esWA = c => c.startsWith("WhatsApp");
+    const sumT = canales.reduce((s_,[c])=>s_+tot[c],0), sumC = canales.reduce((s_,[c])=>s_+totC[c],0);
     const dot = col => `<span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${col};margin-right:8px"></span>`;
-    $("#"+idt).innerHTML = `<table><thead><tr><th>Canal</th><th class="n">${$("#metLleg").selectedOptions[0].text} en el rango</th><th class="n">% del total</th></tr></thead><tbody>${canales.map(([c,col])=>`<tr><td>${dot(col)}${c}</td><td class="n">${etiq(tot[c])}</td><td class="n">${sumT?pct(tot[c]/sumT,0):"—"}</td></tr>`).join("")}<tr><td><b>Total</b></td><td class="n"><b>${etiq(sumT)}</b></td><td class="n">100%</td></tr></tbody></table>`;
+    const filas = [];
+    canales.forEach(([c,col])=>{
+      filas.push(`<tr><td>${dot(col)}${c}</td><td class="n">${etiq(tot[c])}</td><td class="n">${sumT?pct(tot[c]/sumT,0):"—"}</td><td class="n">${delta(tot[c], totC[c], false, esWA(c) && !compFront)}</td></tr>`);
+      if(c==="CRS"){
+        const PLAT = [["google","atribuidas a Google Ads"],["meta","atribuidas a Facebook Ads"],["gha","Google Hotel Ads (inversión fuera del tablero)"],["organico","sin afiliado de pauta (orgánico, GMB…)"]];
+        const campo = met==="reservas" ? "reservas" : met;
+        const sp = (a,b,pl) => CRSA.filter(r=>r.plataforma===pl && r.fecha>=a && r.fecha<=b).reduce((s_,r)=>s_+(r[campo]||0),0);
+        PLAT.forEach(([pl,lbl])=>{ const v1 = sp(ini,fin,pl), v0 = sp(CA0,CB0,pl);
+          if(v1 || v0) filas.push(`<tr class="sub"><td style="padding-left:30px;color:var(--gray)">↳ ${lbl}</td><td class="n" style="color:var(--gray)">${etiq(v1)}</td><td class="n" style="color:var(--gray)">${sumT?pct(v1/sumT,0):"—"}</td><td class="n">${delta(v1, v0)}</td></tr>`); });
+      }
+    });
+    filas.push(`<tr><td><b>Total</b></td><td class="n"><b>${etiq(sumT)}</b></td><td class="n">100%</td><td class="n">${delta(sumT, sumC, false, !compFront)}</td></tr>`);
+    if(prod==="Pasadías"){
+      const campo = {reservas:"compras", pax:"pax", venta:"ingresos"}[met], por = {};
+      PALO.filter(r=>r.fecha>=ini && r.fecha<=fin).forEach(r=>{ por[r.canal] = (por[r.canal]||0) + (r[campo]||0); });
+      Object.entries(por).filter(([,v])=>v).forEach(([k,v])=>filas.push(`<tr><td style="color:var(--gray)">Palco · ${k} <span style="font-size:.85em">(no es digital, no suma${k==="Call center"?"; pendiente confirmar si son ventas del Front":""})</span></td><td class="n" style="color:var(--gray)">${etiq(v)}</td><td class="n"></td><td class="n"></td></tr>`));
+    }
+    $("#"+idt).innerHTML = `<table><thead><tr><th>Canal</th><th class="n">${$("#metLleg").selectedOptions[0].text} en el rango</th><th class="n">% del total</th><th class="n">vs comparación</th></tr></thead><tbody>${filas.join("")}</tbody></table>`;
+    if(prod==="Villas"){
+      const gCosto = GOO_ALL.filter(r=>enRango(r.fecha,ini,fin)).reduce((s_,r)=>s_+r.costo,0);
+      const gRes = CRSA.filter(r=>r.plataforma==="google" && enRango(r.fecha,ini,fin)).reduce((s_,r)=>s_+r.reservas,0);
+      $("#avisoLlegV").innerHTML = (fin >= "2026-07-01" && gCosto > 0 && gRes === 0)
+        ? `<div class="aviso rojo"><b>Atribución de Google al CRS interrumpida:</b> hasta jun-2026 el afiliado "Google Ads - Hotel" atribuía de 2 a 6 reservas de villas al mes; desde jul-2026 atribuye 0, mientras suben las reservas "sin afiliado". Lo más probable es que las campañas de Google no lleven el parámetro de afiliado de Roiback (partner) en la URL. No significa que Google no venda villas.</div>` : "";
+    }
   }
 }
 $("#metLleg").onchange = renderLlegadas;
