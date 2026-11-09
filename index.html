@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261109174153"></script>
+<script src="data.js?v=20261109174601"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -151,6 +151,8 @@ footer img{width:120px;opacity:.9;display:block;margin:0 auto 14px}
 .cv tr.cat td.n{font-size:15.5px;letter-spacing:0;text-transform:none}
 .cv tr.sub td:first-child{padding-left:28px;color:var(--gray)}
 .cv tr.tot td{border-top:2px solid var(--char);font-weight:600}
+.cv .dl{display:block;font-family:var(--body);font-size:10.5px;line-height:1.2;margin-top:2px}
+.cv .dl .cmp{color:var(--mid);font-size:10px}
 .cv .mix{display:flex;height:8px;border-radius:4px;overflow:hidden;margin-top:6px;max-width:260px;gap:2px;background:#fff}
 .cv .mix span{display:block;height:100%}
 .cvley{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--gray);margin:4px 0 10px}
@@ -262,7 +264,6 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
       <div id="tablaCV"></div>
     </div>
     <div class="veredicto" id="veredicto"></div>
-    <div class="big" id="kpisBig"></div>
     <div class="card">
       <h3>Pick-up: reservas por fecha de registro</h3>
       <div class="nota" id="notaLleg"></div>
@@ -712,36 +713,44 @@ function renderComoVamos(){
   const comp = $("#modoComp").value==="prev" ? "periodo anterior" : "mismo periodo del año anterior";
   const sum = (o,f) => CV_CANALES.reduce((s_,[k])=>s_+o[k][f],0);
   const mix = o => { const t = sum(o,"venta"); return t ? `<div class="mix">${CV_CANALES.map(([k])=>o[k].venta>0?`<span style="width:${100*o[k].venta/t}%;background:${CV_COLOR[k]}" title="${k}"></span>`:"").join("")}</div>` : ""; };
-  const td = v => `<td class="n">${v}</td>`;
+  // celda: valor + variación pequeña debajo (inv: más bajo es mejor; neu: gris; sc: sin comparación)
+  const c = (txt, a, b, {inv=false, neu=false, sc=false, nodelta=false}={}) =>
+    `<td class="n">${txt}${nodelta?"":`<span class="dl">${delta(a,b,inv,sc,neu).replace("sin comparación","–")}</span>`}</td>`;
+  const vacio = `<td class="n"></td>`;
   let filas = "", T1 = {inv:0,pax:0,venta:0}, T0 = {inv:0,pax:0,venta:0};
   for(const p of ["Villas","Pasadías"]){
     if(prod && prod!==p) continue;
-    const o1 = d1[p], o0 = d0[p], inv = sum(o1,"inv"), pax = sum(o1,"pax"), ven = sum(o1,"venta"), ven0 = sum(o0,"venta");
-    T1.inv+=inv; T1.pax+=pax; T1.venta+=ven; T0.inv+=sum(o0,"inv"); T0.pax+=sum(o0,"pax"); T0.venta+=ven0;
-    filas += `<tr class="cat"><td>${p}${mix(o1)}</td>${td(money(inv))}${td(fmt(pax))}${td(money(ven))}${td("100%")}${td(pax?money(inv/pax):"—")}${td(inv?fmt(ven/inv,1)+"x":"—")}<td class="n opc">${delta(ven,ven0)}</td></tr>`;
-    const sinCompCanal = p==="Pasadías" && (!PATR_DESDE || CA < PATR_DESDE);
+    const o1 = d1[p], o0 = d0[p];
+    const inv = sum(o1,"inv"), pax = sum(o1,"pax"), ven = sum(o1,"venta");
+    const inv0 = sum(o0,"inv"), pax0 = sum(o0,"pax"), ven0 = sum(o0,"venta");
+    T1.inv+=inv; T1.pax+=pax; T1.venta+=ven; T0.inv+=inv0; T0.pax+=pax0; T0.venta+=ven0;
+    filas += `<tr class="cat"><td>${p}${mix(o1)}</td>${c(money(inv),inv,inv0,{neu:true})}${c(fmt(pax),pax,pax0)}${c(money(ven),ven,ven0)}<td class="n">100%</td>`
+           + `${c(pax?money(inv/pax):"—",div(inv,pax),div(inv0,pax0),{inv:true})}${c(inv?fmt(ven/inv,1)+"x":"—",div(ven,inv),div(ven0,inv0))}</tr>`;
+    const sc = p==="Pasadías" && (!PATR_DESDE || CA < PATR_DESDE);
     CV_CANALES.forEach(([k,lbl])=>{
       const a = o1[k], b = o0[k];
       if(k==="metabuscador" && !a.venta && !b.venta) return;
-      const nota = k==="sin_identificar" ? (p==="Villas" ? " · WhatsApp" : " · WhatsApp y Palco que GA4 no registró") : k==="metabuscador" ? ""
-                 : k==="meta" ? " · solo venta web; sus chats de WhatsApp quedan en sin identificar" : k==="google" ? " · solo venta web; sus chats de WhatsApp quedan en sin identificar" : "";
-      filas += `<tr class="sub"><td><i style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${CV_COLOR[k]};margin-right:7px"></i>${lbl}<span style="font-size:11.5px;color:var(--mid)">${nota}</span></td>
-        ${td(k==="meta"||k==="google" ? money(a.inv) : "—")}${td(fmt(a.pax))}${td(money(a.venta))}${td(ven?pct(a.venta/ven,0):"—")}${td("")}${td("")}<td class="n opc">${delta(a.venta,b.venta,false,sinCompCanal)}</td></tr>`;
+      const nota = k==="sin_identificar" ? (p==="Villas" ? " · WhatsApp" : " · WhatsApp y Palco que GA4 no registró")
+                 : (k==="meta"||k==="google") ? " · solo venta web; sus chats de WhatsApp quedan en sin identificar" : "";
+      const pauta = k==="meta"||k==="google";
+      filas += `<tr class="sub"><td><i style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${CV_COLOR[k]};margin-right:7px"></i>${lbl}<span style="font-size:11.5px;color:var(--mid)">${nota}</span></td>`
+             + (pauta ? c(money(a.inv),a.inv,b.inv,{neu:true}) : `<td class="n">—</td>`)
+             + `${c(fmt(a.pax),a.pax,b.pax,{sc})}${c(money(a.venta),a.venta,b.venta,{sc})}<td class="n">${ven?pct(a.venta/ven,0):"—"}</td>${vacio}${vacio}</tr>`;
     });
   }
   if(!prod){
     T1.inv += d1.mixta.inv; T0.inv += d0.mixta.inv; T1.venta += d1.compl; T0.venta += d0.compl;
-    if(Math.abs(d1.compl)>=1) filas += `<tr class="sub"><td>Complementos sin producto (ubicaciones…)</td>${td("—")}${td("—")}${td(money(d1.compl))}${td("")}${td("")}${td("")}<td class="n opc">${delta(d1.compl,d0.compl)}</td></tr>`;
+    if(Math.abs(d1.compl)>=1) filas += `<tr class="sub"><td>Complementos sin producto (ubicaciones…)</td><td class="n">—</td><td class="n">—</td>${c(money(d1.compl),d1.compl,d0.compl)}${vacio}${vacio}${vacio}</tr>`;
     const mx = [d1.mixta.meta>=1?`Meta Ads ${money(d1.mixta.meta)}`:"", d1.mixta.google>=1?`Google Ads ${money(d1.mixta.google)}`:""].filter(Boolean).join(" · ");
-    filas += `<tr class="sub"><td>Campañas de marca o mixtas<span style="font-size:11.5px;color:var(--mid)"> · venden villas y pasadías, no se asignan a uno${mx?` · ${mx}`:""}</span></td>${td(money(d1.mixta.inv))}${td("—")}${td("—")}${td("")}${td("")}${td("")}<td class="n opc">${delta(d1.mixta.inv,d0.mixta.inv,false,false,true)}</td></tr>`;
+    filas += `<tr class="sub"><td>Campañas de marca o mixtas<span style="font-size:11.5px;color:var(--mid)"> · venden villas y pasadías, no se asignan a uno${mx?` · ${mx}`:""}</span></td>${c(money(d1.mixta.inv),d1.mixta.inv,d0.mixta.inv,{neu:true})}<td class="n">—</td><td class="n">—</td>${vacio}${vacio}${vacio}</tr>`;
   }
-  // Mezcla total (para la nota): % de la venta por tipo
   const mt = {}; CV_CANALES.forEach(([k])=>mt[k] = ["Villas","Pasadías"].filter(p=>!prod||prod===p).reduce((s_,p)=>s_+d1[p][k].venta,0));
   const tv = Object.values(mt).reduce((a_,b_)=>a_+b_,0);
-  filas += `<tr class="tot"><td>Total digital</td>${td(money(T1.inv))}${td(fmt(T1.pax))}${td(money(T1.venta))}${td("")}${td(T1.pax?money(T1.inv/T1.pax):"—")}${td(T1.inv?fmt(T1.venta/T1.inv,1)+"x":"—")}<td class="n opc">${delta(T1.venta,T0.venta)}</td></tr>`;
-  $("#tablaCV").innerHTML = `<div class="cvley">${CV_CANALES.map(([k,l])=>`<span><i style="background:${CV_COLOR[k]}"></i>${l} ${tv?pct(mt[k]/tv,0):""}</span>`).join("")}</div>
-    <div style="overflow-x:auto"><table class="cv"><thead><tr><th>Categoría / canal</th><th class="n">Inversión</th><th class="n">Pax</th><th class="n">Venta sin IVA</th><th class="n">% de la venta</th><th class="n">Costo por pax</th><th class="n">Retorno combinado</th><th class="n opc">Venta vs ${comp}</th></tr></thead><tbody>${filas}</tbody></table></div>`;
-  $("#notaCV").innerHTML = `Venta digital (WhatsApp, motor web de villas y Palco) por fecha de compra. <b>Meta Ads / Google Ads</b> = venta que llegó por un anuncio (afiliado del motor web en villas; visita de GA4 en Palco). <b>Sin identificar</b> = WhatsApp, donde todavía no sabemos si la persona vino de un anuncio, y compras de Palco que GA4 no registró${PATR_DESDE?` (GA4 registra Palco desde ${etiqFecha(PATR_DESDE)})`:""}. Costo por pax y retorno combinado (venta ÷ inversión) van por categoría; el Total incluye las campañas de marca o mixtas. Detalle en Metodología.`;
+  filas += `<tr class="tot"><td>Total digital</td>${c(money(T1.inv),T1.inv,T0.inv,{neu:true})}${c(fmt(T1.pax),T1.pax,T0.pax)}${c(money(T1.venta),T1.venta,T0.venta)}${vacio}`
+         + `${c(T1.pax?money(T1.inv/T1.pax):"—",div(T1.inv,T1.pax),div(T0.inv,T0.pax),{inv:true})}${c(T1.inv?fmt(T1.venta/T1.inv,1)+"x":"—",div(T1.venta,T1.inv),div(T0.venta,T0.inv))}</tr>`;
+  $("#tablaCV").innerHTML = `<div class="cvley">${CV_CANALES.map(([k,l])=>`<span><i style="background:${CV_COLOR[k]}"></i>${l} ${tv?pct(mt[k]/tv,0):""}</span>`).join("")}<span style="margin-left:auto">Variación pequeña: vs ${comp} (– = sin comparación)</span></div>
+    <div style="overflow-x:auto"><table class="cv"><thead><tr><th>Categoría / canal</th><th class="n">Inversión</th><th class="n">Pax</th><th class="n">Venta sin IVA</th><th class="n">% de la venta</th><th class="n">Costo por pax</th><th class="n">Retorno combinado</th></tr></thead><tbody>${filas}</tbody></table></div>`;
+  $("#notaCV").innerHTML = `Venta digital (WhatsApp, motor web de villas y Palco) por fecha de compra. <b>Meta Ads / Google Ads</b> = venta que llegó por un anuncio (afiliado del motor web en villas; visita de GA4 en Palco). <b>Sin identificar</b> = WhatsApp, donde todavía no sabemos si la persona vino de un anuncio, y compras de Palco que GA4 no registró${PATR_DESDE?` (GA4 registra Palco desde ${etiqFecha(PATR_DESDE)}: antes, los canales de pasadías no se comparan)`:""}. Costo por pax y retorno combinado (venta ÷ inversión) van por categoría; el Total incluye las campañas de marca o mixtas. Detalle en Metodología.`;
 }
 
 // --- resumen de un vistazo ---
@@ -794,7 +803,7 @@ function renderResumen(x, y){
   $("#veredicto").innerHTML = `${estado}<p>${txt}</p>`;
   // 4 cifras grandes
   const t = (lbl, val, d, que, spark) => `<div class="t"><div class="lbl">${lbl}</div><div class="val">${val}</div><div class="cmp">${d}</div><div class="que">${que}</div>${spark}</div>`;
-  $("#kpisBig").innerHTML = [
+  const kb = $("#kpisBig"); if(kb) kb.innerHTML = [
     t("Inversión en pauta", money(x.inv), delta(x.inv,y.inv,false,false,true), `Meta ${money(x.m.gasto)} · Google ${money(x.g.costo)}`, sparkline(inv, C.sea)),
     t("Reservas digitales", fmt(x.resDig), delta(x.resDig,y.resDig,false,sf), `WhatsApp IG ${fmt(x.f.res_ig)} · WhatsApp Web ${fmt(x.f.res_web)} · CRS ${fmt(x.crs.tot.r)} · Palco ${fmt(x.onl.c)}`, sparkline(res, C.char)),
     t("Pax digitales", fmt(x.paxDig), delta(x.paxDig,y.paxDig,false,sf), `WhatsApp IG ${fmt(x.f.pax_ig)} · WhatsApp Web ${fmt(x.f.pax_web)} · CRS ${fmt(x.crs.tot.p)} · Palco ${fmt(x.onl.t)}`, sparkline(paxS, C.char)),
