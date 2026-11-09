@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261109082235"></script>
+<script src="data.js?v=20261109085219"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -111,8 +111,8 @@ footer img{width:120px;opacity:.9;display:block;margin:0 auto 14px}
 .leyenda-def{font-size:13px;color:var(--gray);line-height:1.7}
 .leyenda-def b{color:var(--char)}
 /* Resumen de un vistazo */
-.veredicto{background:#fff;border:1px solid var(--line);border-radius:20px;padding:26px 32px;margin-bottom:20px;box-shadow:0 1px 2px rgba(58,58,58,.04)}
-.veredicto p{font-family:var(--head);font-weight:300;font-size:21px;line-height:1.65;color:var(--char);margin:10px 0 0}
+.veredicto{background:#fff;border:1px solid var(--line);border-radius:20px;padding:18px 24px;margin-bottom:20px;box-shadow:0 1px 2px rgba(58,58,58,.04)}
+.veredicto p{font-family:var(--head);font-weight:300;font-size:15px;line-height:1.6;color:var(--char);margin:10px 0 0}
 .veredicto p b{font-weight:500}
 .estado{display:inline-block;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;padding:6px 14px;border-radius:20px;font-weight:600}
 .estado.bien{background:#E5F1E8;color:var(--pos)} .estado.mal{background:#F7E6E3;color:var(--neg)} .estado.neutro{background:var(--cream);color:var(--gray)}
@@ -1477,16 +1477,15 @@ function renderMeta(){
   el.innerHTML = `<div class="meta-mes"><h3>Meta de ${mesNom}: ${fmt(meta)} pax de pasadías digitales</h3>
     <div class="nums">
       <div><div class="l">Ya vinieron</div><div class="v">${fmt(hecho)} pax</div><div class="s">del 1 al ${etiqFin} · a hoy deberían ser ${fmt(esperado)} <b style="color:${col}">(${dif>=0?"+":"−"}${fmt(Math.abs(dif))})</b></div></div>
-      <div><div class="l">Reservados para venir</div><div class="v">${fmt(waFuturo)} pax</div><div class="s">visitas ya vendidas de aquí a fin de mes</div></div>
-      <div><div class="l">Total vendido</div><div class="v">${fmt(vendido)} pax</div><div class="s">${pct(vendido/meta,0)} de la meta</div></div>
+      <div><div class="l">Total vendido</div><div class="v">${fmt(vendido)} pax</div><div class="s">${pct(vendido/meta,0)} de la meta · a hoy deberíamos ir en ${pct(esperado/meta,0)} (${fmt(esperado)} pax)</div></div>
       <div><div class="l">Faltan por vender</div><div class="v">${fmt(falta)} pax</div><div class="s">${porDia==null?"":`unos ${fmt(porDia)} por día en los ${rest} días que quedan`}</div></div>
     </div>
-    <div class="meta-bar" style="margin-top:34px">
+    <div class="meta-bar" style="margin-top:18px">
       <div class="fill" style="width:${w1}%;background:${C.ocean}"></div>
       <div class="fill" style="position:absolute;top:0;left:${w1}%;width:${w2}%;background:${C.ocean};opacity:.35;border-radius:0 10px 10px 0"></div>
-      <div class="marca" style="left:${wHoy}%"><span style="top:-22px">hoy deberíamos ir aquí: ${fmt(esperado)}</span></div>
+      <div class="marca" style="left:${wHoy}%" title="a hoy deberíamos ir en ${fmt(esperado)} pax"></div>
     </div>
-    <div class="meta-escala"><span><b style="color:${C.ocean}">■</b> ya vinieron ${fmt(hecho)} &nbsp; <b style="color:${C.ocean};opacity:.4">■</b> reservados para venir ${fmt(waFuturo)}</span><span>meta ${fmt(meta)}</span></div>
+    <div class="meta-escala"><span><b style="color:${C.ocean}">■</b> ya vinieron ${fmt(hecho)} &nbsp; <b style="color:${C.ocean};opacity:.4">■</b> reservados para venir ${fmt(waFuturo)} &nbsp; <b style="color:var(--char)">|</b> a hoy deberíamos ir en ${fmt(esperado)}</span><span>meta ${fmt(meta)}</span></div>
     <div class="nota" style="margin-top:14px">Cómo se cuenta: un pax suma a la meta el día que visita Makani, no el día que compra. Digital = clientes que llegan por Instagram o la página web: por WhatsApp (${fmt(wa)} pax) o comprando en línea en Palco (${fmt(pl)} pax). La meta diaria es un promedio simple (${fmt(meta)} ÷ ${diasMes} días). Datos hasta el ${etiqFin}, último día registrado por el Front.</div></div>`;
 }
 function render(){
