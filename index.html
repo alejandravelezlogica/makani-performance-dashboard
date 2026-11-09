@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261109070506"></script>
+<script src="data.js?v=20261109082007"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -1468,27 +1468,24 @@ function renderMeta(){
   const col = hecho >= esperado ? C.pos : (hecho >= 0.85*esperado ? C.neu : C.neg);
   const nomMes = toD(ini).toLocaleDateString("es-CO",{month:"long", year:"numeric"});
   const pctHecho = esperado>0 ? hecho/esperado : 0;
+  // UNA sola barra (0 → meta del mes): oscuro = ya vinieron, claro = reservados para venir,
+  // línea = donde deberíamos ir hoy. La usuaria pidió algo que se entienda a simple vista (9-nov-2026):
+  // con dos barras en escalas distintas la roja (peor) se veía más larga que la verde.
+  const w1 = Math.min(100, 100*hecho/meta), w2 = Math.min(100-w1, 100*waFuturo/meta), wHoy = Math.min(100, 100*esperado/meta);
   const etiqFin = etiqFecha(fin), mesNom = toD(ini).toLocaleDateString("es-CO",{month:"long"});
   el.innerHTML = `<div class="meta-mes"><h3>Meta de ${mesNom}: ${fmt(meta)} pax de pasadías digitales</h3>
-    <div class="meta-bloque">
-      <div class="meta-preg">1. ¿Cómo vamos en los días que ya pasaron? <span>del 1 al ${etiqFin}</span></div>
-      <div class="nums">
-        <div><div class="l">Vinieron</div><div class="v" style="color:${col}">${fmt(hecho)} pax</div></div>
-        <div><div class="l">Deberían haber venido</div><div class="v">${fmt(esperado)} pax</div><div class="s">${fmt(meta/diasMes,0)} por día × ${dia} días</div></div>
-        <div><div class="l">Diferencia</div><div class="v" style="color:${col}">${dif>=0?"+":"−"}${fmt(Math.abs(dif))} pax</div><div class="s">${pct(pctHecho,0)} de lo esperado</div></div>
-      </div>
-      <div class="meta-bar"><div class="fill" style="width:${Math.min(100,100*pctHecho)}%;background:${col}"></div></div>
-      <div class="meta-escala"><span>0</span><span>${fmt(esperado)} pax esperados a la fecha</span></div>
+    <div class="nums">
+      <div><div class="l">Ya vinieron</div><div class="v">${fmt(hecho)} pax</div><div class="s">del 1 al ${etiqFin} · a hoy deberían ser ${fmt(esperado)} <b style="color:${col}">(${dif>=0?"+":"−"}${fmt(Math.abs(dif))})</b></div></div>
+      <div><div class="l">Reservados para venir</div><div class="v">${fmt(waFuturo)} pax</div><div class="s">visitas ya vendidas de aquí a fin de mes</div></div>
+      <div><div class="l">Total vendido</div><div class="v">${fmt(vendido)} pax</div><div class="s">${pct(vendido/meta,0)} de la meta</div></div>
+      <div><div class="l">Faltan por vender</div><div class="v">${fmt(falta)} pax</div><div class="s">${porDia==null?"":`unos ${fmt(porDia)} por día en los ${rest} días que quedan`}</div></div>
     </div>
-    <div class="meta-bloque">
-      <div class="meta-preg">2. ¿Cuánto llevamos vendido para todo ${mesNom}? <span>visitas ya hechas + reservas para los próximos días</span></div>
-      <div class="nums">
-        <div><div class="l">Vendido para el mes</div><div class="v">${fmt(vendido)} pax</div><div class="s">${pct(vendido/meta,0)} de la meta</div></div>
-        <div><div class="l">Faltan por vender</div><div class="v">${fmt(falta)} pax</div><div class="s">${porDia==null?"":`unos ${fmt(porDia)} por día en los ${rest} días que quedan`}</div></div>
-      </div>
-      <div class="meta-bar"><div class="fill" style="width:${Math.min(100,100*hecho/meta)}%;background:${C.ocean}"></div><div class="fill" style="position:absolute;top:0;left:${Math.min(100,100*hecho/meta)}%;width:${Math.min(100-100*hecho/meta,100*waFuturo/meta)}%;background:${C.ocean};opacity:.35;border-radius:0 10px 10px 0"></div></div>
-      <div class="meta-escala"><span><b style="color:${C.ocean}">■</b> ya vinieron ${fmt(hecho)} &nbsp; <b style="color:${C.ocean};opacity:.4">■</b> reservados para venir ${fmt(waFuturo)}</span><span>meta ${fmt(meta)}</span></div>
+    <div class="meta-bar" style="margin-top:34px">
+      <div class="fill" style="width:${w1}%;background:${C.ocean}"></div>
+      <div class="fill" style="position:absolute;top:0;left:${w1}%;width:${w2}%;background:${C.ocean};opacity:.35;border-radius:0 10px 10px 0"></div>
+      <div class="marca" style="left:${wHoy}%"><span style="top:-22px">hoy deberíamos ir aquí: ${fmt(esperado)}</span></div>
     </div>
+    <div class="meta-escala"><span><b style="color:${C.ocean}">■</b> ya vinieron ${fmt(hecho)} &nbsp; <b style="color:${C.ocean};opacity:.4">■</b> reservados para venir ${fmt(waFuturo)}</span><span>meta ${fmt(meta)}</span></div>
     <div class="nota" style="margin-top:14px">Cómo se cuenta: un pax suma a la meta el día que visita Makani, no el día que compra. Digital = clientes que llegan por Instagram o la página web: por WhatsApp (${fmt(wa)} pax) o comprando en línea en Palco (${fmt(pl)} pax). La meta diaria es un promedio simple (${fmt(meta)} ÷ ${diasMes} días). Datos hasta el ${etiqFin}, último día registrado por el Front.</div></div>`;
 }
 function render(){
@@ -1508,8 +1505,8 @@ function render(){
   [...new Set(MCAMP.map(c=>c.etapa))].forEach(e=>{ const o=document.createElement("option"); o.value=e; o.textContent=e; $("#etapaCrea").appendChild(o); });
   $("#desde").min=$("#hasta").min=D.rango.min; $("#desde").max=$("#hasta").max=D.rango.max;
   initCalc();
-  document.querySelector('#presets button[data-p="mesant"]').classList.add("on");
-  preset("mesant");
+  document.querySelector('#presets button[data-p="30"]').classList.add("on");
+  preset("30");
 })();
 </script>
 </body>
