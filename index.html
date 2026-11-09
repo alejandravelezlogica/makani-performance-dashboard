@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261109093835"></script>
+<script src="data.js?v=20261109094823"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -260,7 +260,7 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
       <div class="card canal"><h3>Meta Ads</h3><div id="canalMeta"></div></div>
       <div class="card canal"><h3>Google Ads</h3><div id="canalGoogle"></div></div>
     </div>
-    <div class="card"><h3>Pasadías vs Villas</h3><div class="nota">Solo canales digitales (IG + Página Web). Inversión atribuible por el nombre de la campaña. Reservas, pax y venta: Pasadías = WhatsApp IG + Web (front) + Palco; Villas = WhatsApp IG + Web (front) + CRS (todo el motor web, no solo los afiliados de pauta). La inversión de marca o mixta no se reparte: se muestra aparte.</div><div id="tablaProducto"></div></div>
+    <div class="card"><h3>Pasadías vs Villas</h3><div class="nota">Solo canales digitales (IG + Página Web). Inversión atribuible por el nombre de la campaña. Reservas, pax y venta: Pasadías = WhatsApp IG + Web (front) + Palco; Villas = WhatsApp IG + Web (front) + CRS (todo el motor web, no solo los afiliados de pauta). La inversión de marca o mixta no se reparte: se muestra aparte. Por eso el <b>costo por reserva y por pax de cada producto</b> usa solo la inversión de sus campañas, y la fila <b>Total</b> usa toda la inversión (incluida marca / mixta): el Total es igual a las cifras grandes de arriba con "Producto: Todos".</div><div id="tablaProducto"></div></div>
     <div class="card"><h3>Inversión y reservas en el tiempo</h3><div class="nota">Diario en rangos de hasta 3 meses; semanal en rangos más largos. Barras: inversión en Meta y Google. Línea: reservas digitales (IG + Web: WhatsApp, CRS y Palco). Línea discontinua: reservas digitales del periodo de comparación (sin dato antes de sep-2025).</div><div class="chart" id="chTendencia"></div></div>
     <div class="card"><h3>Lectura del periodo</h3><div class="insights" id="insights"></div></div>
     <details class="card mas" id="detMas"><summary>Ver todos los indicadores</summary>
@@ -547,7 +547,9 @@ function agregado(a,b){
 let A, B, CA, CB;
 function setRango(a,b){ $("#desde").value=a; $("#hasta").value=b; render(); }
 function preset(p){
-  const max = D.rango.max; const hoy = toD(max);
+  // Fin = último día COMPLETO común: el del Front (los datos de Meta/Google del día de la descarga van parciales
+  // y ese día aún no tiene reservas registradas, lo que inflaba el costo por reserva).
+  const max = (D.rango.front_hasta && D.rango.front_hasta < D.rango.max) ? D.rango.front_hasta : D.rango.max; const hoy = toD(max);
   if(p==="30") return setRango(addDays(max,-29), max);
   if(p==="90") return setRango(addDays(max,-89), max);
   if(p==="mes") return setRango(max.slice(0,7)+"-01", max);
@@ -713,8 +715,8 @@ function renderResumen(x, y){
     t("Reservas digitales", fmt(x.resDig), delta(x.resDig,y.resDig,false,sf), `WhatsApp IG ${fmt(x.f.res_ig)} · WhatsApp Web ${fmt(x.f.res_web)} · CRS ${fmt(x.crs.tot.r)} · Palco ${fmt(x.onl.c)}`, sparkline(res, C.char)),
     t("Pax digitales", fmt(x.paxDig), delta(x.paxDig,y.paxDig,false,sf), `WhatsApp IG ${fmt(x.f.pax_ig)} · WhatsApp Web ${fmt(x.f.pax_web)} · CRS ${fmt(x.crs.tot.p)} · Palco ${fmt(x.onl.t)}`, sparkline(paxS, C.char)),
     t("Venta digital sin IVA", money(x.ventaDig), delta(x.ventaDig,y.ventaDig,false,sf), `ROAS ${x.roas==null?"—":fmt(x.roas,1)+"x"} (venta ÷ inversión)`, sparkline(ven, C.pos)),
-    t("Costo de pauta por reserva", money(x.cpRes), delta(x.cpRes,y.cpRes,true,sf), "Inversión total ÷ reservas digitales", sparkline(inv.map((v,i)=>res[i]?v/res[i]:null), C.blood)),
-    t("Costo de pauta por pax", money(x.cpPax), delta(x.cpPax,y.cpPax,true,sf), "Inversión total ÷ pax digitales", sparkline(inv.map((v,i)=>paxS[i]?v/paxS[i]:null), C.blood)),
+    t("Costo de pauta por reserva", money(x.cpRes), delta(x.cpRes,y.cpRes,true,sf), ($("#producto").value ? `Inversión de campañas de ${$("#producto").value} ÷ reservas digitales` : "Inversión total (incluye marca) ÷ reservas digitales"), sparkline(inv.map((v,i)=>res[i]?v/res[i]:null), C.blood)),
+    t("Costo de pauta por pax", money(x.cpPax), delta(x.cpPax,y.cpPax,true,sf), ($("#producto").value ? `Inversión de campañas de ${$("#producto").value} ÷ pax digitales` : "Inversión total (incluye marca) ÷ pax digitales"), sparkline(inv.map((v,i)=>paxS[i]?v/paxS[i]:null), C.blood)),
   ].join("");
   // Canales
   const fila = (k, v, d="") => `<div class="fila"><span class="k">${k}</span><span><span class="v">${v}</span><span class="d">${d}</span></span></div>`;
@@ -747,7 +749,16 @@ function renderResumen(x, y){
       <td class="n">${o.venta==null?"—":money(o.venta)}</td>
       <td class="n">${o.res?money(o.inv/o.res):"—"}</td>
       <td class="n">${o.pax?money(o.inv/o.pax):"—"}</td>
-      <td class="n">${o.venta&&o.inv?fmt(o.venta/o.inv,1)+"x":"—"}</td></tr>`).join("")}</tbody></table>`;
+      <td class="n">${o.venta&&o.inv?fmt(o.venta/o.inv,1)+"x":"—"}</td></tr>`).join("")}
+    ${(()=>{ // Complementos sin producto (UBICACION…): venta del Front IG+Web que no es pasadía ni villa
+      const compl = (a,b) => FRONT.filter(r=>enRango(r.fecha,a,b)).reduce((s_,r)=>s_+r.venta_ig+r.venta_web,0)
+                           - FRONTP.filter(r=>enRango(r.fecha,a,b)).reduce((s_,r)=>s_+r.venta_ig+r.venta_web,0);
+      const c1 = compl(A,B), tot = k => ["Pasadías","Villas","Marca / mixta"].reduce((s_,n)=>s_+(p1[n][k]||0),0);
+      const T1 = {inv: tot("inv"), res: tot("res"), pax: tot("pax"), venta: tot("venta") + c1};
+      const T0 = {inv: ["Pasadías","Villas","Marca / mixta"].reduce((s_,n)=>s_+(p0[n].inv||0),0), res: ["Pasadías","Villas"].reduce((s_,n)=>s_+(p0[n].res||0),0)};
+      return (Math.abs(c1) >= 1 ? `<tr><td style="color:var(--gray)">Complementos sin producto (ubicaciones…)</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">${money(c1)}</td><td class="n">—</td><td class="n">—</td><td class="n">—</td></tr>` : "")
+        + `<tr style="border-top:2px solid var(--line)"><td><b>Total</b></td><td class="n"><b>${money(T1.inv)}</b> ${delta(T1.inv,T0.inv,false,false,true)}</td><td class="n"><b>${fmt(T1.res)}</b> ${delta(T1.res,T0.res,false,sf)}</td><td class="n"><b>${fmt(T1.pax)}</b></td><td class="n"><b>${money(T1.venta)}</b></td><td class="n"><b>${T1.res?money(T1.inv/T1.res):"—"}</b></td><td class="n"><b>${T1.pax?money(T1.inv/T1.pax):"—"}</b></td><td class="n"><b>${T1.inv?fmt(T1.venta/T1.inv,1)+"x":"—"}</b></td></tr>`;
+    })()}</tbody></table>`;
 }
 
 // --- insights automáticos ---
@@ -1345,7 +1356,7 @@ function renderNotas(){
   <p><b>Fuentes.</b> Meta Marketing API (cuentas "CP - Makani Luxury - Lógica", jun–sep 2025, y "CP - Makani Luxury", sep 2025 en adelante; token de solo lectura). Google Ads: API (cuenta del MCC) e informes descargados de las cuentas sin acceso API. Registro del front: "INF LEADS GENERAL MENSUAL" (pestañas Data Leads, Data General y Razones no cierre) desde ${D.rango.front_desde}.</p>
   <p><b>Comparación.</b> "LY −364 días" compara contra el mismo periodo del año anterior alineado por día de la semana (recomendado para pasadías). Si el registro del front no cubre el periodo de comparación, esos KPIs muestran "comparación no disponible".</p>
   <p><b>Conversaciones iniciadas (Meta)</b> = veces que una persona envió un mensaje a la empresa desde el anuncio, después de 7 días sin actividad. No es el clic en el anuncio: Meta reporta los clics por separado y son muchos más. Cerca del 97% de las conversaciones se atribuyen a un clic y solo ~2% a una vista sin clic. Muchas conversaciones son solo el mensaje automático precargado del anuncio; por eso también se muestran los <b>chats con 2+ mensajes</b> (la persona siguió escribiendo), una medida más exigente de interés real. Sin la API de WhatsApp no se puede auditar chat por chat: es una métrica de la plataforma.</p>
-  <p><b>Digital</b> = Instagram + Página Web, de villas o pasadías, lleguen por WhatsApp (registro del front: origen Instagram o Página Web), por el <b>CRS</b> (motor web de villas) o por <b>Palco</b> (pasadías online). Referidos, agencias, conserjes, KLM, "ya nos visitaron" y demás orígenes no entran en las métricas. <b>Pax</b>: front = columna NUMERO PAX de Data General; CRS = Ocupantes; Palco = tickets del canal Internet del backoffice de Palco, netos de anulaciones (FOR TWO y X2 = 2 pax; niños cuentan como pax). <b>CRS</b>: se suma completo (el Front no registra nada en el CRS: no hay duplicados). Fecha = fecha de la reserva (Alta); valor = "Importe sin impuestos"; solo reservas confirmadas o modificadas. El detalle por afiliado ("Google Ads - …", "Facebook Ads", "Google Hotel Ads"…) es informativo; el costo por reserva usa todo el CRS para no depender del tracking del afiliado. <b>Palco</b>: compras y tickets en pasadias.makaniluxury.com medidos por GA4 desde jul-2026.</p>
+  <p><b>Digital</b> = Instagram + Página Web, de villas o pasadías, lleguen por WhatsApp (registro del front: origen Instagram o Página Web), por el <b>CRS</b> (motor web de villas) o por <b>Palco</b> (pasadías online). Referidos, agencias, conserjes, KLM, "ya nos visitaron" y demás orígenes no entran en las métricas. <b>Pax</b>: front = columna NUMERO PAX de Data General; CRS = Ocupantes; Palco = tickets del canal Internet del backoffice de Palco, netos de anulaciones (FOR TWO y X2 = 2 pax; niños cuentan como pax). <b>CRS</b>: se suma completo (el Front no registra nada en el CRS: no hay duplicados). Fecha = fecha de la reserva (Alta); valor = "Importe sin impuestos"; solo reservas confirmadas o modificadas. El detalle por afiliado ("Google Ads - …", "Facebook Ads", "Google Hotel Ads"…) es informativo; el costo por reserva usa todo el CRS para no depender del tracking del afiliado. <b>Palco</b>: compras del canal Internet del backoffice de Palco (desde ene-2025), netas de anulaciones; venta = Importe base (sin IVA). Las ventas de Palco por Call center, agencias o taquilla no entran en lo digital y se muestran aparte.</p>
   <p><b>Conversiones de Google</b> = compras en el motor de reservas web (acciones "Booking COP/USD/EUR"). Los clics al botón de WhatsApp de la web no se miden como conversión, así que Google también se evalúa con los <b>leads y reservas Web</b> del front. Esos leads Web incluyen tráfico orgánico y directo, no solo pauta.</p>
   <p><b>Conversaciones WhatsApp</b> (KPI) = conversaciones iniciadas atribuidas por Meta (7 días). <b>Leads</b> = registrados por el front (IG, Web, Referidos). <b>Reservas totales</b> = todas las reservas registradas por el front (pasadías, villas, KLM), de cualquier origen: es la cifra principal porque no depende de cómo se etiquete el origen. <b>Reservas digitales</b> = origen Instagram o Página web (canales donde actúa la pauta); Referidos queda fuera. <b>Comparación</b> por defecto: mismo periodo del año anterior alineado por día de la semana (−364 días, STLY). <b>Lectura incremental</b>: (inversión hoy − inversión año anterior) frente a (reservas y venta hoy − año anterior); muestra cuánto trajo la inversión adicional, sin descontar estacionalidad ni demanda orgánica. <b>Venta</b> = sin IVA, según el front.</p>
   <p><b>Costo de pauta por reserva</b> = inversión total Meta + Google ÷ reservas totales; el costo por reserva digital usa solo IG + Web. Es una medida de eficiencia conjunta: el front no registra qué anuncio originó cada lead.</p>
