@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261109173209"></script>
+<script src="data.js?v=20261109174153"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -255,12 +255,12 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
   <div class="periodo" id="periodo"></div>
 
   <section id="resumen" class="on">
+    <div id="metaMes"></div>
     <div class="card" id="cardCV">
       <h3>Cómo vamos: venta digital por canal</h3>
       <div class="nota" id="notaCV"></div>
       <div id="tablaCV"></div>
     </div>
-    <div id="metaMes"></div>
     <div class="veredicto" id="veredicto"></div>
     <div class="big" id="kpisBig"></div>
     <div class="card">
@@ -279,7 +279,6 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
       <div class="card canal"><h3>Meta Ads</h3><div id="canalMeta"></div></div>
       <div class="card canal"><h3>Google Ads</h3><div id="canalGoogle"></div></div>
     </div>
-    <div class="card"><h3>Pasadías vs Villas</h3><div class="nota">Solo canales digitales (IG + Página Web). Inversión atribuible por el nombre de la campaña. Reservas, pax y venta: Pasadías = WhatsApp IG + Web (front) + Palco; Villas = WhatsApp IG + Web (front) + CRS (todo el motor web, no solo los afiliados de pauta). La inversión de marca o mixta no se reparte: se muestra aparte. Por eso el <b>costo por reserva y por pax de cada producto</b> usa solo la inversión de sus campañas, y la fila <b>Total</b> usa toda la inversión (incluida marca / mixta): el Total es igual a las cifras grandes de arriba con "Producto: Todos".</div><div id="tablaProducto"></div></div>
     <div class="card"><h3>Inversión y reservas en el tiempo</h3><div class="nota">Diario en rangos de hasta 3 meses; semanal en rangos más largos. Barras: inversión en Meta y Google. Línea: reservas digitales (IG + Web: WhatsApp, CRS y Palco). Línea discontinua: reservas digitales del periodo de comparación (sin dato antes de sep-2025).</div><div class="chart" id="chTendencia"></div></div>
     <div class="card"><h3>Lectura del periodo</h3><div class="insights" id="insights"></div></div>
     <details class="card mas" id="detMas"><summary>Ver todos los indicadores</summary>
@@ -693,11 +692,11 @@ const PATR_DESDE = PATR.filter(r=>r.plataforma!=="sin_identificar").reduce((m,r)
 const CV_COLOR = {meta:"#2F6E73", google:"#4D9499", metabuscador:"#9C7F3C", organico:"#C9A961", sin_identificar:"#D5D3CB"};
 function cvDatos(a, b){
   const cero = () => ({inv:0, pax:0, venta:0});
-  const out = {"Villas":{}, "Pasadías":{}, mixta:{inv:0}, compl:0};
+  const out = {"Villas":{}, "Pasadías":{}, mixta:{inv:0, meta:0, google:0}, compl:0};
   for(const p of ["Villas","Pasadías"]) CV_CANALES.forEach(([k])=>out[p][k]=cero());
   const prodInv = pr => (pr==="Pasadías"||pr==="Villas") ? pr : null;
-  META_ALL.filter(r=>enRango(r.fecha,a,b)).forEach(r=>{ const p=prodInv(MCAMP[r.c].producto); if(p) out[p].meta.inv+=r.gasto; else out.mixta.inv+=r.gasto; });
-  GOO_ALL.filter(r=>enRango(r.fecha,a,b)).forEach(r=>{ const p=prodInv(GCAMP[r.c].producto); if(p) out[p].google.inv+=r.costo; else out.mixta.inv+=r.costo; });
+  META_ALL.filter(r=>enRango(r.fecha,a,b)).forEach(r=>{ const p=prodInv(MCAMP[r.c].producto); if(p) out[p].meta.inv+=r.gasto; else { out.mixta.inv+=r.gasto; out.mixta.meta+=r.gasto; } });
+  GOO_ALL.filter(r=>enRango(r.fecha,a,b)).forEach(r=>{ const p=prodInv(GCAMP[r.c].producto); if(p) out[p].google.inv+=r.costo; else { out.mixta.inv+=r.costo; out.mixta.google+=r.costo; } });
   // Villas: CRS por afiliado; WhatsApp (front IG + Web) = sin identificar (el front no sabe si vino de un anuncio)
   CRSA.filter(r=>enRango(r.fecha,a,b)).forEach(r=>{ const o=out["Villas"][r.plataforma] || out["Villas"].organico; o.pax+=r.pax||0; o.venta+=r.venta; });
   // Pasadías: Palco Internet por la fuente de GA4 de cada localizador; lo que GA4 no vio = sin identificar
@@ -719,29 +718,30 @@ function renderComoVamos(){
     if(prod && prod!==p) continue;
     const o1 = d1[p], o0 = d0[p], inv = sum(o1,"inv"), pax = sum(o1,"pax"), ven = sum(o1,"venta"), ven0 = sum(o0,"venta");
     T1.inv+=inv; T1.pax+=pax; T1.venta+=ven; T0.inv+=sum(o0,"inv"); T0.pax+=sum(o0,"pax"); T0.venta+=ven0;
-    filas += `<tr class="cat"><td>${p}${mix(o1)}</td>${td(money(inv))}${td(fmt(pax))}${td(money(ven))}${td("100%")}${td(pax?money(inv/pax):"—")}<td class="n opc">${delta(ven,ven0)}</td></tr>`;
+    filas += `<tr class="cat"><td>${p}${mix(o1)}</td>${td(money(inv))}${td(fmt(pax))}${td(money(ven))}${td("100%")}${td(pax?money(inv/pax):"—")}${td(inv?fmt(ven/inv,1)+"x":"—")}<td class="n opc">${delta(ven,ven0)}</td></tr>`;
     const sinCompCanal = p==="Pasadías" && (!PATR_DESDE || CA < PATR_DESDE);
     CV_CANALES.forEach(([k,lbl])=>{
       const a = o1[k], b = o0[k];
       if(k==="metabuscador" && !a.venta && !b.venta) return;
-      const nota = k==="sin_identificar" ? (p==="Villas" ? " · WhatsApp" : " · WhatsApp y Palco que GA4 no registró") : k==="metabuscador" ? " · inversión fuera del tablero"
+      const nota = k==="sin_identificar" ? (p==="Villas" ? " · WhatsApp" : " · WhatsApp y Palco que GA4 no registró") : k==="metabuscador" ? ""
                  : k==="meta" ? " · solo venta web; sus chats de WhatsApp quedan en sin identificar" : k==="google" ? " · solo venta web; sus chats de WhatsApp quedan en sin identificar" : "";
       filas += `<tr class="sub"><td><i style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${CV_COLOR[k]};margin-right:7px"></i>${lbl}<span style="font-size:11.5px;color:var(--mid)">${nota}</span></td>
-        ${td(k==="meta"||k==="google" ? money(a.inv) : "—")}${td(fmt(a.pax))}${td(money(a.venta))}${td(ven?pct(a.venta/ven,0):"—")}${td("")}<td class="n opc">${delta(a.venta,b.venta,false,sinCompCanal)}</td></tr>`;
+        ${td(k==="meta"||k==="google" ? money(a.inv) : "—")}${td(fmt(a.pax))}${td(money(a.venta))}${td(ven?pct(a.venta/ven,0):"—")}${td("")}${td("")}<td class="n opc">${delta(a.venta,b.venta,false,sinCompCanal)}</td></tr>`;
     });
   }
   if(!prod){
     T1.inv += d1.mixta.inv; T0.inv += d0.mixta.inv; T1.venta += d1.compl; T0.venta += d0.compl;
-    if(Math.abs(d1.compl)>=1) filas += `<tr class="sub"><td>Complementos sin producto (ubicaciones…)</td>${td("—")}${td("—")}${td(money(d1.compl))}${td("")}${td("")}<td class="n opc">${delta(d1.compl,d0.compl)}</td></tr>`;
-    filas += `<tr class="sub"><td>Campañas de marca o mixtas (solo inversión)</td>${td(money(d1.mixta.inv))}${td("—")}${td("—")}${td("")}${td("")}<td class="n opc">${delta(d1.mixta.inv,d0.mixta.inv,false,false,true)}</td></tr>`;
+    if(Math.abs(d1.compl)>=1) filas += `<tr class="sub"><td>Complementos sin producto (ubicaciones…)</td>${td("—")}${td("—")}${td(money(d1.compl))}${td("")}${td("")}${td("")}<td class="n opc">${delta(d1.compl,d0.compl)}</td></tr>`;
+    const mx = [d1.mixta.meta>=1?`Meta Ads ${money(d1.mixta.meta)}`:"", d1.mixta.google>=1?`Google Ads ${money(d1.mixta.google)}`:""].filter(Boolean).join(" · ");
+    filas += `<tr class="sub"><td>Campañas de marca o mixtas<span style="font-size:11.5px;color:var(--mid)"> · venden villas y pasadías, no se asignan a uno${mx?` · ${mx}`:""}</span></td>${td(money(d1.mixta.inv))}${td("—")}${td("—")}${td("")}${td("")}${td("")}<td class="n opc">${delta(d1.mixta.inv,d0.mixta.inv,false,false,true)}</td></tr>`;
   }
   // Mezcla total (para la nota): % de la venta por tipo
   const mt = {}; CV_CANALES.forEach(([k])=>mt[k] = ["Villas","Pasadías"].filter(p=>!prod||prod===p).reduce((s_,p)=>s_+d1[p][k].venta,0));
   const tv = Object.values(mt).reduce((a_,b_)=>a_+b_,0);
-  filas += `<tr class="tot"><td>Total digital</td>${td(money(T1.inv))}${td(fmt(T1.pax))}${td(money(T1.venta))}${td("")}${td(T1.pax?money(T1.inv/T1.pax):"—")}<td class="n opc">${delta(T1.venta,T0.venta)}</td></tr>`;
+  filas += `<tr class="tot"><td>Total digital</td>${td(money(T1.inv))}${td(fmt(T1.pax))}${td(money(T1.venta))}${td("")}${td(T1.pax?money(T1.inv/T1.pax):"—")}${td(T1.inv?fmt(T1.venta/T1.inv,1)+"x":"—")}<td class="n opc">${delta(T1.venta,T0.venta)}</td></tr>`;
   $("#tablaCV").innerHTML = `<div class="cvley">${CV_CANALES.map(([k,l])=>`<span><i style="background:${CV_COLOR[k]}"></i>${l} ${tv?pct(mt[k]/tv,0):""}</span>`).join("")}</div>
-    <div style="overflow-x:auto"><table class="cv"><thead><tr><th>Categoría / canal</th><th class="n">Inversión</th><th class="n">Pax</th><th class="n">Venta sin IVA</th><th class="n">% de la venta</th><th class="n">Costo por pax</th><th class="n opc">Venta vs ${comp}</th></tr></thead><tbody>${filas}</tbody></table></div>`;
-  $("#notaCV").innerHTML = `Venta digital (WhatsApp, motor web de villas y Palco) por fecha de compra. <b>Meta Ads / Google Ads</b> = venta que llegó por un anuncio (afiliado del motor web en villas; visita de GA4 en Palco). <b>Sin identificar</b> = WhatsApp, donde todavía no sabemos si la persona vino de un anuncio, y compras de Palco que GA4 no registró${PATR_DESDE?` (GA4 registra Palco desde ${etiqFecha(PATR_DESDE)})`:""}. Detalle en Metodología.`;
+    <div style="overflow-x:auto"><table class="cv"><thead><tr><th>Categoría / canal</th><th class="n">Inversión</th><th class="n">Pax</th><th class="n">Venta sin IVA</th><th class="n">% de la venta</th><th class="n">Costo por pax</th><th class="n">Retorno combinado</th><th class="n opc">Venta vs ${comp}</th></tr></thead><tbody>${filas}</tbody></table></div>`;
+  $("#notaCV").innerHTML = `Venta digital (WhatsApp, motor web de villas y Palco) por fecha de compra. <b>Meta Ads / Google Ads</b> = venta que llegó por un anuncio (afiliado del motor web en villas; visita de GA4 en Palco). <b>Sin identificar</b> = WhatsApp, donde todavía no sabemos si la persona vino de un anuncio, y compras de Palco que GA4 no registró${PATR_DESDE?` (GA4 registra Palco desde ${etiqFecha(PATR_DESDE)})`:""}. Costo por pax y retorno combinado (venta ÷ inversión) van por categoría; el Total incluye las campañas de marca o mixtas. Detalle en Metodología.`;
 }
 
 // --- resumen de un vistazo ---
@@ -823,26 +823,6 @@ function renderResumen(x, y){
     fila("Reservas motor web atribuidas a Google Ads (CRS)", `${fmt(x.crs.google.r)} · ${money(x.crs.google.v)}`, delta(x.crs.google.r,y.crs.google.r)),
     fila("Retorno atribuido (venta CRS ÷ inversión Google)", x.g.costo?fmt(x.crs.google.v/x.g.costo,1)+"x":"—", delta(div(x.crs.google.v,x.g.costo),div(y.crs.google.v,y.g.costo))),
   ].join("");
-  // Producto
-  const p1 = porProducto(A,B), p0 = porProducto(CA,CB), maxV = Math.max(...Object.values(p1).map(o=>o.venta||0), 1);
-  $("#tablaProducto").innerHTML = `<table class="prod"><thead><tr><th>Producto</th><th class="n">Inversión</th><th class="n">Reservas</th><th class="n">Pax</th><th class="n">Venta sin IVA</th><th class="n">Costo por reserva</th><th class="n">Costo por pax</th><th class="n">Retorno combinado</th></tr></thead><tbody>
-    ${Object.entries(p1).map(([k,o])=>`<tr><td>${k}${o.venta?`<div class="barra" style="width:${100*o.venta/maxV}%"></div>`:""}</td>
-      <td class="n">${money(o.inv)} ${delta(o.inv,p0[k].inv,false,false,true)}</td>
-      <td class="n">${o.res==null?"—":fmt(o.res)} ${o.res==null?"":delta(o.res,p0[k].res,false,sf)}</td>
-      <td class="n">${o.pax==null?"—":fmt(o.pax)}</td>
-      <td class="n">${o.venta==null?"—":money(o.venta)}</td>
-      <td class="n">${o.res?money(o.inv/o.res):"—"}</td>
-      <td class="n">${o.pax?money(o.inv/o.pax):"—"}</td>
-      <td class="n">${o.venta&&o.inv?fmt(o.venta/o.inv,1)+"x":"—"}</td></tr>`).join("")}
-    ${(()=>{ // Complementos sin producto (UBICACION…): venta del Front IG+Web que no es pasadía ni villa
-      const compl = (a,b) => FRONT_ALL.filter(r=>enRango(r.fecha,a,b)).reduce((s_,r)=>s_+r.venta_ig+r.venta_web,0)
-                           - FRONTP.filter(r=>enRango(r.fecha,a,b)).reduce((s_,r)=>s_+r.venta_ig+r.venta_web,0);
-      const c1 = compl(A,B), tot = k => ["Pasadías","Villas","Marca / mixta"].reduce((s_,n)=>s_+(p1[n][k]||0),0);
-      const T1 = {inv: tot("inv"), res: tot("res"), pax: tot("pax"), venta: tot("venta") + c1};
-      const T0 = {inv: ["Pasadías","Villas","Marca / mixta"].reduce((s_,n)=>s_+(p0[n].inv||0),0), res: ["Pasadías","Villas"].reduce((s_,n)=>s_+(p0[n].res||0),0)};
-      return (Math.abs(c1) >= 1 ? `<tr><td style="color:var(--gray)">Complementos sin producto (ubicaciones…)</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">${money(c1)}</td><td class="n">—</td><td class="n">—</td><td class="n">—</td></tr>` : "")
-        + `<tr style="border-top:2px solid var(--line)"><td><b>Total</b></td><td class="n"><b>${money(T1.inv)}</b> ${delta(T1.inv,T0.inv,false,false,true)}</td><td class="n"><b>${fmt(T1.res)}</b> ${delta(T1.res,T0.res,false,sf)}</td><td class="n"><b>${fmt(T1.pax)}</b></td><td class="n"><b>${money(T1.venta)}</b></td><td class="n"><b>${T1.res?money(T1.inv/T1.res):"—"}</b></td><td class="n"><b>${T1.pax?money(T1.inv/T1.pax):"—"}</b></td><td class="n"><b>${T1.inv?fmt(T1.venta/T1.inv,1)+"x":"—"}</b></td></tr>`;
-    })()}</tbody></table>`;
 }
 
 // --- insights automáticos ---
@@ -1539,7 +1519,7 @@ function renderLlegadas(){
     canales.forEach(([c,col])=>{
       filas.push(`<tr><td>${dot(col)}${c}</td><td class="n">${etiq(tot[c])}</td><td class="n">${sumT?pct(tot[c]/sumT,0):"—"}</td><td class="n">${delta(tot[c], totC[c], false, esWA(c) && !compFront)}</td></tr>`);
       if(c==="CRS"){
-        const PLAT = [["google","atribuidas a Google Ads"],["meta","atribuidas a Facebook Ads"],["metabuscador","metabuscadores: Google Hotel Ads, Trivago, Tripadvisor (inversión fuera del tablero)"],["organico","sin afiliado de pauta (orgánico, GMB…)"]];
+        const PLAT = [["google","atribuidas a Google Ads"],["meta","atribuidas a Facebook Ads"],["metabuscador","metabuscadores: Google Hotel Ads, Trivago, Tripadvisor"],["organico","sin afiliado de pauta (orgánico, GMB…)"]];
         const campo = met==="reservas" ? "reservas" : met;
         const sp = (a,b,pl) => CRSA.filter(r=>r.plataforma===pl && r.fecha>=a && r.fecha<=b).reduce((s_,r)=>s_+(r[campo]||0),0);
         PLAT.forEach(([pl,lbl])=>{ const v1 = sp(ini,fin,pl), v0 = sp(CA0,CB0,pl);
