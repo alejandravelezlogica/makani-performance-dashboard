@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261110134117"></script>
+<script src="data.js?v=20261110134336"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -757,7 +757,8 @@ function renderComoVamos(){
     const sc = p==="Pasadías" && (!PATR_DESDE || CA < PATR_DESDE);
     CV_CANALES.forEach(([k,lbl])=>{
       const a = o1[k], b = o0[k];
-      if((k==="metabuscador" || (aprox && k==="sin_identificar")) && a.venta<1 && b.venta<1) return;
+      if(k==="metabuscador" && a.venta<1 && b.venta<1) return;
+      if(aprox && k==="sin_identificar" && a.venta<1) return;   // vacía en el periodo: no aporta
       const nota = aprox
         ? (k==="meta" ? ` · incluye WhatsApp Instagram (supuesto: todo es pauta) + ≈ parte de WhatsApp Web${p==="Pasadías"?" y de Palco":""} según GA4`
            : k==="sin_identificar" ? (p==="Villas" ? " · meses sin datos de clics en GA4" : " · Palco antes de que GA4 lo registrara (jul-2026)")
