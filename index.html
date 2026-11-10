@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261110134336"></script>
+<script src="data.js?v=20261110140344"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -740,7 +740,9 @@ function renderComoVamos(){
   const ap = x => aprox && x.aprox>=1 ? "≈ " : "";
   const comp = $("#modoComp").value==="prev" ? "periodo anterior" : "mismo periodo del año anterior";
   const sum = (o,f) => CV_CANALES.reduce((s_,[k])=>s_+o[k][f],0);
-  const mix = o => { const t = sum(o,"venta"); return t ? `<div class="mix">${CV_CANALES.map(([k])=>o[k].venta>0?`<span style="width:${100*o[k].venta/t}%;background:${CV_COLOR[k]}" title="${k}"></span>`:"").join("")}</div>` : ""; };
+  // largo de la barra proporcional a la venta de la categoría (la mayor = ancho completo)
+  const maxV = Math.max(1, ...["Villas","Pasadías"].filter(p=>!prod||prod===p).map(p=>sum(d1[p],"venta")));
+  const mix = o => { const t = sum(o,"venta"); return t ? `<div class="mix" style="width:${Math.max(4,260*t/maxV)}px">${CV_CANALES.map(([k])=>o[k].venta>0?`<span style="width:${100*o[k].venta/t}%;background:${CV_COLOR[k]}" title="${k}"></span>`:"").join("")}</div>` : ""; };
   // celda: valor + variación pequeña debajo (inv: más bajo es mejor; neu: gris; sc: sin comparación)
   const c = (txt, a, b, {inv=false, neu=false, sc=false, nodelta=false}={}) =>
     `<td class="n">${txt}${nodelta?"":`<span class="dl">${delta(a,b,inv,sc,neu).replace("sin comparación","–")}</span>`}</td>`;
