@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261110124951"></script>
+<script src="data.js?v=20261110133255"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -259,7 +259,15 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
   <section id="resumen" class="on">
     <div id="metaMes"></div>
     <div class="card" id="cardCV">
-      <h3>Cómo vamos: venta digital por canal</h3>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:space-between">
+        <h3 style="margin:0">Cómo vamos: venta digital por canal</h3>
+        <label style="font-size:12.5px;color:var(--mid)">Atribución
+          <select class="sel" id="modoAtr">
+            <option value="aprox">Aproximada por tráfico (≈)</option>
+            <option value="medida">Solo medida</option>
+          </select>
+        </label>
+      </div>
       <div class="nota" id="notaCV"></div>
       <div id="tablaCV"></div>
     </div>
@@ -456,7 +464,8 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
   <section id="notas">
     <div class="card">
 <h3>Metodología y definiciones</h3><div class="leyenda-def" id="metodologia"></div>
-      <p><b>Cómo vamos (venta digital por canal).</b> Villas: reservas del motor web (CRS) por afiliado — "Google Ads - Hotel" = Google Ads, "Facebook Ads" = Meta Ads, Google Hotel Ads / Trivago / Tripadvisor = metabuscadores (su inversión no está en este tablero), el resto (Google My Business, bio de Instagram, email, App GHL Plus, sin afiliado) = orgánico. Pasadías: cada compra de Palco por Internet se cruza por localizador con la compra de GA4 (transactionId) y toma la fuente de esa visita: google / cpc = Google Ads; anuncios de Meta (fb / ig con medio pagado o de colocación, o ID de campaña de Meta) = Meta Ads; GHADirect / Tripadvisor / Trivago pagados = metabuscadores; lo demás (orgánico, directo, Google My Business, bio de Instagram, referidos) = orgánico. GA4 registra las compras de Palco desde jul-2026 y no ve todas (≈ 20–35% por mes queda fuera): esas quedan <b>sin identificar</b>, sin repartirlas en proporción. Las ventas por WhatsApp quedan sin identificar hasta que el código de campaña llegue en el mensaje. La inversión de campañas de marca o mixtas va aparte y entra en el total. El costo por pax se muestra solo por categoría.</p></div>
+      <p><b>Cómo vamos (venta digital por canal).</b> Villas: reservas del motor web (CRS) por afiliado — "Google Ads - Hotel" = Google Ads, "Facebook Ads" = Meta Ads, Google Hotel Ads / Trivago / Tripadvisor = metabuscadores (su inversión no está en este tablero), el resto (Google My Business, bio de Instagram, email, App GHL Plus, sin afiliado) = orgánico. Pasadías: cada compra de Palco por Internet se cruza por localizador con la compra de GA4 (transactionId) y toma la fuente de esa visita: google / cpc = Google Ads; anuncios de Meta (fb / ig con medio pagado o de colocación, o ID de campaña de Meta) = Meta Ads; GHADirect / Tripadvisor / Trivago pagados = metabuscadores; lo demás (orgánico, directo, Google My Business, bio de Instagram, referidos) = orgánico. GA4 registra las compras de Palco desde jul-2026 y no ve todas (≈ 20–35% por mes queda fuera): esas quedan <b>sin identificar</b>, sin repartirlas en proporción. Las ventas por WhatsApp quedan sin identificar hasta que el código de campaña llegue en el mensaje. La inversión de campañas de marca o mixtas va aparte y entra en el total. El costo por pax se muestra solo por categoría.</p>
+      <p><b>Atribución aproximada por tráfico (≈, provisional).</b> Es la vista por defecto del cuadro "Cómo vamos" mientras se mejora el tracking. (1) WhatsApp que el front registra como Instagram = Meta Ads (supuesto: hay algo de orgánico, pero por el tráfico es la gran mayoría). (2) WhatsApp que el front registra como Página Web: el botón manda el mismo mensaje venga de donde venga, así que se reparte según la plataforma de las visitas que hicieron clic en el botón de WhatsApp ese mes en GA4 (no por sesiones: el tráfico de Meta trae muchas visitas que casi no hacen clic). Villas usa los clics de páginas de villas + generales; Pasadías, los de páginas de pasadías + generales. (3) Compras de Palco que GA4 no registró: se reparten como las que sí registró ese mes (solo desde jul-2026). Con poca base en el mes (menos de 15 clics o 10 compras) se usa el mes y los 2 anteriores. Meta Ads probablemente queda subestimado: el navegador interno de Instagram pierde más visitas en GA4 y parte de esas compras aparecen como directo / orgánico. Cuando el tracking identifique cada chat, las reservas desde esa fecha pasarán a atribución medida. Documento: docs/atribucion_venta_digital.md.</p></div>
   </section>
 </main>
 <footer id="footer"></footer>
@@ -592,6 +601,7 @@ document.querySelectorAll("#nav a").forEach(a=>a.onclick=()=>{
   renderSeccion(a.dataset.s); Object.values(charts).forEach(c=>c.resize());
 });
 ["#metHora"].forEach(s=>$(s).onchange=()=>renderHoras());
+$("#modoAtr").onchange=()=>renderComoVamos();
 ["#tipoSeg","#objSeg","#dimG","#filtroTerm"].forEach(s=>$(s).onchange=()=>renderSegmentos());
 ["#ordCrea","#etapaCrea","#minCrea"].forEach(s=>$(s).onchange=()=>renderCreativos());
 
@@ -691,8 +701,17 @@ const CV_CANALES = [["meta","Meta Ads"],["google","Google Ads"],["metabuscador",
 // Desde cuándo GA4 registra las compras de Palco (antes, toda la venta de pasadías queda sin identificar)
 const PATR_DESDE = PATR.filter(r=>r.plataforma!=="sin_identificar").reduce((m,r)=>!m||r.fecha<m?r.fecha:m, null);
 const CV_COLOR = {meta:"#2F6E73", google:"#4D9499", metabuscador:"#9C7F3C", organico:"#C9A961", sin_identificar:"#D5D3CB"};
-function cvDatos(a, b){
-  const cero = () => ({inv:0, pax:0, venta:0});
+// Mezcla mensual por plataforma (construir_dashboard.bloque_mezcla_atr): "web" = clics al botón de WhatsApp en GA4,
+// "palco" = compras de Palco que sí cruzaron con GA4. Atribución APROXIMADA y provisional (docs/atribucion_venta_digital.md).
+const MZ = (()=>{ const m = new Map(); T(D.mezcla_atr).forEach(r=>{ const k=`${r.fuente}|${r.producto}|${r.mes}`; if(!m.has(k)) m.set(k,[]); m.get(k).push(r); }); return m; })();
+function repartir(o, fuente, producto, fecha, pax, venta){
+  // reparte pax y venta según la mezcla del mes; sin mezcla, queda en sin identificar
+  const mz = MZ.get(`${fuente}|${producto}|${String(fecha).slice(0,7)}`);
+  if(!mz){ o.sin_identificar.pax+=pax; o.sin_identificar.venta+=venta; return; }
+  mz.forEach(r=>{ const d=o[r.plataforma]||o.organico; d.pax+=pax*r.peso; d.venta+=venta*r.peso; d.aprox+=venta*r.peso; });
+}
+function cvDatos(a, b, aprox=false){
+  const cero = () => ({inv:0, pax:0, venta:0, aprox:0});
   const out = {"Villas":{}, "Pasadías":{}, mixta:{inv:0, meta:0, google:0}, compl:0};
   for(const p of ["Villas","Pasadías"]) CV_CANALES.forEach(([k])=>out[p][k]=cero());
   const prodInv = pr => (pr==="Pasadías"||pr==="Villas") ? pr : null;
@@ -701,15 +720,24 @@ function cvDatos(a, b){
   // Villas: CRS por afiliado; WhatsApp (front IG + Web) = sin identificar (el front no sabe si vino de un anuncio)
   CRSA.filter(r=>enRango(r.fecha,a,b)).forEach(r=>{ const o=out["Villas"][r.plataforma] || out["Villas"].organico; o.pax+=r.pax||0; o.venta+=r.venta; });
   // Pasadías: Palco Internet por la fuente de GA4 de cada localizador; lo que GA4 no vio = sin identificar
-  if(PATR.length) PATR.filter(r=>enRango(r.fecha,a,b)).forEach(r=>{ const o=out["Pasadías"][r.plataforma] || out["Pasadías"].sin_identificar; o.pax+=r.pax||0; o.venta+=r.ingresos; });
+  // aprox: lo que GA4 no registró se reparte con la mezcla de las compras de Palco que sí registró (ese mes)
+  if(PATR.length) PATR.filter(r=>enRango(r.fecha,a,b)).forEach(r=>{
+    if(aprox && r.plataforma==="sin_identificar") return repartir(out["Pasadías"], "palco", "Pasadías", r.fecha, r.pax||0, r.ingresos);
+    const o=out["Pasadías"][r.plataforma] || out["Pasadías"].sin_identificar; o.pax+=r.pax||0; o.venta+=r.ingresos; });
   else ONLP.filter(r=>enRango(r.fecha,a,b)).forEach(r=>{ const o=out["Pasadías"].sin_identificar; o.pax+=r.pax||0; o.venta+=r.ingresos; });
-  FRONTP.filter(r=>enRango(r.fecha,a,b)).forEach(r=>{ const o=out[r.producto] && out[r.producto].sin_identificar; if(!o) return; o.pax+=(r.pax_ig||0)+(r.pax_web||0); o.venta+=r.venta_ig+r.venta_web; });
+  // WhatsApp del front. Medida: sin identificar. Aprox: Instagram -> Meta Ads (supuesto); Página Web -> clics de GA4
+  FRONTP.filter(r=>enRango(r.fecha,a,b)).forEach(r=>{ const o=out[r.producto]; if(!o) return;
+    if(!aprox){ o.sin_identificar.pax+=(r.pax_ig||0)+(r.pax_web||0); o.sin_identificar.venta+=r.venta_ig+r.venta_web; return; }
+    o.meta.pax+=r.pax_ig||0; o.meta.venta+=r.venta_ig; o.meta.aprox+=r.venta_ig;
+    repartir(o, "web", r.producto, r.fecha, r.pax_web||0, r.venta_web); });
   out.compl = FRONT_ALL.filter(r=>enRango(r.fecha,a,b)).reduce((s_,r)=>s_+r.venta_ig+r.venta_web,0)
             - FRONTP.filter(r=>enRango(r.fecha,a,b)).reduce((s_,r)=>s_+r.venta_ig+r.venta_web,0);
   return out;
 }
 function renderComoVamos(){
-  const d1 = cvDatos(A,B), d0 = cvDatos(CA,CB), prod = $("#producto").value;
+  const aprox = ($("#modoAtr")||{}).value !== "medida";
+  const d1 = cvDatos(A,B,aprox), d0 = cvDatos(CA,CB,aprox), prod = $("#producto").value;
+  const ap = x => aprox && x.aprox>=1 ? "≈ " : "";
   const comp = $("#modoComp").value==="prev" ? "periodo anterior" : "mismo periodo del año anterior";
   const sum = (o,f) => CV_CANALES.reduce((s_,[k])=>s_+o[k][f],0);
   const mix = o => { const t = sum(o,"venta"); return t ? `<div class="mix">${CV_CANALES.map(([k])=>o[k].venta>0?`<span style="width:${100*o[k].venta/t}%;background:${CV_COLOR[k]}" title="${k}"></span>`:"").join("")}</div>` : ""; };
@@ -729,13 +757,17 @@ function renderComoVamos(){
     const sc = p==="Pasadías" && (!PATR_DESDE || CA < PATR_DESDE);
     CV_CANALES.forEach(([k,lbl])=>{
       const a = o1[k], b = o0[k];
-      if(k==="metabuscador" && !a.venta && !b.venta) return;
-      const nota = k==="sin_identificar" ? (p==="Villas" ? " · WhatsApp" : " · WhatsApp y Palco que GA4 no registró")
-                 : (k==="meta"||k==="google") ? " · solo venta web; sus chats de WhatsApp quedan en sin identificar" : "";
+      if((k==="metabuscador" || (aprox && k==="sin_identificar")) && a.venta<1 && b.venta<1) return;
+      const nota = aprox
+        ? (k==="meta" ? ` · incluye WhatsApp Instagram (supuesto: todo es pauta) + ≈ parte de WhatsApp Web${p==="Pasadías"?" y de Palco":""} según GA4`
+           : k==="sin_identificar" ? (p==="Villas" ? " · meses sin datos de clics en GA4" : " · Palco antes de que GA4 lo registrara (jul-2026)")
+           : (a.aprox>=1 ? " · incluye ≈ reparto por tráfico de GA4" : ""))
+        : k==="sin_identificar" ? (p==="Villas" ? " · WhatsApp" : " · WhatsApp y Palco que GA4 no registró")
+        : (k==="meta"||k==="google") ? " · solo venta web; sus chats de WhatsApp quedan en sin identificar" : "";
       const pauta = k==="meta"||k==="google";
       filas += `<tr class="sub"><td><i style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${CV_COLOR[k]};margin-right:7px"></i>${lbl}<span style="font-size:11.5px;color:var(--mid)">${nota}</span></td>`
              + (pauta ? c(money(a.inv),a.inv,b.inv,{neu:true}) : `<td class="n">—</td>`)
-             + `${c(fmt(a.pax),a.pax,b.pax,{sc})}${c(money(a.venta),a.venta,b.venta,{sc})}<td class="n">${ven?pct(a.venta/ven,0):"—"}</td>${vacio}${vacio}</tr>`;
+             + `${c(ap(a)+fmt(a.pax),a.pax,b.pax,{sc})}${c(ap(a)+money(a.venta),a.venta,b.venta,{sc})}<td class="n">${ven?ap(a)+pct(a.venta/ven,0):"—"}</td>${vacio}${vacio}</tr>`;
     });
   }
   if(!prod){
@@ -750,7 +782,9 @@ function renderComoVamos(){
          + `${c(T1.pax?money(T1.inv/T1.pax):"—",div(T1.inv,T1.pax),div(T0.inv,T0.pax),{inv:true})}${c(T1.inv?fmt(T1.venta/T1.inv,1)+"x":"—",div(T1.venta,T1.inv),div(T0.venta,T0.inv))}</tr>`;
   $("#tablaCV").innerHTML = `<div class="cvley">${CV_CANALES.map(([k,l])=>`<span><i style="background:${CV_COLOR[k]}"></i>${l} ${tv?pct(mt[k]/tv,0):""}</span>`).join("")}<span style="margin-left:auto">Variación pequeña: vs ${comp} (– = sin comparación)</span></div>
     <div style="overflow-x:auto"><table class="cv"><thead><tr><th>Categoría / canal</th><th class="n">Inversión</th><th class="n">Pax</th><th class="n">Venta sin IVA</th><th class="n">% de la venta</th><th class="n">Costo por pax</th><th class="n">Retorno combinado</th></tr></thead><tbody>${filas}</tbody></table></div>`;
-  $("#notaCV").innerHTML = `Venta digital (WhatsApp, motor web de villas y Palco) por fecha de compra. <b>Meta Ads / Google Ads</b> = venta que llegó por un anuncio (afiliado del motor web en villas; visita de GA4 en Palco). <b>Sin identificar</b> = WhatsApp, donde todavía no sabemos si la persona vino de un anuncio, y compras de Palco que GA4 no registró${PATR_DESDE?` (GA4 registra Palco desde ${etiqFecha(PATR_DESDE)}: antes, los canales de pasadías no se comparan)`:""}. Costo por pax y retorno combinado (venta ÷ inversión) van por categoría; el Total incluye las campañas de marca o mixtas. Detalle en Metodología.`;
+  $("#notaCV").innerHTML = aprox
+    ? `Venta digital (WhatsApp, motor web de villas y Palco) por fecha de compra. <b>Atribución aproximada por tráfico (≈), provisional</b> mientras se mejora el tracking: WhatsApp Instagram = Meta Ads (supuesto: hay algo de orgánico, pero es minoría); WhatsApp Página Web = repartido según de dónde vinieron los clics al botón de WhatsApp en GA4 ese mes (por producto); Palco que GA4 no registró = repartido como las compras de Palco que sí registró. Motor web de villas y Palco registrado en GA4 = medido. <b>Meta Ads probablemente queda subestimado</b>: el navegador interno de Instagram pierde más visitas en GA4. Con menos de 15 clics (10 compras) en el mes se usa el mes + los 2 anteriores. Cambia a "Solo medida" para ver únicamente lo comprobado. Costo por pax y retorno combinado van por categoría; el Total incluye las campañas de marca o mixtas. Detalle en Metodología.`
+    : `Venta digital (WhatsApp, motor web de villas y Palco) por fecha de compra. <b>Meta Ads / Google Ads</b> = venta que llegó por un anuncio (afiliado del motor web en villas; visita de GA4 en Palco). <b>Sin identificar</b> = WhatsApp, donde todavía no sabemos si la persona vino de un anuncio, y compras de Palco que GA4 no registró${PATR_DESDE?` (GA4 registra Palco desde ${etiqFecha(PATR_DESDE)}: antes, los canales de pasadías no se comparan)`:""}. Costo por pax y retorno combinado (venta ÷ inversión) van por categoría; el Total incluye las campañas de marca o mixtas. Detalle en Metodología.`;
 }
 
 // --- resumen de un vistazo ---
