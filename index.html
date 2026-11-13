@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261113121944"></script>
+<script src="data.js?v=20261113163106"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -105,6 +105,7 @@ tr:hover td{background:var(--cream-2)}
 .crea .mets span{color:var(--mid)}
 .crea .txt{color:var(--gray);max-height:56px;overflow:hidden;line-height:1.5}
 .crea a{color:var(--teal-d);font-weight:700;text-decoration:none}
+.crea .pie-crea{color:var(--gray);font-size:11px;line-height:1.55;border-top:1px solid var(--line);padding-top:8px;word-break:break-word}
 footer{color:var(--mid);font-size:12px;text-align:center;padding:40px 24px 50px;border-top:1px solid var(--line);margin-top:20px}
 footer img{width:120px;opacity:.9;display:block;margin:0 auto 14px}
 .vacio{color:var(--mid);font-style:italic;padding:24px;text-align:center}
@@ -205,6 +206,92 @@ details.mas[open] summary::before{content:"– "}
 .ads tr.tot td{font-weight:700;background:var(--cream-2)}
 .punto{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--pos);margin-right:6px}
 h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gray);margin:18px 0 6px}
+/* ---------- Móvil (UX): sin scroll horizontal de página, objetivos táctiles ≥ 40 px, texto ≥ 11.5 px,
+   cabecera compacta con filtros plegables, tablas con scroll propio y una columna. ---------- */
+.btn-filtros{display:none}
+.grid2>*,.grid3>*,.card,.kpis>*,.big>*{min-width:0}
+.sel{max-width:100%}
+.agr{flex-wrap:wrap}
+@media(max-width:760px){
+  body{font-size:14.5px}
+  header{padding:16px 16px 14px}
+  .top{gap:12px;align-items:stretch}
+  .marca{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;width:100%}
+  .marca img{width:132px}
+  .marca .eyebrow{margin-top:0;font-size:10px;letter-spacing:.28em}
+  .marca h1{display:none}
+  .marca .sub{flex-basis:100%;margin-top:2px;font-size:11.5px}
+  .btn-filtros{display:flex;width:100%;justify-content:space-between;align-items:center;gap:10px;min-height:44px;padding:10px 16px;
+    border-radius:14px;border:1px solid rgba(240,215,138,.45);background:rgba(255,255,255,.12);color:#fff;font-family:var(--body);font-size:13px;cursor:pointer;text-align:left}
+  .btn-filtros b{font-weight:600}
+  .btn-filtros .flecha{font-size:12px;color:var(--gold-l);transition:transform .2s;flex:none}
+  .btn-filtros[aria-expanded="true"] .flecha{transform:rotate(180deg)}
+  .filtros{display:none;width:100%;display:none;grid-template-columns:1fr 1fr;gap:12px;padding:14px}
+  .filtros.abierto{display:grid}
+  .filtros label{min-width:0}
+  .filtros input,.filtros select{width:100%;min-height:44px;font-size:16px}  /* 16px evita el zoom automático de iOS */
+  .presets{grid-column:1/-1;gap:8px}
+  .presets button{min-height:40px;padding:8px 14px;font-size:11.5px}
+  nav{justify-content:flex-start;padding:0 6px;scrollbar-width:none;
+    -webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent)}
+  nav::-webkit-scrollbar{display:none}
+  nav a{padding:15px 12px 13px;font-size:12px;min-height:48px}
+  main{padding:16px 12px}
+  .periodo{font-size:13px}
+  .card,.veredicto,.meta-mes,.calc-res{padding:18px 16px;border-radius:16px}
+  .card h3{font-size:14px;letter-spacing:.1em}
+  .card .nota{font-size:13px}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .kpi{padding:14px}
+  .kpi .lbl{font-size:11px;letter-spacing:.08em;min-height:0}
+  .kpi .val{font-size:23px;word-break:break-word}
+  .kpi .ly{font-size:12px}
+  .big{grid-template-columns:1fr}
+  .big .val{font-size:34px}
+  .meta-mes .nums{gap:16px}
+  .meta-mes .nums .v{font-size:26px}
+  .chart{height:300px}
+  .chart.alto{height:360px}
+  /* Tablas: scroll horizontal dentro de su caja, nunca de la página */
+  .tabla{max-height:none;-webkit-overflow-scrolling:touch}
+  .card table:not(.tabla table){display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{font-size:12.5px}
+  th,td{padding:9px 8px;white-space:nowrap}
+  td:first-child,th:first-child{white-space:normal;min-width:120px}
+  /* Primera columna fija al deslizar la tabla (la etiqueta de la fila no se pierde) */
+  .tabla td:first-child,.tabla th:first-child,.cv td:first-child,.cv th:first-child{position:sticky;left:0;z-index:1;max-width:170px;
+    background:#fff;box-shadow:1px 0 0 var(--line)}
+  .tabla th:first-child{background:var(--cream);z-index:3}
+  .cv tr.cat td:first-child{background:var(--cream-2)}
+  .cv th:first-child{background:var(--cream)}
+  .cv td{font-size:13px} .cv td.n{font-size:14px}
+  /* Sombra en el borde derecho = hay más columnas para deslizar */
+  .tabla,.card div[style*="overflow-x:auto"]{background:
+    linear-gradient(270deg,#fff 30%,rgba(255,255,255,0)) right/36px 100% no-repeat local,
+    radial-gradient(farthest-side at 100% 50%,rgba(58,58,58,.16),transparent) right/12px 100% no-repeat scroll;background-color:#fff}
+  /* Controles: ancho completo y altura táctil */
+  .sel{width:100%;margin:0 0 10px;min-height:44px;font-size:16px}
+  .card label.nota{display:flex!important;align-items:center;gap:8px;margin:0 0 10px}
+  .card label.nota input[type=number]{width:96px;margin:0}
+  input[type=checkbox]{width:20px;height:20px}
+  .agr{margin:8px 0 0}
+  .agr button{min-height:40px;padding:8px 14px;font-size:11.5px}
+  .chip{font-size:11.5px;padding:4px 10px}
+  .galeria{grid-template-columns:1fr;gap:14px}
+  .crea .img{height:300px}
+  .crea .cuerpo{font-size:13px}
+  .crea .nom{font-size:13.5px}
+  .crea a{display:inline-block;padding:8px 0}
+  .crea .pie-crea{font-size:12px}
+  .crea .vid{font-size:11px}
+  .cv .dl{font-size:12px} .cv .dl .cmp{font-size:11.5px}
+  .paso .src{font-size:11px} .salto .txt{font-size:12px}
+  .calc-form label,.filtros label{font-size:11.5px}
+  .estado{font-size:11.5px}
+  .marca .eyebrow{font-size:11px}
+  .insight{padding:12px 14px}
+  footer{padding:30px 16px 40px}
+}
 </style>
 </head>
 <body>
@@ -216,7 +303,9 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
       <h1>Meta · Google Ads · WhatsApp</h1>
       <div class="sub" id="sub"></div>
     </div>
-    <div class="filtros">
+    <button type="button" class="btn-filtros" id="btnFiltros" aria-expanded="false" aria-controls="panelFiltros">
+      <span id="resFiltros">Filtros</span><span class="flecha">▼</span></button>
+    <div class="filtros" id="panelFiltros">
       <label>Desde<input type="date" id="desde"></label>
       <label>Hasta<input type="date" id="hasta"></label>
       <label>Comparar con
@@ -493,7 +582,33 @@ const ejeX = (keys, semanal) => ({type:"category", data:keys.map(etiqFecha), nam
 const MIN_CONV = 30;  // mínimo de conversaciones por punto para calcular un % confiable
 const ETAPAS_CONV = new Set(["Conversaciones WhatsApp","Interacción / WhatsApp"]);
 const charts = {};
-function chart(id){ if(!charts[id]) charts[id] = echarts.init(document.getElementById(id)); return charts[id]; }
+// Móvil: leyenda arriba en una sola línea deslizable (no se monta sobre el gráfico), ejes sin etiquetas encimadas
+const ES_MOVIL = () => matchMedia("(max-width:760px)").matches;
+function ajusteMovil(opt){
+  if(!opt || !ES_MOVIL()) return opt;
+  const o = {...opt}, arr = v => v == null ? null : (Array.isArray(v) ? v : [v]);
+  const tieneLeyenda = !!o.legend && arr(o.legend).some(l => l.show !== false);
+  if(o.legend) o.legend = arr(o.legend).map(l => ({...l, type:"scroll", orient:"horizontal", top:0, left:"center", right:null, bottom:null,
+    itemGap:10, itemWidth:14, textStyle:{...(l.textStyle||{}), fontSize:11}}));
+  // Si un eje Y tiene título, va sobre el gráfico: se baja el área para que no choque con la leyenda
+  const nombreY = arr(o.yAxis)?.some(a => a.name);
+  const topMin = tieneLeyenda ? (nombreY ? 66 : 40) : (nombreY ? 36 : 0);
+  if(o.grid) o.grid = arr(o.grid).map(g => ({...g, containLabel:true, left: typeof g.left==="number" ? Math.min(g.left, 8) : g.left,
+    right: 26,  // margen para la última etiqueta del eje X
+    top: Math.max(typeof g.top==="number" ? g.top : 0, topMin)}));
+  const ejes = (v, esX) => arr(v)?.map(a => ({...a, axisLabel:{...(a.axisLabel||{}), hideOverlap:true, fontSize:10.5},
+    ...(esX && a.type==="value" ? {splitNumber:3} : {})}));
+  if(o.xAxis) o.xAxis = ejes(o.xAxis, true);
+  // Títulos de eje Y alineados hacia adentro para que no se corten en el borde de la pantalla
+  if(o.yAxis) o.yAxis = ejes(o.yAxis, false).map((a, i) => a.name ? {...a, nameTextStyle:{...(a.nameTextStyle||{}),
+    align: (a.position==="right" || i>0) ? "right" : "left", fontSize:11}} : a);
+  return o;
+}
+function chart(id){
+  if(!charts[id]){ const c = echarts.init(document.getElementById(id)); const set = c.setOption.bind(c);
+    c.setOption = (opt, ...r) => set(ajusteMovil(opt), ...r); charts[id] = c; }
+  return charts[id];
+}
 window.addEventListener("resize", () => Object.values(charts).forEach(c => c.resize()));
 document.addEventListener("toggle", e => { if(e.target.id==="detMas") Object.values(charts).forEach(c => c.resize()); }, true);
 const base = {textStyle:{fontFamily:"Raleway, Segoe UI, sans-serif",color:"#676767"}, grid:{left:60,right:60,top:40,bottom:40}, tooltip:{trigger:"axis"}};
@@ -603,7 +718,13 @@ document.querySelectorAll("#nav a").forEach(a=>a.onclick=()=>{
   document.querySelectorAll("#nav a").forEach(x=>x.classList.remove("on")); a.classList.add("on");
   document.querySelectorAll("section").forEach(s=>s.classList.toggle("on", s.id===a.dataset.s));
   renderSeccion(a.dataset.s); Object.values(charts).forEach(c=>c.resize());
+  a.scrollIntoView({block:"nearest", inline:"center", behavior:"smooth"});  // en móvil, la pestaña elegida queda a la vista
 });
+// Móvil: filtros plegables bajo un resumen del periodo
+$("#btnFiltros").onclick = () => { const p=$("#panelFiltros"), ab=!p.classList.contains("abierto");
+  p.classList.toggle("abierto", ab); $("#btnFiltros").setAttribute("aria-expanded", ab); };
+document.querySelectorAll("#presets button").forEach(b=>b.addEventListener("click", ()=>{
+  if(matchMedia("(max-width:760px)").matches){ $("#panelFiltros").classList.remove("abierto"); $("#btnFiltros").setAttribute("aria-expanded", false); } }));
 ["#metHora"].forEach(s=>$(s).onchange=()=>renderHoras());
 $("#modoAtr").onchange=()=>renderComoVamos();
 ["#tipoSeg","#objSeg","#dimG","#filtroTerm"].forEach(s=>$(s).onchange=()=>renderSegmentos());
@@ -746,7 +867,8 @@ function renderComoVamos(){
   const sum = (o,f) => CV_CANALES.reduce((s_,[k])=>s_+o[k][f],0);
   // largo de la barra proporcional a la venta de la categoría (la mayor = ancho completo)
   const maxV = Math.max(1, ...["Villas","Pasadías"].filter(p=>!prod||prod===p).map(p=>sum(d1[p],"venta")));
-  const mix = o => { const t = sum(o,"venta"); return t ? `<div class="mix" style="width:${Math.max(4,260*t/maxV)}px">${CV_CANALES.map(([k])=>o[k].venta>0?`<span style="width:${100*o[k].venta/t}%;background:${CV_COLOR[k]}" title="${k}"></span>`:"").join("")}</div>` : ""; };
+  const anchoMix = matchMedia("(max-width:760px)").matches ? 140 : 260;  // en móvil cabe en la columna fija
+  const mix = o => { const t = sum(o,"venta"); return t ? `<div class="mix" style="width:${Math.max(4,anchoMix*t/maxV)}px">${CV_CANALES.map(([k])=>o[k].venta>0?`<span style="width:${100*o[k].venta/t}%;background:${CV_COLOR[k]}" title="${k}"></span>`:"").join("")}</div>` : ""; };
   // celda: valor + variación pequeña debajo (inv: más bajo es mejor; neu: gris; sc: sin comparación)
   const c = (txt, a, b, {inv=false, neu=false, sc=false, nodelta=false}={}) =>
     `<td class="n">${txt}${nodelta?"":`<span class="dl">${delta(a,b,inv,sc,neu).replace("sin comparación","–")}</span>`}</td>`;
@@ -1470,7 +1592,7 @@ function renderCreativos(){
       <div>${o.quality_ranking && o.quality_ranking!=="UNKNOWN" ? `Calidad ${rk(o.quality_ranking)}<br>Interacción ${rk(o.engagement_rate_ranking)}<br>Conversión ${rk(o.conversion_rate_ranking)}` : `<span style="color:var(--mid)">Sin diagnóstico de Meta</span>`}</div>
       ${o.texto?`<div class="txt" title="${(o.texto||"").replace(/"/g,"'")}">${o.texto}</div>`:""}
       ${o.permalink_ig?`<a href="${o.permalink_ig}" target="_blank" rel="noopener">Ver en Instagram ↗</a>`:""}
-      <div style="color:${C.gray};font-size:10.5px;line-height:1.5;border-top:1px solid var(--line);padding-top:8px">
+      <div class="pie-crea">
         ${est(o.estado)}<br>
         <b>Campaña:</b> ${MCAMP[o.c]?.campaign_name || "—"}<br>
         <b>Conjunto:</b> ${o.adset || "—"}<br>
@@ -1654,6 +1776,7 @@ function render(){
   [CA,CB]=rangoComp(A,B);
   const x=agregado(A,B), y=agregado(CA,CB);
   const prod = $("#producto").value;
+  $("#resFiltros").innerHTML = `<b>${A}</b> → <b>${B}</b> · ${prod || "Todos"} · Filtros`;
   let avisoProd = "";
   if(prod){ const sp = inversionSinProducto(A,B); avisoProd = ` · <span class="chip amar">Producto: ${prod}</span> Inversión excluida por no tener producto identificable (marca / mixta): Meta ${money(sp.meta)}, Google ${money(sp.goo)}. Los <b>leads</b> se muestran totales: el front no los separa por producto.`; }
   $("#periodo").innerHTML = `Periodo: <b>${A}</b> a <b>${B}</b> · Comparación: ${CA} a ${CB}${avisoProd}${avisoRegistro(A,B,x.leadsTot)}`;
