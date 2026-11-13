@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261113114638"></script>
+<script src="data.js?v=20261113121944"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -445,7 +445,7 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
   <section id="creativos">
     <div class="card">
       <h3>Creativos de Meta</h3>
-      <div class="nota"><b>Para qué sirve:</b> decidir qué creativos escalar, cuáles apagar y qué producir después. <b>Métrica principal para elegir el ideal:</b> <i>costo por chat con 2+ mensajes</i> (interés real, no solo el saludo automático), comparando solo anuncios del mismo producto y objetivo y con volumen mínimo para que el dato sea confiable. Desempate: % de chats con 2+ mensajes (calidad) y rankings de Meta (Meta solo los calcula para anuncios recientes, desde sep-2026, con suficientes impresiones; si no hay, dice "Sin diagnóstico de Meta"). En campañas a la web, mirar compras web. Meses completos que tocan el rango.</div>
+      <div class="nota"><b>Para qué sirve:</b> decidir qué creativos escalar, cuáles apagar y qué producir después. <b>Métrica principal para elegir el ideal:</b> <i>costo por chat con 2+ mensajes</i> (interés real, no solo el saludo automático), comparando solo anuncios del mismo producto y objetivo y con volumen mínimo para que el dato sea confiable. Desempate: % de chats con 2+ mensajes (calidad) y rankings de Meta (Meta solo los calcula para anuncios recientes, desde sep-2026, con suficientes impresiones; si no hay, dice "Sin diagnóstico de Meta"). En campañas a la web, mirar compras web. <b>Qué anuncios aparecen:</b> los que tuvieron gasto dentro del rango exacto de fechas (si gastó, su campaña y su conjunto estaban activos esos días), y las cifras son solo de ese rango. Con "Solo activos hoy" se dejan únicamente los que hoy tienen activos el anuncio, el conjunto y la campaña (estado de Meta en la última actualización). Los que no llegan al mínimo de chats 2+ o son de campañas sin chats (tráfico, perfil de Instagram, venta web) no se ocultan: van abajo, en "Sin volumen para comparar".</div>
       <select class="sel" id="ordCrea">
         <option value="cpi">Menor costo por chat con 2+ mensajes (recomendado)</option>
         <option value="cpi_desc">Mayor costo por chat con 2+ mensajes (candidatos a apagar)</option>
@@ -456,7 +456,11 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
       </select>
       <label class="nota" style="display:inline">Mínimo de chats 2+ <input type="number" id="minCrea" value="20" min="0" step="5" class="sel" style="width:80px"></label>
       <select class="sel" id="etapaCrea"><option value="">Todas las etapas</option></select>
+      <label class="nota" style="display:inline"><input type="checkbox" id="activosCrea" checked> Solo activos hoy (anuncio + conjunto + campaña)</label>
       <div class="galeria" id="galeria" style="margin-top:14px"></div>
+      <h3 id="tituloRestoCrea" style="margin-top:22px;display:none">Sin volumen para comparar</h3>
+      <div class="nota" id="notaRestoCrea" style="display:none"></div>
+      <div class="galeria" id="galeriaResto" style="margin-top:10px"></div>
     </div>
   </section>
 
@@ -497,7 +501,7 @@ const base = {textStyle:{fontFamily:"Raleway, Segoe UI, sans-serif",color:"#6767
 // --- tablas columnares -> objetos ---
 function T(t){ if(!t) return []; return t.rows.map(r => Object.fromEntries(t.cols.map((c,i)=>[c,r[i]]))); }
 const MCAMP = T(D.meta_campanas), GCAMP = T(D.google_campanas), ADS = T(D.anuncios);
-const FRONT_ALL = T(D.front), META_ALL = T(D.meta), GOO_ALL = T(D.google), SEG_ALL = T(D.segmentos), ADM_ALL = T(D.anuncios_mes);
+const FRONT_ALL = T(D.front), META_ALL = T(D.meta), GOO_ALL = T(D.google), SEG_ALL = T(D.segmentos), ADM_ALL = T(D.anuncios_dia);
 const FRONTP = T(D.front_producto);
 const HORA = T(D.hora), GHORA = T(D.google_hora);
 // Vistas filtradas por producto (se recalculan en aplicarProducto)
@@ -603,7 +607,7 @@ document.querySelectorAll("#nav a").forEach(a=>a.onclick=()=>{
 ["#metHora"].forEach(s=>$(s).onchange=()=>renderHoras());
 $("#modoAtr").onchange=()=>renderComoVamos();
 ["#tipoSeg","#objSeg","#dimG","#filtroTerm"].forEach(s=>$(s).onchange=()=>renderSegmentos());
-["#ordCrea","#etapaCrea","#minCrea"].forEach(s=>$(s).onchange=()=>renderCreativos());
+["#ordCrea","#etapaCrea","#minCrea","#activosCrea"].forEach(s=>$(s).onchange=()=>renderCreativos());
 
 // --- KPI ---
 function variacion(act, ant, inverso=false){
@@ -1437,19 +1441,27 @@ function renderPresupuesto(){
 }
 
 // --- creativos ---
+// effective_status de Meta: ya incluye si la campaña o el conjunto están pausados
+const ESTADO_AD = {ACTIVE:["Activo","verde"], PENDING_REVIEW:["Activo · en revisión","verde"], IN_PROCESS:["Activo · procesando","verde"],
+  WITH_ISSUES:["Con problemas","amar"], CAMPAIGN_PAUSED:["Campaña pausada","rojo"], ADSET_PAUSED:["Conjunto pausado","rojo"],
+  PAUSED:["Anuncio pausado","rojo"], ARCHIVED:["Archivado","rojo"], DELETED:["Eliminado","rojo"], DISAPPROVED:["Rechazado","rojo"]};
+const ACTIVO_HOY = new Set(["ACTIVE","PENDING_REVIEW","IN_PROCESS"]);
 function renderCreativos(){
-  const meses = mesesDe(A,B); const et = $("#etapaCrea").value;
-  const ag = {}; ADM.filter(r=>meses.has(r.mes)).forEach(r=>{ const o=ag[r.a]||(ag[r.a]={gasto:0,impresiones:0,alcance:0,clics_enlace:0,conversaciones:0,mensaje_2:0,compras_web:0,video_thruplay:0,video_p25:0,video_p100:0,reproducciones_video:0}); Object.keys(o).forEach(k=>o[k]+=r[k]||0); });
+  const et = $("#etapaCrea").value, soloAct = $("#activosCrea").checked;
+  const ag = {}; ADM.filter(r=>r.fecha>=A && r.fecha<=B).forEach(r=>{ const o=ag[r.a]||(ag[r.a]={gasto:0,impresiones:0,alcance:0,clics_enlace:0,conversaciones:0,mensaje_2:0,compras_web:0,video_thruplay:0,video_p25:0,video_p100:0,reproducciones_video:0,ini:r.fecha,fin:r.fecha}); Object.keys(o).forEach(k=>{ if(k!=="ini"&&k!=="fin") o[k]+=r[k]||0; }); if(r.fecha<o.ini) o.ini=r.fecha; if(r.fecha>o.fin) o.fin=r.fecha; });
   let fil = Object.entries(ag).map(([a,o])=>({...ADS[a],...o, cpa:div(o.gasto,o.conversaciones), cpi:div(o.gasto,o.mensaje_2), cal:div(o.mensaje_2,o.conversaciones), ctr:div(o.clics_enlace,o.impresiones)}))
-    .filter(o=>!et || (MCAMP[o.c] && MCAMP[o.c].etapa===et));
+    .filter(o=>o.gasto>0 && (!et || (MCAMP[o.c] && MCAMP[o.c].etapa===et)) && (!soloAct || ACTIVO_HOY.has(o.estado)));
   const ord=$("#ordCrea").value;
   const minC = +$("#minCrea").value || 0;
-  if(["cpi","cpi_desc","calidad"].includes(ord)) fil = fil.filter(o=>o.mensaje_2>=minC);
-  if(ord==="cpa") fil = fil.filter(o=>o.conversaciones>=minC);
+  // Los que no alcanzan el volumen mínimo NO se ocultan: van a "Sin volumen para comparar", ordenados por gasto
+  const cumple = o => ["cpi","cpi_desc","calidad"].includes(ord) ? o.mensaje_2>=minC : ord==="cpa" ? o.conversaciones>=minC : true;
+  let resto = fil.filter(o=>!cumple(o)); fil = fil.filter(cumple);
   const asc = (k)=>(x,y)=>((x[k]??1e15)-(y[k]??1e15)), desc=(k)=>(x,y)=>((y[k]??-1)-(x[k]??-1));
   fil.sort({gasto:desc("gasto"), ctr:desc("ctr"), cpa:asc("cpa"), cpi:asc("cpi"), cpi_desc:desc("cpi"), calidad:desc("cal")}[ord]);
+  resto.sort(desc("gasto"));
   const rk = v => !v || v==="UNKNOWN" ? "" : v.startsWith("ABOVE")?`<span class="chip verde">sobre promedio</span>`: v==="AVERAGE"?`<span class="chip amar">promedio</span>`:`<span class="chip rojo">bajo promedio</span>`;
-  $("#galeria").innerHTML = fil.slice(0,60).map(o=>`<div class="crea">
+  const est = s => { const [t,c] = ESTADO_AD[s] || [s ? s : "Sin estado en Meta", "amar"]; return `<span class="chip ${c}">${t}</span>`; };
+  const tarjeta = o=>`<div class="crea">
     <div class="img">${o.archivo?`<img loading="lazy" src="creativos/${o.archivo}" alt="">`:"Sin vista previa"}${o.es_video==="True"?'<span class="vid">▶ Video</span>':""}</div>
     <div class="cuerpo"><div class="nom">${o.nombre}</div>
       <div><span class="chip">${MCAMP[o.c]?.etapa||""}</span> <span class="chip">${MCAMP[o.c]?.producto||""}</span></div>
@@ -1458,7 +1470,16 @@ function renderCreativos(){
       <div>${o.quality_ranking && o.quality_ranking!=="UNKNOWN" ? `Calidad ${rk(o.quality_ranking)}<br>Interacción ${rk(o.engagement_rate_ranking)}<br>Conversión ${rk(o.conversion_rate_ranking)}` : `<span style="color:var(--mid)">Sin diagnóstico de Meta</span>`}</div>
       ${o.texto?`<div class="txt" title="${(o.texto||"").replace(/"/g,"'")}">${o.texto}</div>`:""}
       ${o.permalink_ig?`<a href="${o.permalink_ig}" target="_blank" rel="noopener">Ver en Instagram ↗</a>`:""}
-      <div style="color:${C.gray}">Activo ${o.desde} → ${o.hasta}</div></div></div>`).join("") || '<div class="vacio">Sin creativos con gasto en el rango.</div>';
+      <div style="color:${C.gray};font-size:10.5px;line-height:1.5;border-top:1px solid var(--line);padding-top:8px">
+        ${est(o.estado)}<br>
+        <b>Campaña:</b> ${MCAMP[o.c]?.campaign_name || "—"}<br>
+        <b>Conjunto:</b> ${o.adset || "—"}<br>
+        Gasto en el rango: ${o.ini} → ${o.fin} · Histórico: ${o.desde} → ${o.hasta}</div></div></div>`;
+  $("#galeria").innerHTML = fil.slice(0,60).map(tarjeta).join("") ||
+    `<div class="vacio">${resto.length ? "Ningún anuncio alcanza el mínimo de chats 2+ en el rango: mira abajo." : "Sin creativos con gasto en el rango" + (soloAct ? " entre los activos hoy." : ".")}</div>`;
+  $("#galeriaResto").innerHTML = resto.slice(0,60).map(tarjeta).join("");
+  $("#tituloRestoCrea").style.display = $("#notaRestoCrea").style.display = resto.length ? "" : "none";
+  $("#notaRestoCrea").textContent = `${resto.length} anuncio${resto.length===1?"":"s"} con gasto en el rango que no ${resto.length===1?"llega":"llegan"} al mínimo (${minC} ${ord==="cpa"?"conversaciones":"chats 2+"}) o ${resto.length===1?"es":"son"} de campañas sin chats (tráfico, perfil de Instagram, venta web). Ordenados por gasto; sus costos por chat no son comparables todavía.`;
 }
 
 
