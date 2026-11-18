@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261118120339"></script>
+<script src="data.js?v=20261118123507"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -668,7 +668,7 @@ const mesesDe = (a,b) => { const out=new Set(); let d=toD(a.slice(0,7)+"-01"); c
 
 // --- agregaciones ---
 function sumar(rows, campos){ const o={}; campos.forEach(c=>o[c]=0); rows.forEach(r=>campos.forEach(c=>o[c]+= +r[c]||0)); return o; }
-const CF = ["leads_ig","leads_web","leads_ref","res_ig","res_web","res_ref","res_otro","venta_ig","venta_web","venta_ref","venta_otro","pax","pax_ig","pax_web","pax_ref","pax_otro"];
+const CF = ["leads_ig","leads_web","leads_ref","leads_aprox","res_ig","res_web","res_ref","res_otro","venta_ig","venta_web","venta_ref","venta_otro","pax","pax_ig","pax_web","pax_ref","pax_otro"];
 const CM = ["gasto","impresiones","clics_enlace","conversaciones","primera_respuesta","mensaje_2","mensaje_3","bloqueos","compras_web","valor_compras_web","vistas_landing","video_thruplay"];
 const CG = ["costo","clics","impresiones","conversiones","valor"];
 function agregado(a,b){
@@ -1684,6 +1684,12 @@ function renderSeccion(s){
   if(s==="creativos") renderCreativos();
   if(s==="notas") renderNotas();
 }
+// Leads completados con la fila roja de Data General (asesora sin registro en Data Leads ese día). Aproximado.
+function avisoAprox(x){
+  const n = x.f.leads_aprox || 0;
+  if(n < 1) return "";
+  return `<br><span class="chip amar">≈ Leads aproximados</span> <b>${fmt(n)}</b> de los ${fmt(x.leadsTot)} leads del periodo vienen del total diario de "Data General" (fila roja), porque la asesora no los anotó en "Data Leads". Se reparten en Instagram, Web y Referidos con la mezcla del mes. Cuando el Front los registre, se usa el dato exacto.`;
+}
 function avisoRegistro(a, b, leads){
   // Leads atendidos (reservas + no cierre) en días en que la asesora no tiene fila en Data Leads
   const por = {}; CASE.filter(r=>enRango(r.fecha,a,b) && r.sin_registro>0).forEach(r=>{ por[r.asesora]=(por[r.asesora]||0)+r.sin_registro; });
@@ -1836,7 +1842,7 @@ function render(){
   $("#resFiltros").innerHTML = `<b>${A}</b> → <b>${B}</b> · ${prod || "Todos"} · Filtros`;
   let avisoProd = "";
   if(prod){ const sp = inversionSinProducto(A,B); avisoProd = ` · <span class="chip amar">Producto: ${prod}</span> Inversión excluida por no tener producto identificable (marca / mixta): Meta ${money(sp.meta)}, Google ${money(sp.goo)}. Los <b>leads</b> se muestran totales: el front no los separa por producto.`; }
-  $("#periodo").innerHTML = `Periodo: <b>${A}</b> a <b>${B}</b> · Comparación: ${CA} a ${CB}${avisoProd}${avisoRegistro(A,B,x.leadsTot)}`;
+  $("#periodo").innerHTML = `Periodo: <b>${A}</b> a <b>${B}</b> · Comparación: ${CA} a ${CB}${avisoProd}${avisoRegistro(A,B,x.leadsTot)}${avisoAprox(x)}`;
   renderComoVamos(); renderMeta(); renderLlegadas(); renderResumen(x,y); renderKPIs(x,y); insights(x,y); renderTendencia(); renderMix(x); renderOrigen(x,y);
   const activa = document.querySelector("#nav a.on").dataset.s; if(activa!=="resumen") renderSeccion(activa);
 }
