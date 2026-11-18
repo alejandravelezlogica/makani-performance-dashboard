@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261117120303"></script>
+<script src="data.js?v=20261118110618"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -398,6 +398,10 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
     <div class="grid2">
       <div class="card"><h3>Chats Meta vs leads IG registrados</h3><div class="nota">Conversaciones iniciadas y chats con 2+ mensajes (Meta) frente a los leads IG del front. Los leads IG se parecen más a los chats con 2+ mensajes: el front anota a quien realmente conversa.</div><div class="chart" id="chConvVsLeads"></div></div>
       <div class="card"><h3>Calidad de la conversación (Meta)</h3><div class="nota">Solo puntos con 30 o más conversaciones (antes de jun-2026 casi no hubo campañas a WhatsApp). % de conversaciones iniciadas en las que la persona envió un 2º mensaje, es decir, siguió escribiendo después del mensaje automático del anuncio. Bloqueos = la persona bloqueó a la empresa.</div><div class="chart" id="chCalidad"></div></div>
+    </div>
+    <div class="grid2">
+      <div class="card"><h3>Costo por chat con interés (Meta)</h3><div class="nota" id="notaCpi"></div><div class="chart" id="chCpi"></div></div>
+      <div class="card"><h3 id="tituloCac">Costo de adquisición por pax</h3><div class="nota" id="notaCacVillas"></div><div class="chart" id="chCacVillas"></div></div>
     </div>
     <div class="card"><h3>Razones de no cierre (front)</h3><div class="nota">Comparación con el periodo de referencia.</div><div class="chart alto" id="chRazones"></div></div>
   </section>
@@ -1084,6 +1088,7 @@ function renderEmbudo(x){
     tooltip:{trigger:"axis",valueFormatter:v=>pct(v)},
     series:[{name:"% que envió 2º mensaje",type:"line",data:s.k.map(k=>{const o=pr.get(k); return o[0]>=MIN_CONV?o[1]/o[0]:null;}),itemStyle:{color:C.ocean},symbol:"none"},
             {name:"% bloqueos",type:"line",data:s.k.map(k=>{const o=bl.get(k)||[0,0]; return o[0]>=MIN_CONV?o[1]/o[0]:null;}),itemStyle:{color:C.gray},symbol:"none"}]}, true);
+  renderKpisPrincipales();
   // razones
   const agg = (a,b) => { const o={}; RAZ.filter(r=>enRango(r.fecha,a,b)).forEach(r=>o[r.razon]=(o[r.razon]||0)+r.leads); return o; };
   const r1=agg(A,B), r0=agg(CA,CB); const t1=Object.values(r1).reduce((a,b)=>a+b,0), t0=Object.values(r0).reduce((a,b)=>a+b,0);
@@ -1092,6 +1097,44 @@ function renderEmbudo(x){
     xAxis:{type:"value",axisLabel:{formatter:v=>fmt(v*100)+"%"}}, yAxis:{type:"category",data:ks,axisLabel:{width:280,overflow:"truncate"}},
     series:[{name:"Periodo",type:"bar",data:ks.map(k=>div(r1[k],t1)),itemStyle:{color:C.ocean}},
             {name:"Comparación",type:"bar",data:ks.map(k=>t0?div(r0[k]||0,t0):null),itemStyle:{color:C.glossy}}]}, true);
+}
+
+// --- KPIs principales: evolución diaria con ventana móvil (los valores diarios sueltos son muy ruidosos) ---
+const sumaPorFecha = (rows, f) => { const m = new Map(); rows.forEach(r => m.set(r.fecha, (m.get(r.fecha)||0) + (f(r)||0))); return m; };
+// Cociente móvil: suma del numerador ÷ suma del denominador en los últimos `v` días (no promedio de cocientes).
+// Sin inversión en la ventana -> vacío (ej. 29-oct-2026: Meta no pautó y llegaron chats rezagados; no es costo $0).
+function cocienteMovil(dias, num, den, v, minDen){
+  return dias.map(d => { let n=0, q=0; for(let i=0;i<v;i++){ const s=addDays(d,-i); n+=num.get(s)||0; q+=den.get(s)||0; } return q>=minDen && n>0 ? Math.round(n/q) : null; });
+}
+function renderKpisPrincipales(){
+  const dias = []; for(let s=A; s<=B; s=addDays(s,1)) dias.push(s);
+  const tot = (m) => dias.reduce((s,d)=>s+(m.get(d)||0),0);
+  // 1) Costo por chat con interés = gasto Meta ÷ chats con 2+ mensajes. Respeta el filtro de producto.
+  const g = sumaPorFecha(META, r=>r.gasto), m2 = sumaPorFecha(META, r=>r.mensaje_2);
+  const tg = tot(g), tm = tot(m2);
+  $("#notaCpi").innerHTML = `Gasto de Meta ÷ chats en los que la persona envió un 2º mensaje. Línea gruesa = promedio móvil de 7 días (suma de gasto ÷ suma de chats); línea delgada = cada día. ${$("#producto").value?`Solo campañas de ${$("#producto").value}. `:""}En el periodo: <b>${tm?money(tg/tm):"—"}</b> (${money(tg)} ÷ ${fmt(tm)} chats).`;
+  chart("chCpi").setOption({...base, grid:{left:70,right:30,top:40,bottom:50}, legend:{top:0}, xAxis:ejeX(dias,false),
+    yAxis:{type:"value",axisLabel:{formatter:v=>money(v)}}, tooltip:{trigger:"axis",valueFormatter:v=>v==null?"—":money(v)},
+    series:[{name:"Promedio móvil 7 días",type:"line",data:cocienteMovil(dias,g,m2,7,20),itemStyle:{color:C.ocean},lineStyle:{width:2.5},symbol:"none"},
+            {name:"Diario",type:"line",data:cocienteMovil(dias,g,m2,1,5),itemStyle:{color:C.gray},lineStyle:{width:1},symbol:"none"}]}, true);
+  // 2) Costo de adquisición por pax = inversión ÷ pax digitales, SEGÚN EL FILTRO DE PRODUCTO (misma lógica que el KPI
+  //    "Costo de pauta por pax"): Villas = campañas de Villas ÷ pax WhatsApp IG/Web + CRS; Pasadías = campañas de Pasadías ÷
+  //    pax WhatsApp IG/Web + Palco; Todos = inversión total (incluye marca) ÷ todos los pax digitales. Por fecha de reserva.
+  const prod = $("#producto").value;
+  const inv = sumaPorFecha([...META.map(r=>({fecha:r.fecha,v:r.gasto})), ...GOO.map(r=>({fecha:r.fecha,v:r.costo}))], r=>r.v);
+  const pax = sumaPorFecha([...FRONT.map(r=>({fecha:r.fecha,v:(r.pax_ig||0)+(r.pax_web||0)})),
+                            ...(prod!=="Pasadías" ? CRSA.map(r=>({fecha:r.fecha,v:r.pax||0})) : []),
+                            ...(prod!=="Villas" ? ONLP.map(r=>({fecha:r.fecha,v:r.pax||0})) : [])], r=>r.v);
+  const ti = tot(inv), tp = tot(pax);
+  const ventana = prod==="Villas" ? 30 : 7;  // villas: pocas reservas por día -> ventana más larga
+  const origen = prod==="Villas" ? "campañas de Villas (Meta + Google) ÷ pax digitales de villas (WhatsApp IG y Web del front + motor web CRS)"
+               : prod==="Pasadías" ? "campañas de Pasadías (Meta + Google) ÷ pax digitales de pasadías (WhatsApp IG y Web del front + Palco online)"
+               : "inversión total de Meta + Google (incluye marca) ÷ todos los pax digitales (WhatsApp IG y Web + CRS + Palco online)";
+  $("#tituloCac").textContent = `Costo de adquisición por pax · ${prod || "Total digital"}`;
+  $("#notaCacVillas").innerHTML = `Inversión de ${origen}, por fecha de reserva. Cambia con el filtro de producto. Línea = móvil de ${ventana} días${prod==="Villas"?": las reservas de villas llegan pocas por día y el dato diario no sirve":""}. En el periodo: <b>${tp?money(ti/tp):"—"}</b> por pax (${money(ti)} ÷ ${fmt(tp)} pax).`;
+  chart("chCacVillas").setOption({...base, grid:{left:80,right:30,top:40,bottom:50}, legend:{top:0}, xAxis:ejeX(dias,false),
+    yAxis:{type:"value",axisLabel:{formatter:v=>money(v)}}, tooltip:{trigger:"axis",valueFormatter:v=>v==null?"—":money(v)},
+    series:[{name:`Móvil ${ventana} días`,type:"line",data:cocienteMovil(dias,inv,pax,ventana,1),itemStyle:{color:C.blood},lineStyle:{width:2.5},symbol:"none"}]}, true);
 }
 
 // --- horas ---
