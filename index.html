@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261118111258"></script>
+<script src="data.js?v=20261118120339"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -400,8 +400,8 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
       <div class="card"><h3>Calidad de la conversación (Meta)</h3><div class="nota">Solo puntos con 30 o más conversaciones (antes de jun-2026 casi no hubo campañas a WhatsApp). % de conversaciones iniciadas en las que la persona envió un 2º mensaje, es decir, siguió escribiendo después del mensaje automático del anuncio. Bloqueos = la persona bloqueó a la empresa.</div><div class="chart" id="chCalidad"></div></div>
     </div>
     <div class="grid2">
-      <div class="card"><h3>Costo por chat con interés (Meta)</h3><div class="nota" id="notaCpi"></div><div class="chart" id="chCpi"></div></div>
-      <div class="card"><h3 id="tituloCac">Costo de adquisición por pax</h3><div class="nota" id="notaCacVillas"></div><div class="chart" id="chCacVillas"></div></div>
+      <div class="card"><h3>Costo por chat con interés (Meta)</h3><div class="agr" id="agrCpi"><span>Agrupar</span><button data-g="auto" class="on">Automático</button><button data-g="dia">Día</button><button data-g="semana">Semana</button><button data-g="mes">Mes</button></div><div class="nota" id="notaCpi"></div><div class="chart" id="chCpi"></div></div>
+      <div class="card"><h3 id="tituloCac">Costo de adquisición por pax</h3><div class="agr" id="agrCac"><span>Agrupar</span><button data-g="auto" class="on">Automático</button><button data-g="dia">Día</button><button data-g="semana">Semana</button><button data-g="mes">Mes</button></div><div class="nota" id="notaCacVillas"></div><div class="chart" id="chCacVillas"></div></div>
     </div>
     <div class="card"><h3>Razones de no cierre (front)</h3><div class="nota">Comparación con el periodo de referencia.</div><div class="chart alto" id="chRazones"></div></div>
   </section>
@@ -1099,43 +1099,49 @@ function renderEmbudo(x){
             {name:"Comparación",type:"bar",data:ks.map(k=>t0?div(r0[k]||0,t0):null),itemStyle:{color:C.glossy}}]}, true);
 }
 
-// --- KPIs principales: evolución diaria con ventana móvil (los valores diarios sueltos son muy ruidosos) ---
+// --- KPIs principales: costo por periodo (día / semana / mes) ---
+// Regla de la usuaria: SIEMPRE totales del periodo, nunca promedios ni móviles. Cada punto = suma del numerador ÷ suma
+// del denominador DENTRO del periodo. Sin inversión o sin denominador -> vacío (ej. 29-oct-2026: Meta no pautó y llegaron
+// chats rezagados; eso no es un costo de $0).
 const sumaPorFecha = (rows, f) => { const m = new Map(); rows.forEach(r => m.set(r.fecha, (m.get(r.fecha)||0) + (f(r)||0))); return m; };
-// Cociente móvil: suma del numerador ÷ suma del denominador en los últimos `v` días (no promedio de cocientes).
-// Sin inversión en la ventana -> vacío (ej. 29-oct-2026: Meta no pautó y llegaron chats rezagados; no es costo $0).
-function cocienteMovil(dias, num, den, v, minDen){
-  return dias.map(d => { let n=0, q=0; for(let i=0;i<v;i++){ const s=addDays(d,-i); n+=num.get(s)||0; q+=den.get(s)||0; } return q>=minDen && n>0 ? Math.round(n/q) : null; });
+function cocientePorPeriodo(cubos, num, den){
+  return cubos.map(c => { let n=0, q=0; for(let f=c.a; f<=c.b; f=addDays(f,1)){ n+=num.get(f)||0; q+=den.get(f)||0; } return q>0 && n>0 ? Math.round(n/q) : null; });
 }
+const NOM_MODO = {dia:"día", semana:"semana (lunes a domingo)", mes:"mes"};
 function renderKpisPrincipales(){
-  const dias = []; for(let s=A; s<=B; s=addDays(s,1)) dias.push(s);
-  const tot = (m) => dias.reduce((s,d)=>s+(m.get(d)||0),0);
+  const tot = (m) => { let s=0; for(let f=A; f<=B; f=addDays(f,1)) s+=m.get(f)||0; return s; };
+  const lineaMarca = (name, data, color) => ({name, type:"line", data, smooth:true, connectNulls:true, symbol:"none", itemStyle:{color}, lineStyle:{width:2, color}});
+  const ejeMoney = {type:"value", axisLabel:{formatter:v=>money(v)}, splitLine:{lineStyle:{color:"#EFEBE3"}}};
   // 1) Costo por chat con interés = gasto Meta ÷ chats con 2+ mensajes. Respeta el filtro de producto.
+  const k1 = cubosPeriodo(A, B, "#agrCpi");
   const g = sumaPorFecha(META, r=>r.gasto), m2 = sumaPorFecha(META, r=>r.mensaje_2);
   const tg = tot(g), tm = tot(m2);
-  $("#notaCpi").innerHTML = `Gasto de Meta ÷ chats en los que la persona envió un 2º mensaje. Línea gruesa = promedio móvil de 7 días (suma de gasto ÷ suma de chats); línea delgada = cada día. ${$("#producto").value?`Solo campañas de ${$("#producto").value}. `:""}En el periodo: <b>${tm?money(tg/tm):"—"}</b> (${money(tg)} ÷ ${fmt(tm)} chats).`;
-  chart("chCpi").setOption({...base, grid:{left:70,right:30,top:40,bottom:50}, legend:{top:0}, xAxis:ejeX(dias,false),
-    yAxis:{type:"value",axisLabel:{formatter:v=>money(v)}}, tooltip:{trigger:"axis",valueFormatter:v=>v==null?"—":money(v)},
-    series:[{name:"Promedio móvil 7 días",type:"line",data:cocienteMovil(dias,g,m2,7,20),itemStyle:{color:C.ocean},lineStyle:{width:2.5},symbol:"none"},
-            {name:"Diario",type:"line",data:cocienteMovil(dias,g,m2,1,5),itemStyle:{color:C.gray},lineStyle:{width:1},symbol:"none"}]}, true);
+  $("#notaCpi").innerHTML = `Gasto de Meta ÷ chats en los que la persona envió un 2º mensaje, con el total de cada ${NOM_MODO[k1.modo]}. ${$("#producto").value?`Solo campañas de ${$("#producto").value}. `:""}En el periodo: <b>${tm?money(tg/tm):"—"}</b> (${money(tg)} ÷ ${fmt(tm)} chats).`;
+  chart("chCpi").setOption({...base, grid:{left:70,right:30,top:40,bottom:50}, legend:{show:false},
+    xAxis:{type:"category", data:k1.cubos.map(c=>c.label), axisLabel:{hideOverlap:true}}, yAxis:ejeMoney,
+    tooltip:{trigger:"axis",valueFormatter:v=>v==null?"sin dato":money(v)},
+    series:[lineaMarca("Costo por chat con interés", cocientePorPeriodo(k1.cubos,g,m2), C.ocean)]}, true);
   // 2) Costo de adquisición por pax = inversión ÷ pax digitales, SEGÚN EL FILTRO DE PRODUCTO (misma lógica que el KPI
   //    "Costo de pauta por pax"): Villas = campañas de Villas ÷ pax WhatsApp IG/Web + CRS; Pasadías = campañas de Pasadías ÷
   //    pax WhatsApp IG/Web + Palco; Todos = inversión total (incluye marca) ÷ todos los pax digitales. Por fecha de reserva.
   const prod = $("#producto").value;
+  const k2 = cubosPeriodo(A, B, "#agrCac");
   const inv = sumaPorFecha([...META.map(r=>({fecha:r.fecha,v:r.gasto})), ...GOO.map(r=>({fecha:r.fecha,v:r.costo}))], r=>r.v);
   const pax = sumaPorFecha([...FRONT.map(r=>({fecha:r.fecha,v:(r.pax_ig||0)+(r.pax_web||0)})),
                             ...(prod!=="Pasadías" ? CRSA.map(r=>({fecha:r.fecha,v:r.pax||0})) : []),
                             ...(prod!=="Villas" ? ONLP.map(r=>({fecha:r.fecha,v:r.pax||0})) : [])], r=>r.v);
   const ti = tot(inv), tp = tot(pax);
-  const ventana = prod==="Villas" ? 30 : 7;  // villas: pocas reservas por día -> ventana más larga
-  const origen = prod==="Villas" ? "campañas de Villas (Meta + Google) ÷ pax digitales de villas (WhatsApp IG y Web del front + motor web CRS)"
-               : prod==="Pasadías" ? "campañas de Pasadías (Meta + Google) ÷ pax digitales de pasadías (WhatsApp IG y Web del front + Palco online)"
-               : "inversión total de Meta + Google (incluye marca) ÷ todos los pax digitales (WhatsApp IG y Web + CRS + Palco online)";
+  const origen = prod==="Villas" ? "Inversión de campañas de Villas (Meta + Google) ÷ pax digitales de villas (WhatsApp IG y Web del front + motor web CRS)"
+               : prod==="Pasadías" ? "Inversión de campañas de Pasadías (Meta + Google) ÷ pax digitales de pasadías (WhatsApp IG y Web del front + Palco online)"
+               : "Inversión total de Meta + Google (incluye marca) ÷ todos los pax digitales (WhatsApp IG y Web + CRS + Palco online)";
   $("#tituloCac").textContent = `Costo de adquisición por pax · ${prod || "Total digital"}`;
-  $("#notaCacVillas").innerHTML = `Inversión de ${origen}, por fecha de reserva. Cambia con el filtro de producto. Línea = móvil de ${ventana} días${prod==="Villas"?": las reservas de villas llegan pocas por día y el dato diario no sirve":""}. En el periodo: <b>${tp?money(ti/tp):"—"}</b> por pax (${money(ti)} ÷ ${fmt(tp)} pax).`;
-  chart("chCacVillas").setOption({...base, grid:{left:80,right:30,top:40,bottom:50}, legend:{top:0}, xAxis:ejeX(dias,false),
-    yAxis:{type:"value",axisLabel:{formatter:v=>money(v)}}, tooltip:{trigger:"axis",valueFormatter:v=>v==null?"—":money(v)},
-    series:[{name:`Móvil ${ventana} días`,type:"line",data:cocienteMovil(dias,inv,pax,ventana,1),itemStyle:{color:C.blood},lineStyle:{width:2.5},symbol:"none"}]}, true);
+  $("#notaCacVillas").innerHTML = `${origen}, por fecha de reserva, con el total de cada ${NOM_MODO[k2.modo]}. Cambia con el filtro de producto. Los periodos sin reservas no tienen costo por pax y la línea los une${prod==="Villas"&&k2.modo==="dia"?"; en villas entran pocas reservas por día: la vista por semana se lee mejor":""}. En el periodo: <b>${tp?money(ti/tp):"—"}</b> por pax (${money(ti)} ÷ ${fmt(tp)} pax).`;
+  chart("chCacVillas").setOption({...base, grid:{left:80,right:30,top:40,bottom:50}, legend:{show:false},
+    xAxis:{type:"category", data:k2.cubos.map(c=>c.label), axisLabel:{hideOverlap:true}}, yAxis:ejeMoney,
+    tooltip:{trigger:"axis",valueFormatter:v=>v==null?"sin reservas":money(v)},
+    series:[lineaMarca("Costo por pax", cocientePorPeriodo(k2.cubos,inv,pax), C.blood)]}, true);
 }
+document.querySelectorAll("#agrCpi button, #agrCac button").forEach(b=>b.onclick=()=>{ b.parentElement.querySelectorAll("button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); renderKpisPrincipales(); });
 
 // --- horas ---
 function renderHoras(){
@@ -1691,15 +1697,12 @@ const PICK = T(D.pickup);
 const COL_PICK = {tot:"#3A3A3A", web:"#2F6E73", ig:"#C9A961", wweb:"#6FA7AB"};
 const CANALES_PICK = {"Villas":[["CRS", COL_PICK.web],["WhatsApp · Instagram", COL_PICK.ig],["WhatsApp · Web", COL_PICK.wweb]],
                       "Pasadías":[["Palco", COL_PICK.web],["WhatsApp · Instagram", COL_PICK.ig],["WhatsApp · Web", COL_PICK.wweb]]};
-function renderLlegadas(){
-  // Pick-up = reservas por FECHA DE REGISTRO (alta). SIEMPRE totales, nunca promedios (decisión de la usuaria):
-  //   hasta 92 días → total por día · 93 a 183 días → total por semana (etiqueta = rango de fechas) · más de 6 meses (año a la fecha, todo) → total por MES CALENDARIO.
-  // Los periodos de los extremos se recortan al rango y su etiqueta muestra las fechas reales.
-  // El eje termina en el último día registrado por el Front: un día sin datos todavía caería a 0 y parecería una caída real.
-  const met = $("#metLleg").value, ini = A, fin = (D.rango.front_hasta && D.rango.front_hasta < B) ? D.rango.front_hasta : B;
+// Periodos de agrupación (regla de la usuaria, 7-nov-2026): SIEMPRE totales, nunca promedios ni móviles.
+// Automático: hasta 92 días → día · 93 a 183 → semana (etiqueta = rango de fechas) · más → mes calendario.
+// Los extremos se recortan al rango y su etiqueta muestra las fechas reales. `selAgr` = contenedor de botones Agrupar.
+function cubosPeriodo(ini, fin, selAgr){
   const dias = Math.round((toD(fin)-toD(ini))/864e5)+1;
-  const [CA0, CB0] = rangoComp(ini, fin), compFront = CA0 >= D.rango.front_desde;
-  const agr = (document.querySelector("#agrLleg button.on")||{}).dataset?.g || "auto";
+  const agr = (document.querySelector(`${selAgr} button.on`)||{}).dataset?.g || "auto";
   const modo = agr!=="auto" ? agr : (dias <= 92 ? "dia" : (dias <= 183 ? "semana" : "mes"));
   const MESL = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
   const dm = f => `${+f.slice(8,10)} ${MESL[+f.slice(5,7)-1]}`;
@@ -1715,6 +1718,17 @@ function renderLlegadas(){
       const completo = a.slice(8,10)==="01" && b===b0;
       cubos.push({a, b, label: completo ? `${MESL[+a.slice(5,7)-1]} ${a.slice(2,4)}` : `${+a.slice(8,10)}–${dm(b)} ${b.slice(2,4)}`}); a = addDays(b,1); } }
   const idx = f => { for(let k=0;k<cubos.length;k++) if(f>=cubos[k].a && f<=cubos[k].b) return k; return -1; };
+  return {modo, cubos, idx};
+}
+function renderLlegadas(){
+  // Pick-up = reservas por FECHA DE REGISTRO (alta). SIEMPRE totales, nunca promedios (decisión de la usuaria):
+  //   hasta 92 días → total por día · 93 a 183 días → total por semana (etiqueta = rango de fechas) · más de 6 meses (año a la fecha, todo) → total por MES CALENDARIO.
+  // Los periodos de los extremos se recortan al rango y su etiqueta muestra las fechas reales.
+  // El eje termina en el último día registrado por el Front: un día sin datos todavía caería a 0 y parecería una caída real.
+  const met = $("#metLleg").value, ini = A, fin = (D.rango.front_hasta && D.rango.front_hasta < B) ? D.rango.front_hasta : B;
+  const dias = Math.round((toD(fin)-toD(ini))/864e5)+1;
+  const [CA0, CB0] = rangoComp(ini, fin), compFront = CA0 >= D.rango.front_desde;
+  const {modo, cubos, idx} = cubosPeriodo(ini, fin, "#agrLleg");
   const etiq = met==="venta" ? money : (v=>fmt(v));
   const nomMet = {reservas:"reservas", pax:"pax", venta:"venta"}[met];
   const unidad = {dia:"ese día", semana:"esa semana (de lunes a domingo)", mes:"ese mes"}[modo];
