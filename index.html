@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261119153058"></script>
+<script src="data.js?v=20261119153256"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -1117,7 +1117,7 @@ function renderKpisPrincipales(){
   const g = sumaPorFecha(META, r=>r.gasto), m2 = sumaPorFecha(META, r=>r.mensaje_2);
   // Periodos sin campañas a WhatsApp (feb–may 2026: todo iba a la web) dan cifras falsas (todo el gasto ÷ 1–4 chats
   // de rebote): se dejan vacíos. El numerador sigue siendo TODO el gasto de Meta (decisión de la usuaria, 19-nov-2026).
-  const gWa = sumaPorFecha(META.filter(r=>MCAMP[r.c]?.etapa==="Interacción / WhatsApp"), r=>r.gasto);
+  const gWa = sumaPorFecha(META.filter(r=>["Interacción / WhatsApp","Conversaciones WhatsApp"].includes(MCAMP[r.c]?.etapa)), r=>r.gasto);
   const conWa = c => { for(let f=c.a; f<=c.b; f=addDays(f,1)) if((gWa.get(f)||0)>0) return true; return false; };
   const tg = tot(g), tm = tot(m2);
   $("#notaCpi").innerHTML = `Gasto de Meta ÷ chats en los que la persona envió un 2º mensaje, con el total de cada ${NOM_MODO[k1.modo]}. ${$("#producto").value?`Solo campañas de ${$("#producto").value}. `:""}En el periodo: <b>${tm?money(tg/tm):"—"}</b> (${money(tg)} ÷ ${fmt(tm)} chats). Las semanas o meses sin campañas a WhatsApp quedan vacíos: antes de jun-2026 la pauta iba a la web y la división no tiene sentido.`;
