@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261120120629"></script>
+<script src="data.js?v=20261120124725"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -601,6 +601,43 @@ function ordenable(tabla){
     filas.sort((a,b)=>{ const x=val(a), y=val(b); const r = typeof x==="number" && typeof y==="number" ? x-y : String(x).localeCompare(String(y),"es"); return desc ? -r : r; });
     filas.forEach(f=>cuerpo.appendChild(f)); }; });
 }
+// Todas las tablas de datos (.tabla) se ordenan con clic en el título de la columna. Lee el número del texto de la
+// celda ($1,5 M, 1.234, 58%, 4x, −$3.000); "—" queda al final. Excluidas: tablas con filas agrupadas o de totales.
+const NO_ORDENAR = new Set(["tablaInvMes","totLlegV","totLlegP"]);
+function valorCelda(td){
+  if(!td) return null;
+  if(td.dataset.v != null && td.dataset.v !== "") { const n = Number(td.dataset.v); return isNaN(n) ? td.dataset.v.toLowerCase() : n; }
+  const t = td.innerText.split(/\r?\n/)[0].replace(/[≈\s]+/g," ").trim();
+  if(t==="" || t==="—" || t==="–") return null;
+  const m = t.match(/^(−|-)?\$?\s?([\d.]+(?:,\d+)?)\s*(M)?\s*(%|x)?(?:\s|$|·)/);
+  if(m && /\d/.test(m[2])){ let n = parseFloat(m[2].replace(/\./g,"").replace(",",".")); if(m[3]) n *= 1e6; return m[1] ? -n : n; }
+  return t.toLowerCase();
+}
+function columnas(thead){   // posición real de cada th (respeta colspan / rowspan)
+  const ocup = [], pos = new Map();
+  [...thead.rows].forEach((tr,ri)=>{ let c = 0; ocup[ri] = ocup[ri] || [];
+    [...tr.cells].forEach(th=>{ while(ocup[ri][c]) c++; const cs = th.colSpan||1, rs = th.rowSpan||1;
+      if(cs===1) pos.set(th, c);
+      for(let r=ri; r<ri+rs; r++){ ocup[r] = ocup[r] || []; for(let k=c; k<c+cs; k++) ocup[r][k] = true; } c += cs; }); });
+  return pos;
+}
+function ordenableAuto(tabla){
+  if(!tabla.tHead || !tabla.tBodies[0] || tabla.dataset.ordenable || tabla.querySelector("th.ord")) return;
+  tabla.dataset.ordenable = "1";
+  columnas(tabla.tHead).forEach((col, th)=>{ th.style.cursor = "pointer"; th.title = "Ordenar"; th.onclick = () => {
+    const cuerpo = tabla.tBodies[0], filas = [...cuerpo.rows];
+    const muestra = filas.map(f=>valorCelda(f.cells[col])).find(v=>v!=null), texto = typeof muestra === "string";
+    const desc = texto ? th.dataset.dir === "asc" : th.dataset.dir !== "desc";
+    tabla.querySelectorAll("thead th").forEach(x=>{ if(x.dataset.dir){ delete x.dataset.dir; x.textContent = x.textContent.replace(/ [▲▼]$/,""); } });
+    th.dataset.dir = desc ? "desc" : "asc"; th.textContent += desc ? " ▼" : " ▲";
+    filas.sort((a,b)=>{ const x = valorCelda(a.cells[col]), y = valorCelda(b.cells[col]);
+      if(x==null && y==null) return 0; if(x==null) return 1; if(y==null) return -1;
+      const r = typeof x==="number" && typeof y==="number" ? x-y : String(x).localeCompare(String(y),"es");
+      return desc ? -r : r; });
+    filas.forEach(f=>cuerpo.appendChild(f)); }; });
+}
+new MutationObserver(()=>document.querySelectorAll(".tabla table").forEach(t=>{ if(!NO_ORDENAR.has(t.closest(".tabla").id)) ordenableAuto(t); }))
+  .observe(document.documentElement, {childList:true, subtree:true});
 const pct = (v,d=1) => v==null||!isFinite(v) ? "—" : fmt(v*100,DIR?0:d)+"%";   // dirección: % sin decimales
 const div = (a,b) => b ? a/b : null;
 const PAL_META = ["#2F6E73","#4D9499","#7FB3B6","#A9CFCF","#1F4B4F","#CFE3E2"], PAL_GOO = ["#C9A961","#E3CC86","#9C7F3C","#F0D78A"];
@@ -1606,7 +1643,7 @@ function renderKeywords(){
   const filas = Object.values(ag).sort((a,b)=>b.costo-a.costo), top = filas.slice(0,40);
   $("#notaKw").innerHTML = `Palabras por las que aparecen los anuncios de búsqueda de la cuenta COPS (la "Makani cuenta 2" no tiene API). Datos mensuales: se incluyen los meses que tocan el rango. <b>CPC</b> = lo que cuesta cada clic. Las ${fmt(top.length)} de mayor costo${filas.length>top.length?` de ${fmt(filas.length)}`:""}${prod?`; solo campañas de ${prod}`:""}.`;
   $("#tablaKw").innerHTML = top.length ? `<table><thead><tr><th>Palabra clave</th><th>Concordancia</th><th>Campaña</th><th>Estado</th><th class="n">Costo</th><th class="n">Clics</th><th class="n">CPC</th><th class="n">Impresiones</th><th class="n">Conversiones</th></tr></thead><tbody>
-    ${top.map(o=>`<tr><td><b>${o.palabra}</b></td><td>${o.concordancia}</td><td>${o.campana}</td><td>${chipEstado(o.estado)}</td><td class="n">${money(o.costo)}</td><td class="n">${fmt(o.clics)}</td><td class="n">${money(div(o.costo,o.clics))}</td><td class="n">${fmt(o.impresiones)}</td><td class="n">${fmt(o.conversiones,DIR?0:1)}</td></tr>`).join("")}</tbody></table>`
+    ${top.map(o=>`<tr><td><b>${o.palabra}</b></td><td>${o.concordancia}</td><td>${o.campana}</td><td>${chipEstado(o.estado)}</td><td class="n">${millones(o.costo)}</td><td class="n">${fmt(o.clics)}</td><td class="n">${money(div(o.costo,o.clics))}</td><td class="n">${fmt(o.impresiones)}</td><td class="n">${fmt(o.conversiones,DIR?0:1)}</td></tr>`).join("")}</tbody></table>`
     : '<div class="vacio">Sin palabras clave con impresiones en el rango.</div>';
 }
 function renderCampanas(){
@@ -1668,12 +1705,12 @@ function renderCampanas(){
   // tabla meta
   const agg = {}; META.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const o=agg[r.c]||(agg[r.c]={...sumar([],CM)}); CM.forEach(c=>o[c]+=r[c]); });
   const filas = Object.entries(agg).map(([c,o])=>({...MCAMP[c],...o})).sort((a,b)=>b.gasto-a.gasto);
-  $("#tablaCampMeta").innerHTML = filas.length ? `<table><thead><tr><th>Campaña</th><th>Estado</th><th>Etapa</th><th>Producto</th><th class="n">Gasto</th><th class="n">Impresiones</th><th class="n">CTR enlace</th><th class="n">Conversaciones</th><th class="n">Costo/conv.</th><th class="n">% 2+ mensajes</th><th class="n">Costo / chat 2+</th><th class="n">% bloqueo</th><th class="n">Compras web</th><th class="n">ROAS atribuido (píxel)</th></tr></thead><tbody>
-    ${filas.map(o=>`<tr><td>${o.campaign_name}<br><span class="chip">${o.cuenta_nombre}</span></td><td>${chipEstado(o.estado)}</td><td>${o.etapa}</td><td>${o.producto}</td><td class="n">${money(o.gasto)}</td><td class="n">${fmt(o.impresiones)}</td><td class="n">${pct(div(o.clics_enlace,o.impresiones),2)}</td><td class="n">${fmt(o.conversaciones)}</td><td class="n">${money(div(o.gasto,o.conversaciones))}</td><td class="n">${pct(div(o.mensaje_2,o.conversaciones))}</td><td class="n">${money(div(o.gasto,o.mensaje_2))}</td><td class="n">${pct(div(o.bloqueos,o.conversaciones))}</td><td class="n">${fmt(o.compras_web)}</td><td class="n">${o.valor_compras_web?fmt(o.valor_compras_web/o.gasto,DIR?0:1)+"x":"—"}</td></tr>`).join("")}</tbody></table>` : '<div class="vacio">Sin inversión Meta en el rango.</div>';
+  $("#tablaCampMeta").innerHTML = filas.length ? `<table><thead><tr><th>Campaña</th><th>Estado</th><th>Etapa</th><th>Producto</th><th class="n">Gasto</th><th class="n">Impresiones</th><th class="n">CTR enlace</th><th class="n">Conversaciones</th>${DIR?"":'<th class="n">Costo/conv.</th>'}<th class="n">% 2+ mensajes</th><th class="n">Costo / chat 2+</th><th class="n">% bloqueo</th><th class="n">Compras web</th><th class="n">ROAS atribuido (píxel)</th></tr></thead><tbody>
+    ${filas.map(o=>`<tr><td>${o.campaign_name}<br><span class="chip">${o.cuenta_nombre}</span></td><td>${chipEstado(o.estado)}</td><td>${o.etapa}</td><td>${o.producto}</td><td class="n">${millones(o.gasto)}</td><td class="n">${fmt(o.impresiones)}</td><td class="n">${pct(div(o.clics_enlace,o.impresiones),2)}</td><td class="n">${fmt(o.conversaciones)}</td>${DIR?"":`<td class="n">${money(div(o.gasto,o.conversaciones))}</td>`}<td class="n">${pct(div(o.mensaje_2,o.conversaciones))}</td><td class="n">${money(div(o.gasto,o.mensaje_2))}</td><td class="n">${pct(div(o.bloqueos,o.conversaciones))}</td><td class="n">${fmt(o.compras_web)}</td><td class="n">${o.valor_compras_web?fmt(o.valor_compras_web/o.gasto,DIR?0:1)+"x":"—"}</td></tr>`).join("")}</tbody></table>` : '<div class="vacio">Sin inversión Meta en el rango.</div>';
   const ag = {}; GOO.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const o=ag[r.c]||(ag[r.c]=sumar([],CG)); CG.forEach(c=>o[c]+=r[c]); });
   const fg = Object.entries(ag).map(([c,o])=>({...GCAMP[c],...o})).sort((a,b)=>b.costo-a.costo);
   $("#tablaCampG").innerHTML = fg.length ? `<table><thead><tr><th>Campaña</th><th>Estado</th><th>Cuenta</th><th>Tipo</th><th class="n">Costo</th><th class="n">Clics</th><th class="n">CPC</th><th class="n">Conversiones</th><th class="n">Costo/conv.</th><th class="n">Valor conv.</th></tr></thead><tbody>
-    ${fg.map(o=>`<tr><td>${o.campana}</td><td>${chipEstado(o.estado)}</td><td>${o.cuenta}</td><td>${o.tipo}</td><td class="n">${money(o.costo)}</td><td class="n">${fmt(o.clics)}</td><td class="n">${money(div(o.costo,o.clics))}</td><td class="n">${fmt(o.conversiones,1)}</td><td class="n">${money(div(o.costo,o.conversiones))}</td><td class="n">${money(o.valor)}</td></tr>`).join("")}</tbody></table>` : '<div class="vacio">Sin inversión Google en el rango.</div>';
+    ${fg.map(o=>`<tr><td>${o.campana}</td><td>${chipEstado(o.estado)}</td><td>${o.cuenta}</td><td>${o.tipo}</td><td class="n">${millones(o.costo)}</td><td class="n">${fmt(o.clics)}</td><td class="n">${money(div(o.costo,o.clics))}</td><td class="n">${fmt(o.conversiones,1)}</td><td class="n">${money(div(o.costo,o.conversiones))}</td><td class="n">${millones(o.valor)}</td></tr>`).join("")}</tbody></table>` : '<div class="vacio">Sin inversión Google en el rango.</div>';
 }
 
 // --- presupuesto ---
