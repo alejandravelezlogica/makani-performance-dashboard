@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261120155254"></script>
+<script src="data.js?v=20261120161024"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -523,7 +523,7 @@ body[data-vista="direccion"] .grid2:has(> .solo-equipo):not(:has(> .solo-direcci
   <section id="mercados">
     <div class="card"><h3>Demanda en Google: búsquedas de hoteles en Cartagena</h3><div class="nota" id="notaTac"></div>
       <div class="grid2" style="margin-top:6px"><div><h3 class="sub3">Por país del usuario</h3><div class="tabla" id="tacPais"></div></div><div><h3 class="sub3">Por región del usuario</h3><div class="tabla" id="tacRegion"></div></div></div></div>
-    <div class="card"><h3>De dónde viene la demanda</h3>
+    <div class="card"><h3>De dónde vienen las visitas y compras web</h3>
       <div class="nota solo-direccion">Visitas y compras en la página web por país del visitante (Google Analytics) y dónde se muestra la pauta (inversión de Meta y Google por país). <b>El país es dónde estaba la persona al navegar, según su conexión a internet, no su nacionalidad.</b> Google Analytics lo identifica por la conexión: un turista de Estados Unidos que ya está en Cartagena y navega con el internet de su propio plan de celular (roaming) aparece como Estados Unidos; si usa el wifi del hotel o una SIM colombiana, aparece como Colombia. Las reservas por WhatsApp no tienen país porque el Front no lo registra: van al pie de la tabla por país.</div>
       <div class="nota solo-equipo"><b>Fuentes reales, sin repartos estimados.</b> Web = GA4 (sesiones, clics al botón de WhatsApp y compras en línea con su ingreso). Pauta = inversión de Meta y Google por país del usuario. GA4 y Google entregan datos por país; Meta también, pero <b>sin conversaciones por región o ciudad</b> (ver abajo). El registro del front <b>no guarda el país o la ciudad del cliente</b>, así que las reservas por WhatsApp no tienen mercado. Producto en GA4: compras de pasadias.makaniluxury.com = Pasadías y del motor de reservas = Villas; sesiones y clics a WhatsApp según la página (club de playa = Pasadías, habitaciones = Villas, otras = General). Con el filtro de producto, lo "General" no se incluye.</div>
       <div class="kpis" id="kpisMerc"></div>
@@ -592,6 +592,8 @@ body[data-vista="direccion"] .grid2:has(> .solo-equipo):not(:has(> .solo-direcci
 const D = window.DATA;
 const $ = s => document.querySelector(s);
 const DIR = document.body.dataset.vista === "direccion";
+// Totales exactos de cada sección (los lee scripts/auditar_coherencia.py para verificar que todo cuadra)
+const TOT = window.__tot = {};
 // Agrupación automática: hasta este número de días se ve por día; luego por semana (hasta 183) y luego por mes.
 // Dirección: nunca por día en automático (usuaria 20-nov-2026: día solo si lo eligen); equipo: 92.
 const UMBRAL_DIA = DIR ? 0 : 92;   // dirección: siempre semana (o mes); por día solo con el botón Día
@@ -917,7 +919,8 @@ function repartir(o, fuente, producto, fecha, pax, venta){
   // reparte pax y venta según la mezcla del mes; sin mezcla, queda en sin identificar
   const mz = MZ.get(`${fuente}|${producto}|${String(fecha).slice(0,7)}`);
   if(!mz){ o.sin_identificar.pax+=pax; o.sin_identificar.venta+=venta; return; }
-  mz.forEach(r=>{ const d=o[r.plataforma]||o.organico; d.pax+=pax*r.peso; d.venta+=venta*r.peso; d.aprox+=venta*r.peso; });
+  const sp = mz.reduce((t,r)=>t+r.peso,0) || 1;   // pesos redondeados: se normalizan para que sume exacto
+  mz.forEach(r=>{ const w=r.peso/sp, d=o[r.plataforma]||o.organico; d.pax+=pax*w; d.venta+=venta*w; d.aprox+=venta*w; });
 }
 function cvDatos(a, b, aprox=false){
   const cero = () => ({inv:0, pax:0, venta:0, aprox:0});
@@ -1030,6 +1033,9 @@ function renderComoVamos(){
   }
   const mt = {}; CV_CANALES.forEach(([k])=>mt[k] = ["Villas","Pasadías"].filter(p=>!prod||prod===p).reduce((s_,p)=>s_+d1[p][k].venta,0));
   const tv = Object.values(mt).reduce((a_,b_)=>a_+b_,0);
+  { const pl = k => ["Villas","Pasadías"].filter(p=>!prod||prod===p).reduce((t,p)=>({inv:t.inv+d1[p][k].inv, pax:t.pax+d1[p][k].pax, venta:t.venta+d1[p][k].venta}),{inv:0,pax:0,venta:0});
+    const mM = pl("meta"), mG = pl("google"); if(!prod){ mM.inv += d1.mixta.meta||0; mG.inv += d1.mixta.google||0; }
+    TOT.resumen = {inv:T1.inv, pax:T1.pax, venta:T1.venta, meta:mM, google:mG}; }
   filas += `<tr class="tot"><td>Total digital</td>${c(money(T1.inv),T1.inv,T0.inv,{neu:true})}${c(fmt(T1.pax),T1.pax,T0.pax)}${c(money(T1.venta),T1.venta,T0.venta)}${DIR?"":vacio}`
          + `${c(T1.pax?money(T1.inv/T1.pax):"—",div(T1.inv,T1.pax),div(T0.inv,T0.pax),{inv:true})}${c(T1.inv?fmt(T1.venta/T1.inv,DIR?0:1)+"x":"—",div(T1.venta,T1.inv),div(T0.venta,T0.inv))}</tr>`;
   $("#tablaCV").innerHTML = (DIR ? `<div class="cvley"><span style="margin-left:auto">Variación pequeña: vs ${comp} (– = sin comparación)</span></div>` : `<div class="cvley">${CV_CANALES.map(([k,l])=>`<span><i style="background:${CV_COLOR[k]}"></i>${l} ${tv?pct(mt[k]/tv,0):""}</span>`).join("")}<span style="margin-left:auto">Variación pequeña: vs ${comp} (– = sin comparación)</span></div>`)
@@ -1247,7 +1253,7 @@ function renderKpisPrincipales(){
   // de rebote): se dejan vacíos. El numerador sigue siendo TODO el gasto de Meta (decisión de la usuaria, 19-nov-2026).
   const gWa = sumaPorFecha(META.filter(r=>["Interacción / WhatsApp","Conversaciones WhatsApp"].includes(MCAMP[r.c]?.etapa)), r=>r.gasto);
   const conWa = c => { for(let f=c.a; f<=c.b; f=addDays(f,1)) if((gWa.get(f)||0)>0) return true; return false; };
-  const tg = tot(g), tm = tot(m2);
+  const tg = tot(g), tm = tot(m2); TOT.cpi = {gasto:tg, m2:tm};
   $("#notaCpi").innerHTML = `Gasto de Meta ÷ chats en los que la persona envió un 2º mensaje, con el total de cada ${NOM_MODO[k1.modo]}. ${$("#producto").value?`Solo campañas de ${$("#producto").value}. `:""}En el periodo: <b>${tm?money(tg/tm):"—"}</b> (${money(tg)} ÷ ${fmt(tm)} chats). Las semanas o meses sin campañas a WhatsApp quedan vacíos: antes de jun-2026 la pauta iba a la web y la división no tiene sentido.`;
   chart("chCpi").setOption({...base, grid:{left:70,right:30,top:40,bottom:50}, legend:{show:false},
     xAxis:{type:"category", data:k1.cubos.map(c=>c.label), axisLabel:{hideOverlap:true}}, yAxis:ejeMoney,
@@ -1262,7 +1268,7 @@ function renderKpisPrincipales(){
   const pax = sumaPorFecha([...FRONT.map(r=>({fecha:r.fecha,v:(r.pax_ig||0)+(r.pax_web||0)})),
                             ...(prod!=="Pasadías" ? CRSA.map(r=>({fecha:r.fecha,v:r.pax||0})) : []),
                             ...(prod!=="Villas" ? ONLP.map(r=>({fecha:r.fecha,v:r.pax||0})) : [])], r=>r.v);
-  const ti = tot(inv), tp = tot(pax);
+  const ti = tot(inv), tp = tot(pax); TOT.cac = {inv:ti, pax:tp};
   const origen = prod==="Villas" ? "Inversión de campañas de Villas (Meta + Google) ÷ pax digitales de villas (WhatsApp IG y Web del front + motor web CRS)"
                : prod==="Pasadías" ? "Inversión de campañas de Pasadías (Meta + Google) ÷ pax digitales de pasadías (WhatsApp IG y Web del front + Palco online)"
                : "Inversión total de Meta + Google (incluye marca) ÷ todos los pax digitales (WhatsApp IG y Web + CRS + Palco online)";
@@ -1289,6 +1295,7 @@ function renderEvolDig(){
   const serie = sumaPorFecha(filas, r=>r.v);
   const datos = k.cubos.map(c=>{ let t=0; for(let f=c.a; f<=c.b; f=addDays(f,1)) t+=serie.get(f)||0; return Math.round(t); });
   const total = datos.reduce((x,y)=>x+y,0), nom = {pax:"Pax", venta:"Venta sin IVA", reservas:"Reservas"}[met];
+  (TOT.evol = TOT.evol || {})[met] = filas.reduce((t,r)=>t+(enRango(r.fecha,A,B)?r.v:0),0);
   const f = met==="venta" ? money : fmt;
   $("#tituloDig").textContent = `Evolución digital · ${nom}${prod?` · ${prod}`:""}`;
   $("#notaDig").innerHTML = `${nom} digitales (WhatsApp de Instagram y Web, motor web de villas y compras de pasadías en línea), por fecha de compra, con el total de cada ${NOM_MODO[k.modo]}. En el periodo: <b>${f(total)}</b>.`;
@@ -1627,10 +1634,14 @@ const MG4 = T(MERC.ga4_pais), MGC = T(MERC.ga4_ciudad), MMP = T(MERC.meta_pais),
 const NOMPAIS = MERC.paises || {};
 const nomPais = i => NOMPAIS[i] || i;
 // Fracción del gasto de un mes (por clave: campaña o producto) que cae dentro del periodo A–B, según el gasto diario.
-function factorMesCampana(filas, campo, clave){
-  const tot = new Map(), den = new Map();
-  filas.forEach(r=>{ const k = clave(r)+"|"+r.fecha.slice(0,7); tot.set(k,(tot.get(k)||0)+r[campo]); if(enRango(r.fecha,A,B)) den.set(k,(den.get(k)||0)+r[campo]); });
-  return (c, mes) => { const k = c+"|"+mes, t = tot.get(k)||0; return t>0 ? (den.get(k)||0)/t : 0; };
+function factorMesCampana(filas, campo, clave, seg, claveSeg, campoSeg){
+  // Factor = gasto real de la campaña (o producto) dentro del periodo / gasto total del desglose por país de ese mes.
+  // Así la suma por país es exactamente el gasto del periodo. Claves con gasto pero sin desglose -> sinPais.
+  const den = new Map(), segTot = new Map();
+  filas.forEach(r=>{ if(!enRango(r.fecha,A,B)) return; const k = clave(r)+"|"+r.fecha.slice(0,7); den.set(k,(den.get(k)||0)+r[campo]); });
+  seg.forEach(r=>{ const k = claveSeg(r)+"|"+r.mes; segTot.set(k,(segTot.get(k)||0)+(r[campoSeg]||0)); });
+  const sinPais = []; den.forEach((v,k)=>{ if(v>0 && !(segTot.get(k)>0)) sinPais.push([k.split("|")[0], v]); });
+  return {f:(c, mes) => { const k = c+"|"+mes, t = segTot.get(k)||0; return t>0 ? (den.get(k)||0)/t : 0; }, sinPais};
 }
 // Demanda TAC (Google Travel Analytics Center), carga manual: periodo fijo, no depende del filtro de fechas.
 const TAC = T(D.tac);
@@ -1662,11 +1673,16 @@ function renderMercados(){
   MG4.filter(r=>enRango(r.fecha,A,B) && okP(r.producto)).forEach(r=>{ const o=get(r.iso); o.ses+=r.sesiones; o.wa+=r.clics_wa; o.comp+=r.compras; o.ing+=r.ingresos; });
   // Meta y Google por país vienen por MES: se toma solo la parte del mes que cae en el periodo, en proporción al gasto
   // diario de cada campaña (Meta) o de cada producto (Google). Así la inversión por país suma lo mismo que el resto del informe.
-  const fM = factorMesCampana(META_ALL, "gasto", r=>r.c), fG = factorMesCampana(GOO_ALL, "costo", r=>GCAMP[r.c].producto);
-  MMP.filter(r=>meses.has(r.mes) && pesoC(r.c)>0).forEach(r=>{ const k=fM(r.c, r.mes)*pesoC(r.c), o=get(r.iso); o.meta+=r.gasto*k; o.mconv+=r.conversaciones*k; });
-  MGP.filter(r=>meses.has(r.mes) && pesoP(r.producto)>0).forEach(r=>{ const k=fG(r.producto, r.mes)*pesoP(r.producto), o=get(r.iso); o.goo+=r.costo*k; o.gclics+=r.clics*k; o.gconv+=r.conversiones*k; });
+  const fM = factorMesCampana(META_ALL, "gasto", r=>r.c, MMP.filter(r=>meses.has(r.mes)), r=>r.c, "gasto"),
+        fG = factorMesCampana(GOO_ALL, "costo", r=>GCAMP[r.c].producto, MGP.filter(r=>meses.has(r.mes)), r=>r.producto, "costo");
+  MMP.filter(r=>meses.has(r.mes) && pesoC(r.c)>0).forEach(r=>{ const k=fM.f(r.c, r.mes)*pesoC(r.c), o=get(r.iso); o.meta+=r.gasto*k; o.mconv+=r.conversaciones*k; });
+  MGP.filter(r=>meses.has(r.mes) && pesoP(r.producto)>0).forEach(r=>{ const k=fG.f(r.producto, r.mes)*pesoP(r.producto), o=get(r.iso); o.goo+=r.costo*k; o.gclics+=r.clics*k; o.gconv+=r.conversiones*k; });
+  // gasto de campañas/productos sin desglose por país en ese mes: fila "Sin dato de país" (para que cuadre)
+  fM.sinPais.forEach(([c,v])=>{ const w=pesoC(c); if(w>0) get("?Sin dato de país").meta += v*w; });
+  fG.sinPais.forEach(([c,v])=>{ const w=pesoP(c); if(w>0) get("?Sin dato de país").goo += v*w; });
   const arr = Object.values(P).filter(o=>o.ses+o.meta+o.goo>0).sort((a,b)=>b.ses-a.ses);
   const T_ = arr.reduce((s,o)=>({ses:s.ses+o.ses, ing:s.ing+o.ing, comp:s.comp+o.comp, inv:s.inv+o.meta+o.goo}), {ses:0,ing:0,comp:0,inv:0});
+  TOT.mercados = {...T_, meta: arr.reduce((t,o)=>t+o.meta,0), google: arr.reduce((t,o)=>t+o.goo,0)};
   const co = P["CO"] || {ses:0,ing:0,comp:0,meta:0,goo:0};
   const ext = {ses:T_.ses-co.ses, ing:T_.ing-co.ing, comp:T_.comp-co.comp, inv:T_.inv-co.meta-co.goo};
   $("#kpisMerc").innerHTML = `
@@ -1697,7 +1713,8 @@ function renderMercados(){
   const ca = Object.values(Ci).sort((a,b)=>b.ses-a.ses);
   $("#tablaCiudad").innerHTML = ca.length ? `<table><thead><tr><th>Ciudad</th><th>País</th><th class="n">Sesiones</th><th class="n">Clics WhatsApp</th><th class="n">% clic WA</th><th class="n">Compras</th><th class="n">Ingreso web</th></tr></thead><tbody>
     ${ca.map(o=>`<tr><td>${o.c}</td><td>${nomPais(o.iso)}</td><td class="n">${fmt(o.ses)}</td><td class="n">${fmt(o.wa)}</td><td class="n">${pct(div(o.wa,o.ses),2)}</td><td class="n">${fmt(o.comp)}</td><td class="n">${millones(o.ing)}</td></tr>`).join("")}</tbody></table>` : '<div class="vacio">Sin datos.</div>';
-  const R = {}; MMR.filter(r=>meses.has(r.mes) && pesoC(r.c)>0).forEach(r=>{ const k=fM(r.c, r.mes)*pesoC(r.c), o=R[r.region]||(R[r.region]={r:r.region,g:0,i:0,cl:0}); o.g+=r.gasto*k; o.i+=r.impresiones*k; o.cl+=r.clics_enlace*k; });
+  const fR = factorMesCampana(META_ALL, "gasto", r=>r.c, MMR.filter(r=>meses.has(r.mes)), r=>r.c, "gasto");
+  const R = {}; MMR.filter(r=>meses.has(r.mes) && pesoC(r.c)>0).forEach(r=>{ const k=fR.f(r.c, r.mes)*pesoC(r.c), o=R[r.region]||(R[r.region]={r:r.region,g:0,i:0,cl:0}); o.g+=r.gasto*k; o.i+=r.impresiones*k; o.cl+=r.clics_enlace*k; });
   const ra = Object.values(R).filter(o=>o.g>0).sort((a,b)=>b.g-a.g); const RG = ra.reduce((s,o)=>s+o.g,0);
   $("#tablaRegion").innerHTML = ra.length ? `<table><thead><tr><th>Región</th><th class="n">Inversión</th><th class="n">% inversión</th><th class="n">Impresiones</th><th class="n">Clics</th><th class="n">CTR</th><th class="n">Costo por clic</th></tr></thead><tbody>
     ${ra.slice(0,40).map(o=>`<tr><td>${o.r}</td><td class="n">${millones(o.g)}</td><td class="n">${pct(div(o.g,RG))}</td><td class="n">${fmt(o.i)}</td><td class="n">${fmt(o.cl)}</td><td class="n">${pct(div(o.cl,o.i),2)}</td><td class="n">${money(div(o.g,o.cl))}</td></tr>`).join("")}</tbody></table>` : '<div class="vacio">Sin datos.</div>';
@@ -1737,7 +1754,9 @@ function medidoCampanas(a, b){
   const out = {meta:{}, google:{}, sin:{meta:{pax:0,venta:0}, google:{pax:0,venta:0}}};
   const nombres = {meta: new Map(MCAMP.map((c,i)=>[c.campaign_name, i])), google: new Map(GCAMP.map((c,i)=>[c.campana, i]))};
   const tot = {meta:{pax:0,venta:0}, google:{pax:0,venta:0}};
-  TXC.filter(t=>enRango(t.fecha,a,b)).forEach(t=>{ for(const pl of ["meta","google"]){ const c = nombres[pl].get(t.campana); if(c==null) continue;
+  // Solo compras que el resumen también atribuye a esa plataforma (villas: afiliado del motor de reservas; pasadías:
+  // fuente de GA4). Si Google Analytics y el motor no coinciden, manda el resumen: tabla y resumen no se contradicen.
+  TXC.filter(t=>enRango(t.fecha,a,b)).forEach(t=>{ for(const pl of ["meta","google"]){ const c = nombres[pl].get(t.campana); if(c==null || (t.plataforma && t.plataforma!==pl)) continue;
     const o = out[pl][c] || (out[pl][c] = {pax:0, venta:0, compras:0}); o.pax += t.pax; o.venta += t.ingresos; o.compras += t.compras; tot[pl].pax += t.pax; tot[pl].venta += t.ingresos; } });
   const d = cvDatos(a, b, true);
   for(const pl of ["meta","google"]){ const P = ["Villas","Pasadías"].reduce((s_,p)=>({pax:s_.pax+d[p][pl].pax, venta:s_.venta+d[p][pl].venta}),{pax:0,venta:0});
@@ -1834,6 +1853,8 @@ function renderCampanas(){
       + `</tr>`).join("")}</tbody></table>` : '<div class="vacio">Sin inversión Meta en el rango.</div>';
   const ag = {}; GOO.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const o=ag[r.c]||(ag[r.c]=sumar([],CG)); CG.forEach(c=>o[c]+=r[c]); });
   const fg = Object.entries(ag).map(([c,o])=>({...GCAMP[c],...o})).sort((a,b)=>activaPrimero(a,b) || b.costo-a.costo);
+  TOT.campanas = {metaGasto: filas.reduce((t,o)=>t+o.gasto,0), metaM2: filas.reduce((t,o)=>t+(o.mensaje_2||0),0), gooCosto: fg.reduce((t,o)=>t+o.costo,0),
+    gooMedido: ATR ? Object.values(ATR.google).reduce((t,o)=>t+o.venta,0) : null, gooSin: ATR ? ATR.sin.google.venta : null};
   $("#tablaCampG").innerHTML = fg.length ? `<table><thead><tr><th>Campaña</th><th>Estado</th><th>Cuenta</th><th>Tipo</th><th class="n">Costo</th><th class="n">Clics</th><th class="n">CPC</th>${DIR?thAtr:'<th class="n">Conversiones</th><th class="n">Costo/conv.</th><th class="n">Valor conv.</th>'}</tr></thead><tbody>
     ${fg.map(o=>`<tr><td>${o.campana}</td><td>${chipEstado(o.estado)}</td><td>${o.cuenta}</td><td>${o.tipo}</td><td class="n">${millones(o.costo)}</td><td class="n">${fmt(o.clics)}</td><td class="n">${money(div(o.costo,o.clics))}</td>${DIR?celdasAtr("google",o,o.costo):`<td class="n">${fmt(o.conversiones,1)}</td><td class="n">${money(div(o.costo,o.conversiones))}</td><td class="n">${millones(o.valor)}</td>`}</tr>`).join("")}</tbody>${DIR?pieSin("google",7):""}</table>` : '<div class="vacio">Sin inversión Google en el rango.</div>';
   if(DIR){
@@ -2105,18 +2126,21 @@ function renderMeta(){
 // Inversión del mes en curso vs presupuesto aprobado (config/presupuesto_aprobado.csv). No depende del filtro de fechas.
 function renderInvMes(){
   const mes = D.rango.max.slice(0,7), ap = (CAL.aprobado||{})[mes] || {};
-  const inv = {Meta: META_ALL.filter(r=>r.fecha.startsWith(mes)).reduce((t,r)=>t+r.gasto,0),
-               Google: GOO_ALL.filter(r=>r.fecha.startsWith(mes)).reduce((t,r)=>t+r.costo,0)};
-  const hasta = {Meta: CAL.fin_meta, Google: CAL.fin_google};
+  // Mismo corte que el resto del informe (último día completo, el del Front): así la inversión no difiere del resumen
+  const corte = (D.rango.front_hasta && D.rango.front_hasta < D.rango.max) ? D.rango.front_hasta : D.rango.max;
+  const inv = {Meta: META_ALL.filter(r=>r.fecha.startsWith(mes) && r.fecha<=corte).reduce((t,r)=>t+r.gasto,0),
+               Google: GOO_ALL.filter(r=>r.fecha.startsWith(mes) && r.fecha<=corte).reduce((t,r)=>t+r.costo,0)};
+  const hasta = {Meta: null, Google: null};
   const fila = (lbl, a, i, h) => { const u = a ? i/a : null;
     const barra = u==null ? "" : `<div style="height:6px;background:var(--cream-2);border-radius:3px;margin-top:5px"><div style="height:6px;width:${Math.min(100,u*100)}%;background:${u>1?"var(--neg)":"var(--teal-d)"};border-radius:3px"></div></div>`;
     return `<tr><td>${lbl}${h?` <span class="nota">(datos al ${h})</span>`:""}</td><td class="n">${a?money(a):"sin definir"}</td><td class="n">${money(i)}</td><td class="n">${u==null?"—":pct(u)}${barra}</td><td class="n">${a?money(a-i):"—"}</td></tr>`; };
-  const aT = (ap.Meta||0)+(ap.Google||0), iT = inv.Meta+inv.Google;
+  const aT = (ap.Meta||0)+(ap.Google||0), iT = inv.Meta+inv.Google; TOT.invMes = {meta:inv.Meta, google:inv.Google, mes};
   $("#tablaInvMes").innerHTML = `<table class="cv"><thead><tr><th>Plataforma</th><th class="n">Aprobado</th><th class="n">Invertido</th><th class="n">% usado</th><th class="n">Disponible</th></tr></thead><tbody>
     ${fila("Meta Ads", ap.Meta, inv.Meta, hasta.Meta)}${fila("Google Ads", ap.Google, inv.Google, hasta.Google)}
     <tr class="tot"><td>Total</td><td class="n">${aT?money(aT):"sin definir"}</td><td class="n">${money(iT)}</td><td class="n">${aT?pct(iT/aT):"—"}</td><td class="n">${aT?money(aT-iT):"—"}</td></tr></tbody></table>`;
   const [y,m] = mes.split("-").map(Number);
-  $("#notaInvMes").innerHTML = `Mes en curso (${new Date(y,m-1,1).toLocaleDateString("es-CO",{month:"long",year:"numeric"})}), todas las campañas de los dos productos. No cambia con el filtro de fechas.`;
+  const fc = d => { const [yy,mm,dd] = d.split("-").map(Number); return new Date(yy,mm-1,dd).toLocaleDateString("es-CO",{day:"numeric",month:"long"}); };
+  $("#notaInvMes").innerHTML = `Mes en curso (${new Date(y,m-1,1).toLocaleDateString("es-CO",{month:"long",year:"numeric"})}), todas las campañas de los dos productos, invertido hasta el ${fc(corte)} (mismo corte que el resto del informe). No cambia con el filtro de fechas.`;
 }
 function render(){
   A=$("#desde").value; B=$("#hasta").value; if(A>B){ [A,B]=[B,A]; }
