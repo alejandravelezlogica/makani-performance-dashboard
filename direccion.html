@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261120132847"></script>
+<script src="data.js?v=20261120141220"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -301,6 +301,7 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
    .solo-equipo = se oculta en dirección; .solo-direccion = solo aparece en dirección. */
 body[data-vista="direccion"] .solo-equipo{display:none!important}
 body:not([data-vista="direccion"]) .solo-direccion{display:none!important}
+body[data-vista="direccion"] .grid2:has(> .solo-equipo){grid-template-columns:1fr}
 </style>
 </head>
 <body data-vista="direccion">
@@ -399,6 +400,10 @@ body:not([data-vista="direccion"]) .solo-direccion{display:none!important}
   </section>
 
   <section id="embudo">
+    <div class="card solo-direccion"><h3 id="tituloDig">Evolución digital</h3>
+      <div class="agr" id="metDig"><span>Ver</span><button data-m="pax" class="on">Pax</button><button data-m="venta">Venta</button><button data-m="reservas">Reservas</button></div>
+      <div class="agr" id="agrDig"><span>Agrupar</span><button data-g="auto" class="on">Automático</button><button data-g="dia">Día</button><button data-g="semana">Semana</button><button data-g="mes">Mes</button></div>
+      <div class="nota" id="notaDig"></div><div class="chart" id="chDig"></div></div>
     <div class="card solo-equipo"><h3>Embudo Meta → WhatsApp → venta</h3>
       <div class="nota">Cada tarjeta es una etapa; entre etapas, el % de personas que avanza y su cambio frente al periodo de comparación. La etapa marcada es la que más empeoró: ahí está la mayor oportunidad. Un % mayor a 100 significa que el front también registra chats orgánicos. Las tasas de Meta del año anterior vienen de campañas con otros objetivos (tráfico y ventas web), así que en esas etapas la comparación es solo orientativa.</div>
       <div class="fuga" id="fuga"></div>
@@ -772,7 +777,7 @@ let A, B, CA, CB;
 function setRango(a,b){ $("#desde").value=a; $("#hasta").value=b; render(); }
 function preset(p){
   // Dirección: con "Mes actual", las gráficas de costo por chat y costo por pax arrancan agrupadas por semana
-  if(DIR) ["#agrCpi","#agrCac"].forEach(sel=>document.querySelectorAll(`${sel} button`).forEach(b=>b.classList.toggle("on", b.dataset.g===(p==="mes"?"semana":"auto"))));
+  if(DIR) ["#agrCpi","#agrCac","#agrDig"].forEach(sel=>document.querySelectorAll(`${sel} button`).forEach(b=>b.classList.toggle("on", b.dataset.g===(p==="mes"?"semana":"auto"))));
   // Fin = último día COMPLETO común: el del Front (los datos de Meta/Google del día de la descarga van parciales
   // y ese día aún no tiene reservas registradas, lo que inflaba el costo por reserva).
   const max = (D.rango.front_hasta && D.rango.front_hasta < D.rango.max) ? D.rango.front_hasta : D.rango.max; const hoy = toD(max);
@@ -1224,6 +1229,7 @@ function cocientePorPeriodo(cubos, num, den){
 }
 const NOM_MODO = {dia:"día", semana:"semana (lunes a domingo)", mes:"mes"};
 function renderKpisPrincipales(){
+  renderEvolDig();
   const tot = (m) => { let s=0; for(let f=A; f<=B; f=addDays(f,1)) s+=m.get(f)||0; return s; };
   const lineaMarca = (name, data, color) => ({name, type:"line", data, smooth:true, connectNulls:true, symbol:"none", itemStyle:{color}, lineStyle:{width:2, color}});
   const ejeMoney = {type:"value", axisLabel:{formatter:v=>money(v)}, splitLine:{lineStyle:{color:"#EFEBE3"}}};
@@ -1259,6 +1265,31 @@ function renderKpisPrincipales(){
     xAxis:{type:"category", data:k2.cubos.map(c=>c.label), axisLabel:{hideOverlap:true}}, yAxis:ejeMoney,
     tooltip:{trigger:"axis",valueFormatter:v=>v==null?"sin reservas":money(v)},
     series:[lineaMarca("Costo por pax", cocientePorPeriodo(k2.cubos,inv,pax), C.blood)]}, true);
+}
+document.querySelectorAll("#agrDig button, #metDig button").forEach(b=>b.onclick=()=>{ b.parentElement.querySelectorAll("button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); renderEvolDig(); });
+// Dirección: evolución de pax / venta / reservas digitales (WhatsApp IG y Web del Front + motor web de villas + Palco
+// online), por fecha de compra, totales por periodo. Sigue el filtro de producto y cuadra con el resumen.
+function renderEvolDig(){
+  if(!DIR) return;
+  const prod = $("#producto").value, met = ($("#metDig button.on")||{}).dataset?.m || "pax";
+  const k = cubosPeriodo(A, B, "#agrDig");
+  const val = {
+    pax: [FRONT.map(r=>({fecha:r.fecha, v:(r.pax_ig||0)+(r.pax_web||0)})), CRSA.map(r=>({fecha:r.fecha, v:r.pax||0})), ONLP.map(r=>({fecha:r.fecha, v:r.pax||0}))],
+    venta: [FRONT.map(r=>({fecha:r.fecha, v:(r.venta_ig||0)+(r.venta_web||0)})), CRSA.map(r=>({fecha:r.fecha, v:r.venta||0})), ONLP.map(r=>({fecha:r.fecha, v:r.ingresos||0}))],
+    reservas: [FRONT.map(r=>({fecha:r.fecha, v:(r.res_ig||0)+(r.res_web||0)})), CRSA.map(r=>({fecha:r.fecha, v:r.reservas||0})), ONLP.map(r=>({fecha:r.fecha, v:r.compras||0}))],
+  }[met];
+  const filas = [...val[0], ...(prod!=="Pasadías" ? val[1] : []), ...(prod!=="Villas" ? val[2] : [])];
+  const serie = sumaPorFecha(filas, r=>r.v);
+  const datos = k.cubos.map(c=>{ let t=0; for(let f=c.a; f<=c.b; f=addDays(f,1)) t+=serie.get(f)||0; return Math.round(t); });
+  const total = datos.reduce((x,y)=>x+y,0), nom = {pax:"Pax", venta:"Venta sin IVA", reservas:"Reservas"}[met];
+  const f = met==="venta" ? money : fmt;
+  $("#tituloDig").textContent = `Evolución digital · ${nom}${prod?` · ${prod}`:""}`;
+  $("#notaDig").innerHTML = `${nom} digitales (WhatsApp de Instagram y Web, motor web de villas y compras de pasadías en línea), por fecha de compra, con el total de cada ${NOM_MODO[k.modo]}. En el periodo: <b>${f(total)}</b>.`;
+  chart("chDig").setOption({...base, grid:{left:met==="venta"?80:60,right:30,top:30,bottom:50}, legend:{show:false},
+    xAxis:{type:"category", data:k.cubos.map(c=>c.label), axisLabel:{hideOverlap:true}},
+    yAxis:{type:"value", axisLabel:{formatter:v=>met==="venta"?money(v):fmt(v)}, splitLine:{lineStyle:{color:"#EFEBE3"}}},
+    tooltip:{trigger:"axis", valueFormatter:v=>f(v)},
+    series:[{name:nom, type:"line", data:datos, smooth:true, symbol:"none", itemStyle:{color:C.ocean}, lineStyle:{width:2, color:C.ocean}}]}, true);
 }
 document.querySelectorAll("#agrCpi button, #agrCac button").forEach(b=>b.onclick=()=>{ b.parentElement.querySelectorAll("button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); renderKpisPrincipales(); });
 
@@ -1640,7 +1671,7 @@ function renderKeywords(){
     const k = r.palabra+"|"+r.concordancia+"|"+r.campana;
     const o = ag[k] || (ag[k] = {palabra:r.palabra, concordancia:r.concordancia, campana:r.campana, estado:r.estado, costo:0, clics:0, impresiones:0, conversiones:0});
     ["costo","clics","impresiones","conversiones"].forEach(c=>o[c]+=r[c]||0); });
-  const filas = Object.values(ag).sort((a,b)=>b.costo-a.costo), top = filas.slice(0,40);
+  const filas = Object.values(ag).sort((a,b)=>(b.estado==="Activa")-(a.estado==="Activa") || b.costo-a.costo), top = filas.slice(0,40);
   $("#notaKw").innerHTML = `Palabras por las que aparecen los anuncios de búsqueda de la cuenta COPS (la "Makani cuenta 2" no tiene API). Datos mensuales: se incluyen los meses que tocan el rango. <b>CPC</b> = lo que cuesta cada clic. Las ${fmt(top.length)} de mayor costo${filas.length>top.length?` de ${fmt(filas.length)}`:""}${prod?`; solo campañas de ${prod}`:""}.`;
   $("#tablaKw").innerHTML = top.length ? `<table><thead><tr><th>Palabra clave</th><th>Concordancia</th><th>Campaña</th><th>Estado</th><th class="n">Costo</th><th class="n">Clics</th><th class="n">CPC</th><th class="n">Impresiones</th><th class="n">Conversiones</th></tr></thead><tbody>
     ${top.map(o=>`<tr><td><b>${o.palabra}</b></td><td>${o.concordancia}</td><td>${o.campana}</td><td>${chipEstado(o.estado)}</td><td class="n">${millones(o.costo)}</td><td class="n">${fmt(o.clics)}</td><td class="n">${money(div(o.costo,o.clics))}</td><td class="n">${fmt(o.impresiones)}</td><td class="n">${fmt(o.conversiones,DIR?0:1)}</td></tr>`).join("")}</tbody></table>`
@@ -1737,7 +1768,8 @@ function renderCampanas(){
       <td class="n" style="border-left:2px solid #D5D3CB"><b>${money(cpr(o.meta+o.goo,o.rtot,m))}</b></td></tr>`; }).join("")}</tbody></table>`;
   // tabla meta
   const agg = {}; META.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const o=agg[r.c]||(agg[r.c]={...sumar([],CM)}); CM.forEach(c=>o[c]+=r[c]); });
-  const filas = Object.entries(agg).map(([c,o])=>({...MCAMP[c],...o})).sort((a,b)=>b.gasto-a.gasto);
+  const activaPrimero = (a,b) => (b.estado==="Activa") - (a.estado==="Activa");   // por defecto: activas arriba, luego por gasto
+  const filas = Object.entries(agg).map(([c,o])=>({...MCAMP[c],...o})).sort((a,b)=>activaPrimero(a,b) || b.gasto-a.gasto);
   // Métricas de WhatsApp solo para campañas cuyo objetivo es mensajes; las demás muestran "—" (no es su objetivo).
   // Dirección: columna "Resultado según el objetivo" con su costo; sin costo por conversación ni % bloqueo.
   const esWA = o => ["Interacción / WhatsApp","Conversaciones WhatsApp"].includes(o.etapa);
@@ -1754,7 +1786,7 @@ function renderCampanas(){
              : `<td class="n">${wa(o,fmt(o.conversaciones))}</td><td class="n">${wa(o,money(div(o.gasto,o.conversaciones)))}</td><td class="n">${wa(o,pct(div(o.mensaje_2,o.conversaciones)))}</td><td class="n">${wa(o,money(div(o.gasto,o.mensaje_2)))}</td><td class="n">${wa(o,pct(div(o.bloqueos,o.conversaciones)))}</td><td class="n">${fmt(o.compras_web)}</td><td class="n">${o.valor_compras_web?fmt(o.valor_compras_web/o.gasto,1)+"x":"—"}</td>`)
       + `</tr>`).join("")}</tbody></table>` : '<div class="vacio">Sin inversión Meta en el rango.</div>';
   const ag = {}; GOO.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const o=ag[r.c]||(ag[r.c]=sumar([],CG)); CG.forEach(c=>o[c]+=r[c]); });
-  const fg = Object.entries(ag).map(([c,o])=>({...GCAMP[c],...o})).sort((a,b)=>b.costo-a.costo);
+  const fg = Object.entries(ag).map(([c,o])=>({...GCAMP[c],...o})).sort((a,b)=>activaPrimero(a,b) || b.costo-a.costo);
   $("#tablaCampG").innerHTML = fg.length ? `<table><thead><tr><th>Campaña</th><th>Estado</th><th>Cuenta</th><th>Tipo</th><th class="n">Costo</th><th class="n">Clics</th><th class="n">CPC</th><th class="n">Conversiones</th><th class="n">Costo/conv.</th><th class="n">Valor conv.</th>${DIR?thAtr:""}</tr></thead><tbody>
     ${fg.map(o=>`<tr><td>${o.campana}</td><td>${chipEstado(o.estado)}</td><td>${o.cuenta}</td><td>${o.tipo}</td><td class="n">${millones(o.costo)}</td><td class="n">${fmt(o.clics)}</td><td class="n">${money(div(o.costo,o.clics))}</td><td class="n">${fmt(o.conversiones,1)}</td><td class="n">${money(div(o.costo,o.conversiones))}</td><td class="n">${millones(o.valor)}</td>${DIR?celdasAtr("google",o,o.costo):""}</tr>`).join("")}</tbody></table>` : '<div class="vacio">Sin inversión Google en el rango.</div>';
   if(DIR){
