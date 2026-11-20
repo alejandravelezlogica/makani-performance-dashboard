@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261120141220"></script>
+<script src="data.js?v=20261120141958"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -301,7 +301,7 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
    .solo-equipo = se oculta en dirección; .solo-direccion = solo aparece en dirección. */
 body[data-vista="direccion"] .solo-equipo{display:none!important}
 body:not([data-vista="direccion"]) .solo-direccion{display:none!important}
-body[data-vista="direccion"] .grid2:has(> .solo-equipo){grid-template-columns:1fr}
+body[data-vista="direccion"] .grid2:has(> .solo-equipo):not(:has(> .solo-direccion)){grid-template-columns:1fr}
 </style>
 </head>
 <body>
@@ -400,10 +400,6 @@ body[data-vista="direccion"] .grid2:has(> .solo-equipo){grid-template-columns:1f
   </section>
 
   <section id="embudo">
-    <div class="card solo-direccion"><h3 id="tituloDig">Evolución digital</h3>
-      <div class="agr" id="metDig"><span>Ver</span><button data-m="pax" class="on">Pax</button><button data-m="venta">Venta</button><button data-m="reservas">Reservas</button></div>
-      <div class="agr" id="agrDig"><span>Agrupar</span><button data-g="auto" class="on">Automático</button><button data-g="dia">Día</button><button data-g="semana">Semana</button><button data-g="mes">Mes</button></div>
-      <div class="nota" id="notaDig"></div><div class="chart" id="chDig"></div></div>
     <div class="card solo-equipo"><h3>Embudo Meta → WhatsApp → venta</h3>
       <div class="nota">Cada tarjeta es una etapa; entre etapas, el % de personas que avanza y su cambio frente al periodo de comparación. La etapa marcada es la que más empeoró: ahí está la mayor oportunidad. Un % mayor a 100 significa que el front también registra chats orgánicos. Las tasas de Meta del año anterior vienen de campañas con otros objetivos (tráfico y ventas web), así que en esas etapas la comparación es solo orientativa.</div>
       <div class="fuga" id="fuga"></div>
@@ -411,6 +407,10 @@ body[data-vista="direccion"] .grid2:has(> .solo-equipo){grid-template-columns:1f
       <div class="nota" id="embudoCtx" style="margin-top:14px"></div>
     </div>
     <div class="grid2">
+      <div class="card solo-direccion"><h3 id="tituloDig">Evolución digital</h3>
+      <div class="agr" id="metDig"><span>Ver</span><button data-m="pax" class="on">Pax</button><button data-m="venta">Venta</button><button data-m="reservas">Reservas</button></div>
+      <div class="agr" id="agrDig"><span>Agrupar</span><button data-g="auto" class="on">Automático</button><button data-g="dia">Día</button><button data-g="semana">Semana</button><button data-g="mes">Mes</button></div>
+      <div class="nota" id="notaDig"></div><div class="chart" id="chDig"></div></div>
       <div class="card solo-equipo"><h3>Chats Meta vs leads IG registrados</h3><div class="nota">Conversaciones iniciadas y chats con 2+ mensajes (Meta) frente a los leads IG del front. Los leads IG se parecen más a los chats con 2+ mensajes: el front anota a quien realmente conversa.</div><div class="chart" id="chConvVsLeads"></div></div>
       <div class="card"><h3>Calidad de la conversación (Meta)</h3><div class="nota">Solo puntos con 30 o más conversaciones (antes de jun-2026 casi no hubo campañas a WhatsApp). % de conversaciones iniciadas en las que la persona envió un 2º mensaje, es decir, siguió escribiendo después del mensaje automático del anuncio. <span class="solo-equipo">Bloqueos = la persona bloqueó a la empresa.</span></div><div class="chart" id="chCalidad"></div></div>
     </div>
