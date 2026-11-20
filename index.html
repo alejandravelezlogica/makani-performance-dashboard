@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261120081918"></script>
+<script src="data.js?v=20261120100623"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -292,6 +292,10 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
   .insight{padding:12px 14px}
   footer{padding:30px 16px 40px}
 }
+/* Vista "direccion" (informe para la gerencia del dueño): misma plantilla y datos, menos secciones.
+   .solo-equipo = se oculta en dirección; .solo-direccion = solo aparece en dirección. */
+body[data-vista="direccion"] .solo-equipo{display:none!important}
+body:not([data-vista="direccion"]) .solo-direccion{display:none!important}
 </style>
 </head>
 <body>
@@ -300,7 +304,7 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
     <div class="marca">
       <img src="assets/logo_makani_dorado_720.png" alt="Makani Luxury Wanderlust">
       <div class="eyebrow">Performance digital</div>
-      <h1>Meta · Google Ads · WhatsApp</h1>
+      <h1><span class="solo-equipo">Meta · Google Ads · WhatsApp</span><span class="solo-direccion">Informe de dirección</span></h1>
       <div class="sub" id="sub"></div>
     </div>
     <button type="button" class="btn-filtros" id="btnFiltros" aria-expanded="false" aria-controls="panelFiltros">
@@ -332,15 +336,15 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
 </header>
 <nav id="nav">
   <a data-s="resumen" class="on">Resumen</a>
-  <a data-s="embudo">Embudo WhatsApp</a>
-  <a data-s="horas">Días y horas</a>
-  <a data-s="segmentos">Segmentos y desperdicio</a>
-  <a data-s="calculadora">Calculadora</a>
+  <a data-s="embudo"><span class="solo-equipo">Embudo WhatsApp</span><span class="solo-direccion">Eficiencia</span></a>
+  <a class="solo-equipo" data-s="horas">Días y horas</a>
+  <a class="solo-equipo" data-s="segmentos">Segmentos y desperdicio</a>
+  <a class="solo-equipo" data-s="calculadora">Calculadora</a>
   <a data-s="mercados">Mercados</a>
   <a data-s="campanas">Campañas</a>
-  <a data-s="presupuesto">Presupuesto óptimo</a>
+  <a class="solo-equipo" data-s="presupuesto">Presupuesto óptimo</a>
   <a data-s="creativos">Creativos</a>
-  <a data-s="notas">Metodología</a>
+  <a class="solo-equipo" data-s="notas">Metodología</a>
 </nav>
 <main>
   <div class="periodo" id="periodo"></div>
@@ -349,8 +353,8 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
     <div id="metaMes"></div>
     <div class="card" id="cardCV">
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:space-between">
-        <h3 style="margin:0">Cómo vamos: venta digital por canal</h3>
-        <label style="font-size:12.5px;color:var(--mid)">Atribución
+        <h3 style="margin:0"><span class="solo-equipo">Cómo vamos: venta digital por canal</span><span class="solo-direccion">Inversión, pax y venta digital</span></h3>
+        <label class="solo-equipo" style="font-size:12.5px;color:var(--mid)">Atribución
           <select class="sel" id="modoAtr">
             <option value="aprox">Aproximada por tráfico (≈)</option>
             <option value="medida">Solo medida</option>
@@ -360,8 +364,8 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
       <div class="nota" id="notaCV"></div>
       <div id="tablaCV"></div>
     </div>
-    <div class="veredicto" id="veredicto"></div>
-    <div class="card">
+    <div class="veredicto solo-equipo" id="veredicto"></div>
+    <div class="card solo-equipo">
       <h3>Pick-up: reservas por fecha de registro</h3>
       <div class="nota" id="notaLleg"></div>
       <select class="sel" id="metLleg">
@@ -371,15 +375,15 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
       </select>
       <div class="agr" id="agrLleg"><span>Agrupar</span><button data-g="auto" class="on">Automático</button><button data-g="dia">Día</button><button data-g="semana">Semana</button><button data-g="mes">Mes</button></div>
     </div>
-    <div class="card"><h3>Villas · CRS y WhatsApp (Instagram / Web)</h3><div class="tabla" id="totLlegV"></div><div class="chart alto" id="chLlegV"></div><div id="avisoLlegV"></div></div>
-    <div class="card"><h3>Pasadías · Palco y WhatsApp (Instagram / Web)</h3><div class="tabla" id="totLlegP"></div><div class="chart alto" id="chLlegP"></div></div>
+    <div class="card solo-equipo"><h3>Villas · CRS y WhatsApp (Instagram / Web)</h3><div class="tabla" id="totLlegV"></div><div class="chart alto" id="chLlegV"></div><div id="avisoLlegV"></div></div>
+    <div class="card solo-equipo"><h3>Pasadías · Palco y WhatsApp (Instagram / Web)</h3><div class="tabla" id="totLlegP"></div><div class="chart alto" id="chLlegP"></div></div>
     <div class="grid2">
       <div class="card canal"><h3>Meta Ads</h3><div id="canalMeta"></div></div>
       <div class="card canal"><h3>Google Ads</h3><div id="canalGoogle"></div></div>
     </div>
     <div class="card"><h3>Inversión y reservas en el tiempo</h3><div class="nota">Diario en rangos de hasta 3 meses; semanal en rangos más largos. Barras: inversión en Meta y Google. Línea: reservas digitales (IG + Web: WhatsApp, CRS y Palco). Línea discontinua: reservas digitales del periodo de comparación (sin dato antes de sep-2025).</div><div class="chart" id="chTendencia"></div></div>
-    <div class="card"><h3>Lectura del periodo</h3><div class="insights" id="insights"></div></div>
-    <details class="card mas" id="detMas"><summary>Ver todos los indicadores</summary>
+    <div class="card solo-equipo"><h3>Lectura del periodo</h3><div class="insights" id="insights"></div></div>
+    <details class="card mas solo-equipo" id="detMas"><summary>Ver todos los indicadores</summary>
       <div class="kpis" id="kpis" style="margin-top:18px"></div>
       <div class="grid2">
         <div><h3 class="sub3">Mezcla de inversión</h3><div class="chart" id="chMix"></div></div>
@@ -389,21 +393,21 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
   </section>
 
   <section id="embudo">
-    <div class="card"><h3>Embudo Meta → WhatsApp → venta</h3>
+    <div class="card solo-equipo"><h3>Embudo Meta → WhatsApp → venta</h3>
       <div class="nota">Cada tarjeta es una etapa; entre etapas, el % de personas que avanza y su cambio frente al periodo de comparación. La etapa marcada es la que más empeoró: ahí está la mayor oportunidad. Un % mayor a 100 significa que el front también registra chats orgánicos. Las tasas de Meta del año anterior vienen de campañas con otros objetivos (tráfico y ventas web), así que en esas etapas la comparación es solo orientativa.</div>
       <div class="fuga" id="fuga"></div>
       <div class="pasos" id="pasos"></div>
       <div class="nota" id="embudoCtx" style="margin-top:14px"></div>
     </div>
     <div class="grid2">
-      <div class="card"><h3>Chats Meta vs leads IG registrados</h3><div class="nota">Conversaciones iniciadas y chats con 2+ mensajes (Meta) frente a los leads IG del front. Los leads IG se parecen más a los chats con 2+ mensajes: el front anota a quien realmente conversa.</div><div class="chart" id="chConvVsLeads"></div></div>
+      <div class="card solo-equipo"><h3>Chats Meta vs leads IG registrados</h3><div class="nota">Conversaciones iniciadas y chats con 2+ mensajes (Meta) frente a los leads IG del front. Los leads IG se parecen más a los chats con 2+ mensajes: el front anota a quien realmente conversa.</div><div class="chart" id="chConvVsLeads"></div></div>
       <div class="card"><h3>Calidad de la conversación (Meta)</h3><div class="nota">Solo puntos con 30 o más conversaciones (antes de jun-2026 casi no hubo campañas a WhatsApp). % de conversaciones iniciadas en las que la persona envió un 2º mensaje, es decir, siguió escribiendo después del mensaje automático del anuncio. Bloqueos = la persona bloqueó a la empresa.</div><div class="chart" id="chCalidad"></div></div>
     </div>
     <div class="grid2">
       <div class="card"><h3>Costo por chat con interés (Meta)</h3><div class="agr" id="agrCpi"><span>Agrupar</span><button data-g="auto" class="on">Automático</button><button data-g="dia">Día</button><button data-g="semana">Semana</button><button data-g="mes">Mes</button></div><div class="nota" id="notaCpi"></div><div class="chart" id="chCpi"></div></div>
       <div class="card"><h3 id="tituloCac">Costo de adquisición por pax</h3><div class="agr" id="agrCac"><span>Agrupar</span><button data-g="auto" class="on">Automático</button><button data-g="dia">Día</button><button data-g="semana">Semana</button><button data-g="mes">Mes</button></div><div class="nota" id="notaCacVillas"></div><div class="chart" id="chCacVillas"></div></div>
     </div>
-    <div class="card"><h3>Razones de no cierre (front)</h3><div class="nota">Comparación con el periodo de referencia.</div><div class="chart alto" id="chRazones"></div></div>
+    <div class="card solo-equipo"><h3>Razones de no cierre (front)</h3><div class="nota">Comparación con el periodo de referencia.</div><div class="chart alto" id="chRazones"></div></div>
   </section>
 
   <section id="horas">
@@ -519,11 +523,11 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
   </section>
 
   <section id="campanas">
-    <div class="card"><h3>Inversión y costo por resultado según etapa de estrategia</h3><div class="nota">Mensual. Barras: inversión por etapa de estrategia. Líneas (eje derecho): costo por conversación y por chat con 2+ mensajes, calculados <b>solo con el gasto de las campañas que llevan a WhatsApp</b>. Los meses con menos de 30 conversaciones no se dibujan: en ene–may 2026 casi toda la pauta de Meta fue de ventas web.</div><div class="chart alto" id="chEtapas"></div></div>
-    <div class="card"><h3>Costo de pauta por reserva, mes a mes</h3><div class="nota">Cierra la cadena: cuánto costó en pauta cada reserva. <b>Meta</b> = inversión Meta ÷ reservas IG; <b>Google</b> = inversión Google ÷ reservas Web; <b>Total</b> = inversión total ÷ reservas totales del front (todos los orígenes). Las reservas IG y Web también incluyen clientes orgánicos, así que es un costo "de caja", no incremental.</div><div class="chart" id="chCostoReserva"></div></div>
-    <div class="card"><h3>Cadena completa por mes</h3><div class="nota">De la inversión a la venta, mes a mes (el más reciente arriba). Leads y reservas, del registro del front, que empieza en sep-2025. Retorno = venta del canal ÷ inversión del canal.</div><div class="tabla" id="tablaCadena"></div></div>
+    <div class="card solo-equipo"><h3>Inversión y costo por resultado según etapa de estrategia</h3><div class="nota">Mensual. Barras: inversión por etapa de estrategia. Líneas (eje derecho): costo por conversación y por chat con 2+ mensajes, calculados <b>solo con el gasto de las campañas que llevan a WhatsApp</b>. Los meses con menos de 30 conversaciones no se dibujan: en ene–may 2026 casi toda la pauta de Meta fue de ventas web.</div><div class="chart alto" id="chEtapas"></div></div>
+    <div class="card solo-equipo"><h3>Costo de pauta por reserva, mes a mes</h3><div class="nota">Cierra la cadena: cuánto costó en pauta cada reserva. <b>Meta</b> = inversión Meta ÷ reservas IG; <b>Google</b> = inversión Google ÷ reservas Web; <b>Total</b> = inversión total ÷ reservas totales del front (todos los orígenes). Las reservas IG y Web también incluyen clientes orgánicos, así que es un costo "de caja", no incremental.</div><div class="chart" id="chCostoReserva"></div></div>
+    <div class="card solo-equipo"><h3>Cadena completa por mes</h3><div class="nota">De la inversión a la venta, mes a mes (el más reciente arriba). Leads y reservas, del registro del front, que empieza en sep-2025. Retorno = venta del canal ÷ inversión del canal.</div><div class="tabla" id="tablaCadena"></div></div>
     <div class="card"><h3>Campañas Meta</h3><div class="tabla" id="tablaCampMeta"></div></div>
-    <div class="card"><h3>Google Ads frente a los leads Web del front</h3><div class="nota">Las "conversiones" de Google solo cuentan compras en el motor de reservas web. Quien llega desde Google y escribe por el botón de WhatsApp no aparece como conversión en Google, pero sí como lead Web en el registro del front. Por eso Google se evalúa también con leads y reservas Web (que además incluyen tráfico orgánico y directo).</div><div class="chart" id="chGoogleWeb"></div></div>
+    <div class="card solo-equipo"><h3>Google Ads frente a los leads Web del front</h3><div class="nota">Las "conversiones" de Google solo cuentan compras en el motor de reservas web. Quien llega desde Google y escribe por el botón de WhatsApp no aparece como conversión en Google, pero sí como lead Web en el registro del front. Por eso Google se evalúa también con leads y reservas Web (que además incluyen tráfico orgánico y directo).</div><div class="chart" id="chGoogleWeb"></div></div>
     <div class="card"><h3>Campañas Google Ads</h3><div class="tabla" id="tablaCampG"></div></div>
   </section>
 
@@ -570,6 +574,7 @@ h3.sub3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(-
 <script>
 const D = window.DATA;
 const $ = s => document.querySelector(s);
+const DIR = document.body.dataset.vista === "direccion";   // informe de dirección: sin desglose por canal de atribución
 const fmt = (v, d=0) => v==null||!isFinite(v) ? "—" : Number(v).toLocaleString("es-CO",{maximumFractionDigits:d,minimumFractionDigits:d});
 const money = v => v==null||!isFinite(v) ? "—" : v<0 ? "−"+money(-v) : "$" + (Math.abs(v)>=1e6 ? fmt(v/1e6,1)+" M" : fmt(v,0));
 const pct = (v,d=1) => v==null||!isFinite(v) ? "—" : fmt(v*100,d)+"%";
@@ -884,10 +889,10 @@ function renderComoVamos(){
     const inv = sum(o1,"inv"), pax = sum(o1,"pax"), ven = sum(o1,"venta");
     const inv0 = sum(o0,"inv"), pax0 = sum(o0,"pax"), ven0 = sum(o0,"venta");
     T1.inv+=inv; T1.pax+=pax; T1.venta+=ven; T0.inv+=inv0; T0.pax+=pax0; T0.venta+=ven0;
-    filas += `<tr class="cat"><td>${p}${mix(o1)}</td>${c(money(inv),inv,inv0,{neu:true})}${c(fmt(pax),pax,pax0)}${c(money(ven),ven,ven0)}<td class="n">100%</td>`
+    filas += `<tr class="cat"><td>${p}${DIR?"":mix(o1)}</td>${c(money(inv),inv,inv0,{neu:true})}${c(fmt(pax),pax,pax0)}${c(money(ven),ven,ven0)}${DIR?"":'<td class="n">100%</td>'}`
            + `${c(pax?money(inv/pax):"—",div(inv,pax),div(inv0,pax0),{inv:true})}${c(inv?fmt(ven/inv,1)+"x":"—",div(ven,inv),div(ven0,inv0))}</tr>`;
     const sc = p==="Pasadías" && (!PATR_DESDE || CA < PATR_DESDE);
-    CV_CANALES.forEach(([k,lbl])=>{
+    if(!DIR) CV_CANALES.forEach(([k,lbl])=>{
       const a = o1[k], b = o0[k];
       if(k==="metabuscador" && a.venta<1 && b.venta<1) return;
       if(aprox && k==="sin_identificar" && a.venta<1) return;   // vacía en el periodo: no aporta
@@ -905,17 +910,19 @@ function renderComoVamos(){
   }
   if(!prod){
     T1.inv += d1.mixta.inv; T0.inv += d0.mixta.inv; T1.venta += d1.compl; T0.venta += d0.compl;
-    if(Math.abs(d1.compl)>=1) filas += `<tr class="sub"><td>Complementos sin producto (ubicaciones…)</td><td class="n">—</td><td class="n">—</td>${c(money(d1.compl),d1.compl,d0.compl)}${vacio}${vacio}${vacio}</tr>`;
+    if(Math.abs(d1.compl)>=1) filas += `<tr class="sub"><td>Complementos sin producto (ubicaciones…)</td><td class="n">—</td><td class="n">—</td>${c(money(d1.compl),d1.compl,d0.compl)}${DIR?"":vacio}${vacio}${vacio}</tr>`;
     const mx = [d1.mixta.meta>=1?`Meta Ads ${money(d1.mixta.meta)}`:"", d1.mixta.google>=1?`Google Ads ${money(d1.mixta.google)}`:""].filter(Boolean).join(" · ");
-    filas += `<tr class="sub"><td>Campañas de marca o mixtas<span style="font-size:11.5px;color:var(--mid)"> · venden villas y pasadías, no se asignan a uno${mx?` · ${mx}`:""}</span></td>${c(money(d1.mixta.inv),d1.mixta.inv,d0.mixta.inv,{neu:true})}<td class="n">—</td><td class="n">—</td>${vacio}${vacio}${vacio}</tr>`;
+    filas += `<tr class="sub"><td>Campañas de marca o mixtas<span style="font-size:11.5px;color:var(--mid)"> · venden villas y pasadías, no se asignan a uno${mx?` · ${mx}`:""}</span></td>${c(money(d1.mixta.inv),d1.mixta.inv,d0.mixta.inv,{neu:true})}<td class="n">—</td><td class="n">—</td>${DIR?"":vacio}${vacio}${vacio}</tr>`;
   }
   const mt = {}; CV_CANALES.forEach(([k])=>mt[k] = ["Villas","Pasadías"].filter(p=>!prod||prod===p).reduce((s_,p)=>s_+d1[p][k].venta,0));
   const tv = Object.values(mt).reduce((a_,b_)=>a_+b_,0);
-  filas += `<tr class="tot"><td>Total digital</td>${c(money(T1.inv),T1.inv,T0.inv,{neu:true})}${c(fmt(T1.pax),T1.pax,T0.pax)}${c(money(T1.venta),T1.venta,T0.venta)}${vacio}`
+  filas += `<tr class="tot"><td>Total digital</td>${c(money(T1.inv),T1.inv,T0.inv,{neu:true})}${c(fmt(T1.pax),T1.pax,T0.pax)}${c(money(T1.venta),T1.venta,T0.venta)}${DIR?"":vacio}`
          + `${c(T1.pax?money(T1.inv/T1.pax):"—",div(T1.inv,T1.pax),div(T0.inv,T0.pax),{inv:true})}${c(T1.inv?fmt(T1.venta/T1.inv,1)+"x":"—",div(T1.venta,T1.inv),div(T0.venta,T0.inv))}</tr>`;
-  $("#tablaCV").innerHTML = `<div class="cvley">${CV_CANALES.map(([k,l])=>`<span><i style="background:${CV_COLOR[k]}"></i>${l} ${tv?pct(mt[k]/tv,0):""}</span>`).join("")}<span style="margin-left:auto">Variación pequeña: vs ${comp} (– = sin comparación)</span></div>
-    <div style="overflow-x:auto"><table class="cv"><thead><tr><th>Categoría / canal</th><th class="n">Inversión</th><th class="n">Pax</th><th class="n">Venta sin IVA</th><th class="n">% de la venta</th><th class="n">Costo por pax</th><th class="n">Retorno combinado</th></tr></thead><tbody>${filas}</tbody></table></div>`;
-  $("#notaCV").innerHTML = aprox
+  $("#tablaCV").innerHTML = (DIR ? `<div class="cvley"><span style="margin-left:auto">Variación pequeña: vs ${comp} (– = sin comparación)</span></div>` : `<div class="cvley">${CV_CANALES.map(([k,l])=>`<span><i style="background:${CV_COLOR[k]}"></i>${l} ${tv?pct(mt[k]/tv,0):""}</span>`).join("")}<span style="margin-left:auto">Variación pequeña: vs ${comp} (– = sin comparación)</span></div>`)
+    + `<div style="overflow-x:auto"><table class="cv"><thead><tr><th>${DIR?"Producto":"Categoría / canal"}</th><th class="n">Inversión</th><th class="n">Pax</th><th class="n">Venta sin IVA</th>${DIR?"":'<th class="n">% de la venta</th>'}<th class="n">Costo por pax</th><th class="n">Retorno combinado</th></tr></thead><tbody>${filas}</tbody></table></div>`;
+  $("#notaCV").innerHTML = DIR
+    ? `Solo canales digitales: clientes que llegan por Instagram o la página web y reservan por WhatsApp, reservas del motor web de villas y compras de pasadías en línea (Palco). Venta sin IVA, por fecha de compra. Inversión = Meta Ads + Google Ads de cada producto; las campañas de marca venden los dos productos y suman solo en el total. Retorno = venta ÷ inversión.`
+    : aprox
     ? `Venta digital (WhatsApp, motor web de villas y Palco) por fecha de compra. <b>Atribución aproximada por tráfico (≈), provisional</b> mientras se mejora el tracking: WhatsApp Instagram = Meta Ads (supuesto: hay algo de orgánico, pero es minoría); WhatsApp Página Web = repartido según de dónde vinieron los clics al botón de WhatsApp en GA4 ese mes (por producto); Palco que GA4 no registró = repartido como las compras de Palco que sí registró. Motor web de villas y Palco registrado en GA4 = medido. <b>Meta Ads probablemente queda subestimado</b>: el navegador interno de Instagram pierde más visitas en GA4. Con menos de 15 clics (10 compras) en el mes se usa el mes + los 2 anteriores. Cambia a "Solo medida" para ver únicamente lo comprobado. Costo por pax y retorno combinado van por categoría; el Total incluye las campañas de marca o mixtas. Detalle en Metodología.`
     : `Venta digital (WhatsApp, motor web de villas y Palco) por fecha de compra. <b>Meta Ads / Google Ads</b> = venta que llegó por un anuncio (afiliado del motor web en villas; visita de GA4 en Palco). <b>Sin identificar</b> = WhatsApp, donde todavía no sabemos si la persona vino de un anuncio, y compras de Palco que GA4 no registró${PATR_DESDE?` (GA4 registra Palco desde ${etiqFecha(PATR_DESDE)}: antes, los canales de pasadías no se comparan)`:""}. Costo por pax y retorno combinado (venta ÷ inversión) van por categoría; el Total incluye las campañas de marca o mixtas. Detalle en Metodología.`;
 }
