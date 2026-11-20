@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261120110411"></script>
+<script src="data.js?v=20261120112958"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -517,7 +517,8 @@ body:not([data-vista="direccion"]) .solo-direccion{display:none!important}
 
   <section id="mercados">
     <div class="card"><h3>De dónde viene la demanda</h3>
-      <div class="nota"><b>Fuentes reales, sin repartos estimados.</b> Web = GA4 (sesiones, clics al botón de WhatsApp y compras en línea con su ingreso). Pauta = inversión de Meta y Google por país del usuario. GA4 y Google entregan datos por país; Meta también, pero <b>sin conversaciones por región o ciudad</b> (ver abajo). El registro del front <b>no guarda el país o la ciudad del cliente</b>, así que las reservas por WhatsApp no tienen mercado. Producto en GA4: compras de pasadias.makaniluxury.com = Pasadías y del motor de reservas = Villas; sesiones y clics a WhatsApp según la página (club de playa = Pasadías, habitaciones = Villas, otras = General). Con el filtro de producto, lo "General" no se incluye.</div>
+      <div class="nota solo-direccion">Visitas y compras en la página web por país del visitante (Google Analytics) y dónde se muestra la pauta (inversión de Meta y Google por país). Las reservas por WhatsApp no tienen país porque el Front no lo registra.</div>
+      <div class="nota solo-equipo"><b>Fuentes reales, sin repartos estimados.</b> Web = GA4 (sesiones, clics al botón de WhatsApp y compras en línea con su ingreso). Pauta = inversión de Meta y Google por país del usuario. GA4 y Google entregan datos por país; Meta también, pero <b>sin conversaciones por región o ciudad</b> (ver abajo). El registro del front <b>no guarda el país o la ciudad del cliente</b>, así que las reservas por WhatsApp no tienen mercado. Producto en GA4: compras de pasadias.makaniluxury.com = Pasadías y del motor de reservas = Villas; sesiones y clics a WhatsApp según la página (club de playa = Pasadías, habitaciones = Villas, otras = General). Con el filtro de producto, lo "General" no se incluye.</div>
       <div class="kpis" id="kpisMerc"></div>
       <div class="chart alto" id="chMerc"></div>
     </div>
@@ -879,10 +880,34 @@ function cvDatos(a, b, aprox=false){
             - FRONTP.filter(r=>enRango(r.fecha,a,b)).reduce((s_,r)=>s_+r.venta_ig+r.venta_web,0);
   return out;
 }
+const TXC = T(D.ga4_tx_campana);
+// Dirección (opción A, usuaria 20-nov-2026): la inversión de campañas de marca o mixtas se reparte entre Villas y Pasadías
+// según lo que vende cada campaña en el periodo. Google = compras web de GA4 de esa campaña por producto; Meta = mezcla
+// de venta de WhatsApp Instagram del Front por producto. Sin ventas en el periodo: peso de cada producto en la venta digital.
+function repartirMixtas(d, a, b){
+  const prods = ["Villas","Pasadías"], sum = (o,f) => CV_CANALES.reduce((s_,[k])=>s_+o[k][f],0);
+  const base = {Villas: sum(d.Villas,"venta"), Pasadías: sum(d["Pasadías"],"venta")};
+  const pesos = w => { const t = w.Villas + w["Pasadías"]; return t > 0 ? {Villas: w.Villas/t, Pasadías: w["Pasadías"]/t} : null; };
+  const pBase = pesos(base) || {Villas: .5, Pasadías: .5};
+  const ig = {Villas:0, Pasadías:0}; FRONTP.filter(r=>enRango(r.fecha,a,b) && ig[r.producto]!=null).forEach(r=>ig[r.producto]+=r.venta_ig);
+  const pIg = pesos(ig) || pBase;
+  const det = [];
+  const asignar = (canal, nombre, inv, p) => { prods.forEach(x=>d[x][canal].inv += inv*p[x]); det.push({nombre, inv, villas:p.Villas}); };
+  const gM = {}; META_ALL.filter(r=>enRango(r.fecha,a,b) && !["Villas","Pasadías"].includes(MCAMP[r.c].producto)).forEach(r=>gM[r.c]=(gM[r.c]||0)+r.gasto);
+  Object.entries(gM).forEach(([c,inv])=>{ if(inv>=1) asignar("meta", MCAMP[c].campaign_name, inv, pIg); });
+  const gG = {}; GOO_ALL.filter(r=>enRango(r.fecha,a,b) && !["Villas","Pasadías"].includes(GCAMP[r.c].producto)).forEach(r=>gG[r.c]=(gG[r.c]||0)+r.costo);
+  Object.entries(gG).forEach(([c,inv])=>{ if(inv<1) return;
+    const w = {Villas:0, Pasadías:0}; TXC.filter(t=>enRango(t.fecha,a,b) && t.campana===GCAMP[c].campana).forEach(t=>w[t.producto]+=t.ingresos);
+    asignar("google", GCAMP[c].campana, inv, pesos(w) || pBase); });
+  d.mixta = {inv:0, meta:0, google:0};
+  return det;
+}
 const CV_ABIERTAS = new Set();   // dirección: productos desplegados (se conservan al cambiar filtros)
 function renderComoVamos(){
   const aprox = ($("#modoAtr")||{}).value !== "medida";
   const d1 = cvDatos(A,B,aprox), d0 = cvDatos(CA,CB,aprox), prod = $("#producto").value;
+  const repMix = DIR ? repartirMixtas(d1, A, B) : [];
+  if(DIR) repartirMixtas(d0, CA, CB);
   const ap = x => !DIR && aprox && x.aprox>=1 ? "≈ " : "";   // dirección: sin símbolo ≈ (la nota lo explica)
   const comp = $("#modoComp").value==="prev" ? "periodo anterior" : "mismo periodo del año anterior";
   const sum = (o,f) => CV_CANALES.reduce((s_,[k])=>s_+o[k][f],0);
@@ -938,7 +963,7 @@ function renderComoVamos(){
     T1.inv += d1.mixta.inv; T0.inv += d0.mixta.inv; T1.venta += d1.compl; T0.venta += d0.compl;
     if(Math.abs(d1.compl)>=1) filas += `<tr class="sub"><td>Complementos sin producto (ubicaciones…)</td><td class="n">—</td><td class="n">—</td>${c(money(d1.compl),d1.compl,d0.compl)}${DIR?"":vacio}${vacio}${vacio}</tr>`;
     const mx = [d1.mixta.meta>=1?`Meta Ads ${money(d1.mixta.meta)}`:"", d1.mixta.google>=1?`Google Ads ${money(d1.mixta.google)}`:""].filter(Boolean).join(" · ");
-    filas += `<tr class="sub"><td>Campañas de marca o mixtas<span style="font-size:11.5px;color:var(--mid)"> · venden villas y pasadías, no se asignan a uno${mx?` · ${mx}`:""}</span></td>${c(money(d1.mixta.inv),d1.mixta.inv,d0.mixta.inv,{neu:true})}<td class="n">—</td><td class="n">—</td>${DIR?"":vacio}${vacio}${vacio}</tr>`;
+    if(!DIR) filas += `<tr class="sub"><td>Campañas de marca o mixtas<span style="font-size:11.5px;color:var(--mid)"> · venden villas y pasadías, no se asignan a uno${mx?` · ${mx}`:""}</span></td>${c(money(d1.mixta.inv),d1.mixta.inv,d0.mixta.inv,{neu:true})}<td class="n">—</td><td class="n">—</td>${DIR?"":vacio}${vacio}${vacio}</tr>`;
   }
   const mt = {}; CV_CANALES.forEach(([k])=>mt[k] = ["Villas","Pasadías"].filter(p=>!prod||prod===p).reduce((s_,p)=>s_+d1[p][k].venta,0));
   const tv = Object.values(mt).reduce((a_,b_)=>a_+b_,0);
@@ -953,7 +978,7 @@ function renderComoVamos(){
     document.querySelectorAll(`#tablaCV tr.canal-dir[data-grupo="${p}"]`).forEach(x=>x.hidden=!ab);
   });
   $("#notaCV").innerHTML = DIR
-    ? `Solo canales digitales: clientes que llegan por Instagram o la página web y reservan por WhatsApp, reservas del motor web de villas y compras de pasadías en línea (Palco). Venta sin IVA, por fecha de compra. Inversión = Meta Ads + Google Ads de cada producto; las campañas de marca venden los dos productos y suman solo en el total. Retorno = venta ÷ inversión. Clic en Villas o Pasadías para ver Google Ads, Meta Ads y Otros: es una <b>atribución aproximada</b> por el tráfico de GA4, provisional mientras se mejora el tracking; las reservas por WhatsApp de Instagram se asignan a Meta Ads. <b>Otros</b> = sin pauta: Google orgánico, directo, bio de Instagram, Google My Business, email y metabuscadores.`
+    ? `Solo canales digitales: clientes que llegan por Instagram o la página web y reservan por WhatsApp, reservas del motor web de villas y compras de pasadías en línea (Palco). Venta sin IVA, por fecha de compra. Inversión = Meta Ads + Google Ads de cada producto${repMix.length?`, incluido el reparto de las campañas de marca o mixtas según lo que vende cada una (${repMix.map(x=>`${x.nombre}: ${pct(x.villas)} a villas`).join(" · ")})`:""}. Retorno = venta ÷ inversión. Clic en Villas o Pasadías para ver Google Ads, Meta Ads y Otros: es una <b>atribución aproximada</b> por el tráfico de GA4, provisional mientras se mejora el tracking; las reservas por WhatsApp de Instagram se asignan a Meta Ads. <b>Otros</b> = sin pauta: Google orgánico, directo, bio de Instagram, Google My Business, email y metabuscadores.`
     : aprox
     ? `Venta digital (WhatsApp, motor web de villas y Palco) por fecha de compra. <b>Atribución aproximada por tráfico (≈), provisional</b> mientras se mejora el tracking: WhatsApp Instagram = Meta Ads (supuesto: hay algo de orgánico, pero es minoría); WhatsApp Página Web = repartido según de dónde vinieron los clics al botón de WhatsApp en GA4 ese mes (por producto); Palco que GA4 no registró = repartido como las compras de Palco que sí registró. Motor web de villas y Palco registrado en GA4 = medido. <b>Meta Ads probablemente queda subestimado</b>: el navegador interno de Instagram pierde más visitas en GA4. Con menos de 15 clics (10 compras) en el mes se usa el mes + los 2 anteriores. Cambia a "Solo medida" para ver únicamente lo comprobado. Costo por pax y retorno combinado van por categoría; el Total incluye las campañas de marca o mixtas. Detalle en Metodología.`
     : `Venta digital (WhatsApp, motor web de villas y Palco) por fecha de compra. <b>Meta Ads / Google Ads</b> = venta que llegó por un anuncio (afiliado del motor web en villas; visita de GA4 en Palco). <b>Sin identificar</b> = WhatsApp, donde todavía no sabemos si la persona vino de un anuncio, y compras de Palco que GA4 no registró${PATR_DESDE?` (GA4 registra Palco desde ${etiqFecha(PATR_DESDE)}: antes, los canales de pasadías no se comparan)`:""}. Costo por pax y retorno combinado (venta ÷ inversión) van por categoría; el Total incluye las campañas de marca o mixtas. Detalle en Metodología.`;
