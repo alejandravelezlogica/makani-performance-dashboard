@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261120142315"></script>
+<script src="data.js?v=20261120142533"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -587,7 +587,10 @@ body[data-vista="direccion"] .grid2:has(> .solo-equipo):not(:has(> .solo-direcci
 <script>
 const D = window.DATA;
 const $ = s => document.querySelector(s);
-const DIR = document.body.dataset.vista === "direccion";   // informe de dirección: sin desglose por canal de atribución
+const DIR = document.body.dataset.vista === "direccion";
+// Agrupación automática: hasta este número de días se ve por día; luego por semana (hasta 183) y luego por mes.
+// Dirección: 31 días (90 días se ve por semana, pedido de la usuaria 20-nov-2026); equipo: 92.
+const UMBRAL_DIA = DIR ? 31 : 92;   // informe de dirección: sin desglose por canal de atribución
 const fmt = (v, d=0) => v==null||!isFinite(v) ? "—" : Number(v).toLocaleString("es-CO",{maximumFractionDigits:d,minimumFractionDigits:d});
 const money = v => v==null||!isFinite(v) ? "—" : v<0 ? "−"+money(-v) : "$" + (Math.abs(v)>=1e6 ? fmt(v/1e6,1)+" M" : fmt(v,0));
 const chipEstado = e => !e ? '<span class="nota" title="Cuenta sin API: estado no disponible">—</span>'
@@ -848,7 +851,7 @@ function renderKPIs(x, y){
 
 // --- serie temporal (diaria o semanal) ---
 function serie(a,b){
-  const dias = (toD(b)-toD(a))/864e5+1; const semanal = dias>92;
+  const dias = (toD(b)-toD(a))/864e5+1; const semanal = dias>UMBRAL_DIA;
   const clave = s => { if(!semanal) return s; const d=toD(s); d.setDate(d.getDate()-diaSem(s)); return toS(d); };
   const mp = new Map();
   const get = k => { if(!mp.has(k)) mp.set(k,{meta:0,goo:0,leads:0,res:0,venta:0,pax:0}); return mp.get(k); };
@@ -1930,7 +1933,7 @@ const CANALES_PICK = {"Villas":[["CRS", COL_PICK.web],["WhatsApp · Instagram", 
 function cubosPeriodo(ini, fin, selAgr){
   const dias = Math.round((toD(fin)-toD(ini))/864e5)+1;
   const agr = (document.querySelector(`${selAgr} button.on`)||{}).dataset?.g || "auto";
-  const modo = agr!=="auto" ? agr : (dias <= 92 ? "dia" : (dias <= 183 ? "semana" : "mes"));
+  const modo = agr!=="auto" ? agr : (dias <= UMBRAL_DIA ? "dia" : (dias <= 183 ? "semana" : "mes"));
   const MESL = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
   const dm = f => `${+f.slice(8,10)} ${MESL[+f.slice(5,7)-1]}`;
   const finMes = f => { const d=toD(f.slice(0,7)+"-01"); d.setMonth(d.getMonth()+1); d.setDate(0); return toS(d); };
