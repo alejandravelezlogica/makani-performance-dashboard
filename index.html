@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261120145730"></script>
+<script src="data.js?v=20261120150624"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -1800,22 +1800,22 @@ function renderCampanas(){
   const wa = (o, txt) => esWA(o) ? txt : "—";
   const resultado = o => esWA(o) ? [o.mensaje_2, "chats 2+"] : o.etapa==="Tráfico" ? [o.clics_enlace, "clics"]
     : o.etapa==="Ventas web" ? [o.compras_web, "compras web"] : o.etapa==="Reconocimiento" ? [o.impresiones/1000, "mil impresiones"] : [o.conversaciones, "conversaciones"];
-  const celdaRes = o => { const [n,u] = resultado(o); return `<td class="n" data-v="${n||0}">${fmt(n)} <span class="nota">${u}</span></td><td class="n" data-v="${n?o.gasto/n:-1}">${money(div(o.gasto,n))}</td>`; };
+  const celdaRes = o => { const [n,u] = resultado(o); return `<td class="n" data-v="${n||0}">${fmt(n)} <span class="nota">${u}</span></td><td class="n" data-v="${n&&o.gasto>=1?o.gasto/n:-1}">${o.gasto>=1?money(div(o.gasto,n)):"—"}</td>`; };
   $("#tablaCampMeta").innerHTML = filas.length ? `<table><thead><tr><th>Campaña</th><th>Estado</th><th>Etapa</th><th>Producto</th><th class="n">Gasto</th><th class="n">Impresiones</th><th class="n">CTR enlace</th>`
-    + (DIR ? `<th class="n">Conversaciones</th><th class="n">% 2+ mensajes</th><th class="n">Resultado según el objetivo</th><th class="n">Costo por resultado</th>${thAtr}`
+    + (DIR ? `<th class="n">Conversaciones</th><th class="n">% 2+ mensajes</th><th class="n">Resultado según el objetivo</th><th class="n">Costo por resultado</th>`
            : `<th class="n">Conversaciones</th><th class="n">Costo/conv.</th><th class="n">% 2+ mensajes</th><th class="n">Costo / chat 2+</th><th class="n">% bloqueo</th><th class="n">Compras web</th><th class="n">ROAS atribuido (píxel)</th>`)
     + `</tr></thead><tbody>
     ${filas.map(o=>`<tr><td>${o.campaign_name}<br><span class="chip">${o.cuenta_nombre}</span></td><td>${chipEstado(o.estado)}</td><td>${o.etapa}</td><td>${o.producto}</td><td class="n">${millones(o.gasto)}</td><td class="n">${fmt(o.impresiones)}</td><td class="n">${pct(div(o.clics_enlace,o.impresiones),2)}</td>`
-      + (DIR ? `<td class="n">${wa(o,fmt(o.conversaciones))}</td><td class="n">${wa(o,pct(div(o.mensaje_2,o.conversaciones)))}</td>${celdaRes(o)}${celdasAtr("meta",o,o.gasto)}`
+      + (DIR ? `<td class="n">${wa(o,fmt(o.conversaciones))}</td><td class="n">${wa(o,pct(div(o.mensaje_2,o.conversaciones)))}</td>${celdaRes(o)}`
              : `<td class="n">${wa(o,fmt(o.conversaciones))}</td><td class="n">${wa(o,money(div(o.gasto,o.conversaciones)))}</td><td class="n">${wa(o,pct(div(o.mensaje_2,o.conversaciones)))}</td><td class="n">${wa(o,money(div(o.gasto,o.mensaje_2)))}</td><td class="n">${wa(o,pct(div(o.bloqueos,o.conversaciones)))}</td><td class="n">${fmt(o.compras_web)}</td><td class="n">${o.valor_compras_web?fmt(o.valor_compras_web/o.gasto,1)+"x":"—"}</td>`)
-      + `</tr>`).join("")}</tbody>${DIR?pieSin("meta",11):""}</table>` : '<div class="vacio">Sin inversión Meta en el rango.</div>';
+      + `</tr>`).join("")}</tbody></table>` : '<div class="vacio">Sin inversión Meta en el rango.</div>';
   const ag = {}; GOO.filter(r=>enRango(r.fecha,A,B)).forEach(r=>{ const o=ag[r.c]||(ag[r.c]=sumar([],CG)); CG.forEach(c=>o[c]+=r[c]); });
   const fg = Object.entries(ag).map(([c,o])=>({...GCAMP[c],...o})).sort((a,b)=>activaPrimero(a,b) || b.costo-a.costo);
   $("#tablaCampG").innerHTML = fg.length ? `<table><thead><tr><th>Campaña</th><th>Estado</th><th>Cuenta</th><th>Tipo</th><th class="n">Costo</th><th class="n">Clics</th><th class="n">CPC</th><th class="n">Conversiones</th>${DIR?"":'<th class="n">Costo/conv.</th>'}<th class="n">Valor conv.</th>${DIR?thAtr:""}</tr></thead><tbody>
     ${fg.map(o=>`<tr><td>${o.campana}</td><td>${chipEstado(o.estado)}</td><td>${o.cuenta}</td><td>${o.tipo}</td><td class="n">${millones(o.costo)}</td><td class="n">${fmt(o.clics)}</td><td class="n">${money(div(o.costo,o.clics))}</td><td class="n">${fmt(o.conversiones,1)}</td>${DIR?"":`<td class="n">${money(div(o.costo,o.conversiones))}</td>`}<td class="n">${millones(o.valor)}</td>${DIR?celdasAtr("google",o,o.costo):""}</tr>`).join("")}</tbody>${DIR?pieSin("google",9):""}</table>` : '<div class="vacio">Sin inversión Google en el rango.</div>';
   if(DIR){
     const notaAtr = `<b>Pax y venta medidos (web)</b>: solo compras en la página web (Palco y motor de reservas de villas) que Google Analytics registró con el nombre de la campaña. Es dato medido, no estimado. Pasa el cursor sobre la venta para ver cuántas compras son.`;
-    $("#notaCampMeta").innerHTML = `${notaAtr} Las reservas por WhatsApp no traen la campaña: van en la fila final "sin campaña identificada", así la tabla suma lo mismo que Meta Ads en el resumen.`;
+    $("#notaCampMeta").innerHTML = `Las campañas de WhatsApp se optimizan por el <b>número y el costo de los chats con 2º mensaje</b> (personas que siguieron escribiendo después del saludo automático). Las demás, por el resultado de su objetivo (clics, compras web o impresiones). La venta por WhatsApp no se puede ligar a una campaña: está en el resumen, en la fila Meta Ads.`;
     $("#notaCampG").innerHTML = `${notaAtr} Lo que Google Ads tiene en el resumen y no se puede ligar a una campaña va en la fila final. "Conversiones" y "Valor conv." son las que cuenta Google Ads (compras en el motor web).`;
   }
 }
