@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261120110252"></script>
+<script src="data.js?v=20261120110411"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -407,7 +407,7 @@ body:not([data-vista="direccion"]) .solo-direccion{display:none!important}
     </div>
     <div class="grid2">
       <div class="card solo-equipo"><h3>Chats Meta vs leads IG registrados</h3><div class="nota">Conversaciones iniciadas y chats con 2+ mensajes (Meta) frente a los leads IG del front. Los leads IG se parecen más a los chats con 2+ mensajes: el front anota a quien realmente conversa.</div><div class="chart" id="chConvVsLeads"></div></div>
-      <div class="card"><h3>Calidad de la conversación (Meta)</h3><div class="nota">Solo puntos con 30 o más conversaciones (antes de jun-2026 casi no hubo campañas a WhatsApp). % de conversaciones iniciadas en las que la persona envió un 2º mensaje, es decir, siguió escribiendo después del mensaje automático del anuncio. Bloqueos = la persona bloqueó a la empresa.</div><div class="chart" id="chCalidad"></div></div>
+      <div class="card"><h3>Calidad de la conversación (Meta)</h3><div class="nota">Solo puntos con 30 o más conversaciones (antes de jun-2026 casi no hubo campañas a WhatsApp). % de conversaciones iniciadas en las que la persona envió un 2º mensaje, es decir, siguió escribiendo después del mensaje automático del anuncio. <span class="solo-equipo">Bloqueos = la persona bloqueó a la empresa.</span></div><div class="chart" id="chCalidad"></div></div>
     </div>
     <div class="grid2">
       <div class="card"><h3>Costo por chat con interés (Meta)</h3><div class="agr" id="agrCpi"><span>Agrupar</span><button data-g="auto" class="on">Automático</button><button data-g="dia">Día</button><button data-g="semana">Semana</button><button data-g="mes">Mes</button></div><div class="nota" id="notaCpi"></div><div class="chart" id="chCpi"></div></div>
@@ -719,6 +719,8 @@ function agregado(a,b){
 let A, B, CA, CB;
 function setRango(a,b){ $("#desde").value=a; $("#hasta").value=b; render(); }
 function preset(p){
+  // Dirección: con "Mes actual", las gráficas de costo por chat y costo por pax arrancan agrupadas por semana
+  if(DIR) ["#agrCpi","#agrCac"].forEach(sel=>document.querySelectorAll(`${sel} button`).forEach(b=>b.classList.toggle("on", b.dataset.g===(p==="mes"?"semana":"auto"))));
   // Fin = último día COMPLETO común: el del Front (los datos de Meta/Google del día de la descarga van parciales
   // y ese día aún no tiene reservas registradas, lo que inflaba el costo por reserva).
   const max = (D.rango.front_hasta && D.rango.front_hasta < D.rango.max) ? D.rango.front_hasta : D.rango.max; const hoy = toD(max);
@@ -1124,7 +1126,7 @@ function renderEmbudo(x){
   chart("chCalidad").setOption({...base, grid:{left:60,right:30,top:40,bottom:50}, legend:{top:0}, xAxis:ejeX(s.k, s.semanal), yAxis:{type:"value",axisLabel:{formatter:v=>fmt(v*100)+"%"}},
     tooltip:{trigger:"axis",valueFormatter:v=>pct(v)},
     series:[{name:"% que envió 2º mensaje",type:"line",data:s.k.map(k=>{const o=pr.get(k); return o[0]>=MIN_CONV?o[1]/o[0]:null;}),itemStyle:{color:C.ocean},symbol:"none"},
-            {name:"% bloqueos",type:"line",data:s.k.map(k=>{const o=bl.get(k)||[0,0]; return o[0]>=MIN_CONV?o[1]/o[0]:null;}),itemStyle:{color:C.gray},symbol:"none"}]}, true);
+            ...(DIR ? [] : [{name:"% bloqueos",type:"line",data:s.k.map(k=>{const o=bl.get(k)||[0,0]; return o[0]>=MIN_CONV?o[1]/o[0]:null;}),itemStyle:{color:C.gray},symbol:"none"}])]}, true);
   renderKpisPrincipales();
   // razones
   const agg = (a,b) => { const o={}; RAZ.filter(r=>enRango(r.fecha,a,b)).forEach(r=>o[r.razon]=(o[r.razon]||0)+r.leads); return o; };
@@ -1927,8 +1929,9 @@ function render(){
   [...new Set(MCAMP.map(c=>c.etapa))].forEach(e=>{ const o=document.createElement("option"); o.value=e; o.textContent=e; $("#etapaCrea").appendChild(o); });
   $("#desde").min=$("#hasta").min=D.rango.min; $("#desde").max=$("#hasta").max=D.rango.max;
   initCalc();
-  document.querySelector('#presets button[data-p="30"]').classList.add("on");
-  preset("30");
+  const inicial = DIR ? "mes" : "30";   // dirección arranca en el mes actual
+  document.querySelector(`#presets button[data-p="${inicial}"]`).classList.add("on");
+  preset(inicial);
 })();
 </script>
 </body>
