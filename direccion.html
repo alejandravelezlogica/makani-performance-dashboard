@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-<script src="data.js?v=20261120103707"></script>
+<script src="data.js?v=20261120110252"></script>
 <style>
 /* Identidad Makani Luxury Wanderlust (makaniluxury.com): dorado, arena, crema, gris carbón y verde agua.
    Títulos: Jost (sustituto web de Saveur Sans, la tipografía de títulos de la marca). Texto: Raleway (tipografía de la marca). */
@@ -383,7 +383,7 @@ body:not([data-vista="direccion"]) .solo-direccion{display:none!important}
     </div>
     <div class="card solo-equipo"><h3>Villas · CRS y WhatsApp (Instagram / Web)</h3><div class="tabla" id="totLlegV"></div><div class="chart alto" id="chLlegV"></div><div id="avisoLlegV"></div></div>
     <div class="card solo-equipo"><h3>Pasadías · Palco y WhatsApp (Instagram / Web)</h3><div class="tabla" id="totLlegP"></div><div class="chart alto" id="chLlegP"></div></div>
-    <div class="grid2">
+    <div class="grid2 solo-equipo">
       <div class="card canal"><h3>Meta Ads</h3><div id="canalMeta"></div></div>
       <div class="card canal"><h3>Google Ads</h3><div id="canalGoogle"></div></div>
     </div>
@@ -881,7 +881,7 @@ const CV_ABIERTAS = new Set();   // dirección: productos desplegados (se conser
 function renderComoVamos(){
   const aprox = ($("#modoAtr")||{}).value !== "medida";
   const d1 = cvDatos(A,B,aprox), d0 = cvDatos(CA,CB,aprox), prod = $("#producto").value;
-  const ap = x => aprox && x.aprox>=1 ? "≈ " : "";
+  const ap = x => !DIR && aprox && x.aprox>=1 ? "≈ " : "";   // dirección: sin símbolo ≈ (la nota lo explica)
   const comp = $("#modoComp").value==="prev" ? "periodo anterior" : "mismo periodo del año anterior";
   const sum = (o,f) => CV_CANALES.reduce((s_,[k])=>s_+o[k][f],0);
   // largo de la barra proporcional a la venta de la categoría (la mayor = ancho completo)
@@ -951,7 +951,7 @@ function renderComoVamos(){
     document.querySelectorAll(`#tablaCV tr.canal-dir[data-grupo="${p}"]`).forEach(x=>x.hidden=!ab);
   });
   $("#notaCV").innerHTML = DIR
-    ? `Solo canales digitales: clientes que llegan por Instagram o la página web y reservan por WhatsApp, reservas del motor web de villas y compras de pasadías en línea (Palco). Venta sin IVA, por fecha de compra. Inversión = Meta Ads + Google Ads de cada producto; las campañas de marca venden los dos productos y suman solo en el total. Retorno = venta ÷ inversión. Clic en Villas o Pasadías para ver Google Ads, Meta Ads y Otros: es una <b>atribución aproximada (≈)</b> por el tráfico de GA4, provisional mientras se mejora el tracking; las reservas por WhatsApp de Instagram se asignan a Meta Ads. <b>Otros</b> = sin pauta: Google orgánico, directo, bio de Instagram, Google My Business, email y metabuscadores.`
+    ? `Solo canales digitales: clientes que llegan por Instagram o la página web y reservan por WhatsApp, reservas del motor web de villas y compras de pasadías en línea (Palco). Venta sin IVA, por fecha de compra. Inversión = Meta Ads + Google Ads de cada producto; las campañas de marca venden los dos productos y suman solo en el total. Retorno = venta ÷ inversión. Clic en Villas o Pasadías para ver Google Ads, Meta Ads y Otros: es una <b>atribución aproximada</b> por el tráfico de GA4, provisional mientras se mejora el tracking; las reservas por WhatsApp de Instagram se asignan a Meta Ads. <b>Otros</b> = sin pauta: Google orgánico, directo, bio de Instagram, Google My Business, email y metabuscadores.`
     : aprox
     ? `Venta digital (WhatsApp, motor web de villas y Palco) por fecha de compra. <b>Atribución aproximada por tráfico (≈), provisional</b> mientras se mejora el tracking: WhatsApp Instagram = Meta Ads (supuesto: hay algo de orgánico, pero es minoría); WhatsApp Página Web = repartido según de dónde vinieron los clics al botón de WhatsApp en GA4 ese mes (por producto); Palco que GA4 no registró = repartido como las compras de Palco que sí registró. Motor web de villas y Palco registrado en GA4 = medido. <b>Meta Ads probablemente queda subestimado</b>: el navegador interno de Instagram pierde más visitas en GA4. Con menos de 15 clics (10 compras) en el mes se usa el mes + los 2 anteriores. Cambia a "Solo medida" para ver únicamente lo comprobado. Costo por pax y retorno combinado van por categoría; el Total incluye las campañas de marca o mixtas. Detalle en Metodología.`
     : `Venta digital (WhatsApp, motor web de villas y Palco) por fecha de compra. <b>Meta Ads / Google Ads</b> = venta que llegó por un anuncio (afiliado del motor web en villas; visita de GA4 en Palco). <b>Sin identificar</b> = WhatsApp, donde todavía no sabemos si la persona vino de un anuncio, y compras de Palco que GA4 no registró${PATR_DESDE?` (GA4 registra Palco desde ${etiqFecha(PATR_DESDE)}: antes, los canales de pasadías no se comparan)`:""}. Costo por pax y retorno combinado (venta ÷ inversión) van por categoría; el Total incluye las campañas de marca o mixtas. Detalle en Metodología.`;
